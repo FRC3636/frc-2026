@@ -15,11 +15,11 @@ import com.frcteam3636.frc2026.utils.swerve.DrivetrainCorner
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import com.frcteam3636.frc2026.utils.swerve.SwerveModuleTemperature
 import edu.wpi.first.apriltag.AprilTagFieldLayout
+import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.measure.Voltage
-import edu.wpi.first.wpilibj.Filesystem
 import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
 import kotlin.math.atan2
@@ -152,4 +152,4 @@ class DrivetrainIOSim : DrivetrainIO() {
     }
 }
 
-val FIELD_LAYOUT = AprilTagFieldLayout(Filesystem.getDeployDirectory().path + "/Bunnybots-2025-AprilTagMap.json")
+val FIELD_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField)
