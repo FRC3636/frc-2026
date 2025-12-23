@@ -1,6 +1,6 @@
-package com.frcteam3636.swervebase.utils
+package com.frcteam3636.frc2026.utils
 
-import com.frcteam3636.swervebase.utils.swerve.PerCorner
+import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import edu.wpi.first.util.struct.StructSerializable
 import org.littletonrobotics.junction.LogTable
 

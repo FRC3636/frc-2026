@@ -1,6 +1,6 @@
 @file:Suppress("NOTHING_TO_INLINE", "unused")
 
-package com.frcteam3636.swervebase.utils.math
+package com.frcteam3636.frc2026.utils.math
 
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.VoltageUnit

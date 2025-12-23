@@ -19,7 +19,7 @@ val javaVersion by extra(17)
 val jvmVendor: JvmVendorSpec by extra { JvmVendorSpec.ADOPTIUM }
 
 @Suppress("PropertyName")
-val ROBOT_MAIN_CLASS = "com.frcteam3636.swervebase.Main"
+val ROBOT_MAIN_CLASS = "com.frcteam3636.frc2026.Main"
 
 gversion {
     srcDir = layout.buildDirectory.dir("generated/gversion/main/kotlin").get().toString()

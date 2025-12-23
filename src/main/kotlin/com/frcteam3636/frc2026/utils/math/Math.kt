@@ -1,5 +1,5 @@
 @file:Suppress("unused", "UnusedReceiverParameter")
-package com.frcteam3636.swervebase.utils.math
+package com.frcteam3636.frc2026.utils.math
 
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d

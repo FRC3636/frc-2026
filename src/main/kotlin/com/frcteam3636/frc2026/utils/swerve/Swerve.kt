@@ -1,10 +1,10 @@
-package com.frcteam3636.swervebase.utils.swerve
+package com.frcteam3636.frc2026.utils.swerve
 
-import com.frcteam3636.swervebase.utils.math.celsius
-import com.frcteam3636.swervebase.utils.math.inCelsius
-import com.frcteam3636.swervebase.utils.math.inMetersPerSecond
-import com.frcteam3636.swervebase.utils.math.metersPerSecond
-import com.frcteam3636.swervebase.utils.math.radiansPerSecond
+import com.frcteam3636.frc2026.utils.math.celsius
+import com.frcteam3636.frc2026.utils.math.inCelsius
+import com.frcteam3636.frc2026.utils.math.inMetersPerSecond
+import com.frcteam3636.frc2026.utils.math.metersPerSecond
+import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds

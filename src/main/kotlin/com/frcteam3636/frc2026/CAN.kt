@@ -1,4 +1,4 @@
-package com.frcteam3636.swervebase
+package com.frcteam3636.frc2026
 
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.hardware.CANcoder

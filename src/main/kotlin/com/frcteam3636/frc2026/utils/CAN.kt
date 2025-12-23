@@ -1,8 +1,8 @@
-package com.frcteam3636.swervebase.utils
+package com.frcteam3636.frc2026.utils
 
 import com.ctre.phoenix6.CANBus
-import com.frcteam3636.swervebase.utils.math.advanceIfElapsed
-import com.frcteam3636.swervebase.utils.math.seconds
+import com.frcteam3636.frc2026.utils.math.advanceIfElapsed
+import com.frcteam3636.frc2026.utils.math.seconds
 import edu.wpi.first.wpilibj.Timer
 
 private val cachedBusStatuses = HashMap<String, Pair<Timer, CANBus.CANBusStatus>>()

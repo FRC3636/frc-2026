@@ -1,9 +1,9 @@
-package com.frcteam3636.swervebase
+package com.frcteam3636.frc2026
 
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
-import com.frcteam3636.swervebase.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
