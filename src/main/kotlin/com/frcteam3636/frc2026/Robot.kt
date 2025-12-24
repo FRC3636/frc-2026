@@ -61,6 +61,21 @@ object Robot : LoggedRobot() {
 
     val statusSignals = StatusSignalCollection()
 
+    /** A model of robot, depending on where we're deployed to. */
+    enum class Model {
+        SIMULATION, COMPETITION
+    }
+
+    /** The model of this robot. */
+    val model: Model = if (isSimulation()) {
+        Model.SIMULATION
+    } else {
+        when (val key = Preferences.getString("Model", "competition")) {
+            "competition" -> Model.COMPETITION
+            else -> throw AssertionError("Invalid model found in preferences: $key")
+        }
+    }
+
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
         HAL.report(
@@ -219,20 +234,5 @@ object Robot : LoggedRobot() {
     }
 
     override fun testExit() {
-    }
-
-    /** A model of robot, depending on where we're deployed to. */
-    enum class Model {
-        SIMULATION, COMPETITION
-    }
-
-    /** The model of this robot. */
-    val model: Model = if (isSimulation()) {
-        Model.SIMULATION
-    } else {
-        when (val key = Preferences.getString("Model", "competition")) {
-            "competition" -> Model.COMPETITION
-            else -> throw AssertionError("Invalid model found in preferences: $key")
-        }
     }
 }
