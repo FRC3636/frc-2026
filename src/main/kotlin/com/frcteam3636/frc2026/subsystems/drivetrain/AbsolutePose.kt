@@ -71,7 +71,6 @@ class LimelightPoseProvider(
     // https://docs.limelightvision.io/docs/docs-limelight/apis/limelight-lib#4-field-localization-with-megatag
 
     private var observedTags = mutableListOf<Int>()
-
     private var measurements = mutableListOf<AbsolutePoseMeasurement>()
     private var lock = ReentrantLock()
 
@@ -241,13 +240,15 @@ class LimelightPoseProvider(
 //        }
         val newData = updateCurrentMeasurements()
 
-        inputs.observedTags = intArrayOf()
-        inputs.measurements = arrayOf()
-
+        observedTags.clear()
+        measurements.clear()
         for (measurement in newData) {
-            inputs.observedTags += measurement.observedTags
-            inputs.measurements += measurement.poseMeasurement!!
+            observedTags.addAll(measurement.observedTags)
+            measurements.add(measurement.poseMeasurement!!)
         }
+
+        inputs.measurements = measurements.toTypedArray()
+        inputs.observedTags = observedTags.toIntArray()
 
         inputs.latestTargetObservation = TargetObservation(
             Rotation2d(txSubscriber.get().degrees),
