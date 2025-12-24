@@ -6,11 +6,9 @@ import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.utils.math.degreesPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
-import com.studica.frc.AHRS
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.AngularVelocity
-import org.littletonrobotics.junction.Logger
 import java.util.*
 import kotlin.math.sign
 
@@ -39,31 +37,6 @@ interface Gyro {
     fun periodic() {}
 }
 
-@Suppress("unused") // and hopefully it stays that way
-class GyroNavX(private val ahrs: AHRS) : Gyro {
-
-    private var offset = Rotation2d.kZero
-
-    init {
-        Logger.recordOutput("NavXGyro/Offset", offset)
-    }
-
-    override var rotation: Rotation2d
-        get() = offset + ahrs.rotation2d
-        set(goal) {
-            offset = goal - ahrs.rotation2d
-            Logger.recordOutput("NavXGyro/Offset", offset)
-        }
-
-    override val velocity: AngularVelocity
-        get() = ahrs.rate.degreesPerSecond
-
-    override var odometryYawPositions: DoubleArray = doubleArrayOf()
-    override var odometryYawTimestamps: DoubleArray = doubleArrayOf()
-
-    override val connected
-        get() = ahrs.isConnected
-}
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     private val yawSignal = pigeon.yaw
