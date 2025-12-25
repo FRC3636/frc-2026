@@ -8,6 +8,7 @@ import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
+import com.revrobotics.util.StatusLogger
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
@@ -83,6 +84,7 @@ object Robot : LoggedRobot() {
         )
 
         SignalLogger.enableAutoLogging(false)
+        StatusLogger.disableAutoLogging()
 
         // Joysticks are likely to be missing in simulation, which usually isn't a problem.
         DriverStation.silenceJoystickConnectionWarning(model != Model.COMPETITION)
