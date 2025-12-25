@@ -6,11 +6,7 @@ import com.frcteam3636.frc2026.Diagnostics
 import com.frcteam3636.frc2026.Pigeon2
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
-import com.frcteam3636.frc2026.utils.math.celsius
-import com.frcteam3636.frc2026.utils.math.degrees
-import com.frcteam3636.frc2026.utils.math.degreesPerSecond
-import com.frcteam3636.frc2026.utils.math.inRadians
-import com.frcteam3636.frc2026.utils.math.radians
+import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.DrivetrainCorner
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import com.frcteam3636.frc2026.utils.swerve.SwerveModuleTemperature

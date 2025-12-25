@@ -87,7 +87,8 @@ class LimelightPoseProvider(
     private val throttlePublisher = table.getIntegerTopic("throttle_set").publish()
     private val imuModePublisher = table.getIntegerTopic("imumode_set").publish()
     private val imuAlphaPublisher = table.getDoubleTopic("imuassistalpha_set").publish()
-//    private var loopsSinceLastSeen: Int = 0
+
+    //    private var loopsSinceLastSeen: Int = 0
     private var connected = false
 
     private var gyroState = DoubleArray(6)
@@ -339,7 +340,8 @@ class PhotonVisionPoseProvider(name: String, val chassisToCamera: Transform3d) :
                             APRIL_TAG_STD_DEV(cameraToTarget.translation.norm, result.targets.size),
                             false
                         )
-                        inputs.latestTargetObservation = TargetObservation(Rotation2d(target.yaw.degrees), Rotation2d(target.pitch.degrees))
+                        inputs.latestTargetObservation =
+                            TargetObservation(Rotation2d(target.yaw.degrees), Rotation2d(target.pitch.degrees))
                     }
                 }
             } else {
