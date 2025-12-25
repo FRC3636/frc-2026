@@ -193,7 +193,7 @@ object Drivetrain : Subsystem {
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
 
-        PhoenixOdometryThread.getInstance().start()
+        PhoenixOdometryThread.start()
     }
 
     val modulePositions = Array(4) { SwerveModulePosition() }

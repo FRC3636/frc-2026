@@ -10,7 +10,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
-class PhoenixOdometryThread : Thread("PhoenixOdometry") {
+object PhoenixOdometryThread : Thread("PhoenixOdometry") {
     init {
         isDaemon = true
     }
@@ -89,16 +89,6 @@ class PhoenixOdometryThread : Thread("PhoenixOdometry") {
             } finally {
                 odometryLock.unlock()
             }
-        }
-    }
-
-    companion object {
-        private var instance: PhoenixOdometryThread? = null
-
-        fun getInstance(): PhoenixOdometryThread {
-            if (instance == null)
-                instance = PhoenixOdometryThread()
-            return instance!!
         }
     }
 }

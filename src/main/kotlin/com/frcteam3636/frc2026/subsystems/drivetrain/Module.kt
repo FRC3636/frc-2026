@@ -60,7 +60,7 @@ interface SwerveModule {
 class Mk5nSwerveModule(
     val drivingMotor: SwerveDrivingMotor, val turningMotor: SwerveTurningMotor, private val chassisAngle: Rotation2d
 ) : SwerveModule {
-    private var timestampQueue: Queue<Double> = PhoenixOdometryThread.getInstance().makeTimestampQueue()
+    private var timestampQueue: Queue<Double> = PhoenixOdometryThread.makeTimestampQueue()
 
     private val maxQueueSize = 100  // or however many timestamps we expect
 
@@ -194,7 +194,7 @@ class DrivingTalon(id: CTREDeviceId) : SwerveDrivingMotor {
     private val temperatureSignal = inner.deviceTemp
 
     private val positionQueue: Queue<Double> =
-        PhoenixOdometryThread.getInstance().registerSignal(positionSignal.clone())
+        PhoenixOdometryThread.registerSignal(positionSignal.clone())
 
     init {
         BaseStatusSignal.setUpdateFrequencyForAll(250.0, positionSignal)
@@ -265,7 +265,7 @@ class TurningTalon(id: CTREDeviceId, encoderId: CTREDeviceId, magnetOffset: Doub
     private val temperatureSignal = inner.deviceTemp
 
     private val positionQueue: Queue<Double> =
-        PhoenixOdometryThread.getInstance().registerSignal(positionSignal.clone())
+        PhoenixOdometryThread.registerSignal(positionSignal.clone())
     override var odometryTurnPositions: Array<Rotation2d> = emptyArray()
 
     init {

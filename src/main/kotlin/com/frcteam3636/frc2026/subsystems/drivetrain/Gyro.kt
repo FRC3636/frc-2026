@@ -58,8 +58,8 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
             angularVelocitySignal
         )
         pigeon.optimizeBusUtilization(0.0)
-        yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue()
-        yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(yawSignal.clone())
+        yawTimestampQueue = PhoenixOdometryThread.makeTimestampQueue()
+        yawPositionQueue = PhoenixOdometryThread.registerSignal(yawSignal.clone())
     }
 
     override var rotation: Rotation2d
