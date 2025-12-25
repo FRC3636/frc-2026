@@ -94,7 +94,7 @@ class Mk5nSwerveModule(
         }
     }
 
-    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d.kZero)
+    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, -chassisAngle)
         get() = SwerveModuleState(field.speedMetersPerSecond, field.angle + chassisAngle)
         set(value) {
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
