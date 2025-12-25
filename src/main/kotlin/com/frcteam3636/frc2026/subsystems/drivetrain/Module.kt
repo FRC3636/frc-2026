@@ -257,12 +257,6 @@ class TurningTalon(id: CTREDeviceId, encoderId: CTREDeviceId, magnetOffset: Doub
                 RotorToSensorRatio = TURNING_GEAR_RATIO
                 FeedbackRemoteSensorID = encoderId.num
             }
-            MotionMagic.apply {
-                MotionMagicCruiseVelocity = 100.0 / TURNING_GEAR_RATIO
-                MotionMagicAcceleration = MotionMagicCruiseVelocity / 0.1
-                MotionMagicExpo_kA = 0.1
-                MotionMagicExpo_kV = 0.12 * TURNING_GEAR_RATIO
-            }
         })
     }
 
