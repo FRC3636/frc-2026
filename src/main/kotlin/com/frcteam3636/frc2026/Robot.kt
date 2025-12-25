@@ -95,8 +95,6 @@ object Robot : LoggedRobot() {
         configureBindings()
         configureDashboard()
 
-//        Diagnostics.reportLimelightsInBackground(arrayOf("limelight-left", "limelight-right"))
-
         statusSignals.addSignals(*Drivetrain.signals)
     }
 
@@ -120,15 +118,9 @@ object Robot : LoggedRobot() {
             }
             Logger.addDataReceiver(NT4Publisher()) // Publish data to NetworkTables
             // Enables power distribution logging
-            if (model == Model.COMPETITION) {
-                PowerDistribution(
-                    1, PowerDistribution.ModuleType.kRev
-                )
-            } else {
-                PowerDistribution(
-                    1, PowerDistribution.ModuleType.kCTRE
-                )
-            }
+            PowerDistribution(
+                1, PowerDistribution.ModuleType.kRev
+            )
         } else {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
@@ -179,8 +171,13 @@ object Robot : LoggedRobot() {
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
-            controllerDev.leftBumper().onTrue(Commands.runOnce(SignalLogger::start))
-            controllerDev.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop))
+            controllerDev.leftBumper().onTrue(
+                Commands.runOnce(SignalLogger::start)
+                    .andThen(StatusLogger::start))
+            controllerDev.rightBumper().onTrue(
+                Commands.runOnce(SignalLogger::stop)
+                    .andThen(StatusLogger::stop)
+            )
 
             controllerDev.y().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kForward))
             controllerDev.a().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kReverse))

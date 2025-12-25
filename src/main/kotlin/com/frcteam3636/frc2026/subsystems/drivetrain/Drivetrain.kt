@@ -65,18 +65,18 @@ object Drivetrain : Subsystem {
     fun calculateWheelRadius(): Command = Commands.parallel(
         Commands.sequence(
             Commands.runOnce({
-                Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", true)
                 limiter.reset(0.0)
             }),
-            Commands.run({
-                val speed = limiter.calculate(0.1)
+            run {
+                val speed = limiter.calculate(0.25)
                 driveWithoutDeadband(Translation2d.kZero, Translation2d(0.0, speed))
-            }, this)
+            }
         ),
         Commands.sequence(
             // Wait for modules to orient
             Commands.waitSeconds(1.0),
             Commands.runOnce({
+                Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", true)
                 for (i in 0..3) {
                     wheelRadiusModuleStates[i] = io.modules.toTypedArray()[i].positionRad.inRadians()
                 }
@@ -94,20 +94,23 @@ object Drivetrain : Subsystem {
                     // Someone give me a better way to do this
                     for (i in 0..3) {
                         wheelDelta += abs(io.modules.toTypedArray()[i].positionRad.inRadians() - wheelRadiusModuleStates[i]) / 4.0
-                        Logger.recordOutput(
-                            "Drivetrain/Wheel Radius Calculated/Initial Wheel Position Rad/$i",
-                            wheelRadiusModuleStates[i]
-                        )
-                        Logger.recordOutput(
-                            "Drivetrain/Wheel Radius Calculated/Final Wheel Position Rad/$i",
-                            io.modules.toTypedArray()[i].positionRad.inRadians()
-                        )
                     }
+
+                    Logger.recordOutput(
+                        "Drivetrain/Wheel Radius Calculated/Initial Wheel Position Rad",
+                        wheelRadiusModuleStates
+                    )
+                    Logger.recordOutput(
+                        "Drivetrain/Wheel Radius Calculated/Final Wheel Position Rad",
+                        io.modules.map {
+                            it.positionRad.inRadians()
+                        }.toDoubleArray()
+                    )
+
                     val wheelRadius = ((wheelRadiusGyroDelta * DRIVE_BASE_RADIUS) / wheelDelta)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Drive Base Radius", DRIVE_BASE_RADIUS)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Wheel Delta", wheelDelta)
-                    Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Meters", wheelRadius)
-                    Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Inches", wheelRadius.meters.inInches())
+                    Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Calibrated Radius", wheelRadius.meters)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", false)
                 }
         )
