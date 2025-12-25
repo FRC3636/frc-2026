@@ -78,7 +78,7 @@ object Drivetrain : Subsystem {
             Commands.runOnce({
                 Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", true)
                 for (i in 0..3) {
-                    wheelRadiusModuleStates[i] = io.modules.toTypedArray()[i].positionRad.inRadians()
+                    wheelRadiusModuleStates[i] = io.modules.toTypedArray()[i].angularDrivePosition.inRadians()
                 }
                 wheelRadiusLastAngle = inputs.gyroRotation
                 wheelRadiusGyroDelta = 0.0
@@ -93,7 +93,7 @@ object Drivetrain : Subsystem {
                     var wheelDelta = 0.0
                     // Someone give me a better way to do this
                     for (i in 0..3) {
-                        wheelDelta += abs(io.modules.toTypedArray()[i].positionRad.inRadians() - wheelRadiusModuleStates[i]) / 4.0
+                        wheelDelta += abs(io.modules.toTypedArray()[i].angularDrivePosition.inRadians() - wheelRadiusModuleStates[i]) / 4.0
                     }
 
                     Logger.recordOutput(
@@ -103,7 +103,7 @@ object Drivetrain : Subsystem {
                     Logger.recordOutput(
                         "Drivetrain/Wheel Radius Calculated/Final Wheel Position Rad",
                         io.modules.map {
-                            it.positionRad.inRadians()
+                            it.angularDrivePosition.inRadians()
                         }.toDoubleArray()
                     )
 

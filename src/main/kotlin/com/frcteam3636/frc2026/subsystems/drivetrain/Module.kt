@@ -43,7 +43,7 @@ interface SwerveModule {
     // This is a vector with direction equal to the current angle of the module,
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
-    val positionRad: Angle
+    val angularDrivePosition: Angle
     var odometryTimestamps: DoubleArray
     var odometryTurnPositions: Array<Rotation2d>
     var odometryDrivePositions: DoubleArray
@@ -84,8 +84,8 @@ class Mk5nSwerveModule(
             drivingMotor.position, Rotation2d.fromRadians(turningMotor.position.inRadians()) + chassisAngle
         )
 
-    override val positionRad: Angle
-        get() = drivingMotor.positionRad
+    override val angularDrivePosition: Angle
+        get() = drivingMotor.angularPosition
 
     override fun characterize(voltage: Voltage, turningAngle: Angle?) {
         drivingMotor.setVoltage(voltage)
@@ -146,7 +146,7 @@ class Mk5nSwerveModule(
 
 interface SwerveDrivingMotor {
     val position: Distance
-    val positionRad: Angle
+    val angularPosition: Angle
     var velocity: LinearVelocity
     var odometryDrivePositions: DoubleArray
     val temperature: Temperature
@@ -205,7 +205,7 @@ class DrivingTalon(id: CTREDeviceId) : SwerveDrivingMotor {
     override val position: Distance
         get() = positionSignal.value.toLinear(WHEEL_RADIUS)
 
-    override val positionRad: Angle
+    override val angularPosition: Angle
         get() = positionSignal.value
 
     private var velocityControl = VelocityVoltage(0.0).apply {
@@ -337,7 +337,7 @@ class SimSwerveModule : SwerveModule {
             Rotation2d.fromRadians(turnMotor.angularPositionRad)
         )
 
-    override val positionRad: Angle
+    override val angularDrivePosition: Angle
         get() = driveMotor.angularPosition
 
     override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
