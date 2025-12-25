@@ -184,7 +184,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                (rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3).seconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
                 APRIL_TAG_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
@@ -205,7 +205,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                (rawSample.timestamp * 1.0e-6 - rawSample.value[6] * 1.0e-3).seconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
                 MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
