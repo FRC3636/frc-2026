@@ -318,6 +318,10 @@ class PhotonVisionPoseProvider(name: String, val chassisToCamera: Transform3d) :
                         ),
                         false
                     )
+                    inputs.latestTargetObservation = TargetObservation(
+                        Rotation2d(result.bestTarget.yaw.degrees),
+                        Rotation2d(result.bestTarget.pitch.degrees)
+                    )
                 } else {
                     val target = result.targets.first()
                     val tagPose = FIELD_LAYOUT.getTagPose(target.fiducialId)
@@ -335,6 +339,7 @@ class PhotonVisionPoseProvider(name: String, val chassisToCamera: Transform3d) :
                             APRIL_TAG_STD_DEV(cameraToTarget.translation.norm, result.targets.size),
                             false
                         )
+                        inputs.latestTargetObservation = TargetObservation(Rotation2d(target.yaw.degrees), Rotation2d(target.pitch.degrees))
                     }
                 }
             } else {
@@ -365,7 +370,7 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
             if (result.hasTargets()) {
                 // we don't need multitag in sim
                 // aka I really don't care enough to implement it
-                val target = result.targets[0]
+                val target = result.bestTarget
                 inputs.observedTags = result.targets.map {
                     it.fiducialId
                 }.toIntArray()
@@ -382,6 +387,12 @@ class CameraSimPoseProvider(name: String, val chassisToCamera: Transform3d) : Ab
                     APRIL_TAG_STD_DEV(cameraToTarget.translation.norm, result.targets.size),
                     result.bestTarget.poseAmbiguity > 0.3
                 )
+                inputs.latestTargetObservation = TargetObservation(
+                    Rotation2d(result.bestTarget.yaw.degrees),
+                    Rotation2d(result.bestTarget.pitch.degrees)
+                )
+            } else {
+                inputs.latestTargetObservation = TargetObservation(targetPresent = false)
             }
         }
 

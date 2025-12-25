@@ -318,13 +318,13 @@ class SimSwerveModule : SwerveModule {
     override var validTimestamps: Int = 0
     private val driveMotorSystem = LinearSystemId.createDCMotorSystem(
         DCMotor.getKrakenX60Foc(1),
-        0.0001,
+        0.01,
         DRIVING_GEAR_RATIO
     )
     private val driveMotor = DCMotorSim(driveMotorSystem, DCMotor.getKrakenX60Foc(1).withReduction(DRIVING_GEAR_RATIO))
 
     private val turnMotorSystem = LinearSystemId.createDCMotorSystem(
-        DCMotor.getKrakenX60(1),
+        DCMotor.getKrakenX44Foc(1),
         0.01,
         TURNING_GEAR_RATIO
     )
