@@ -235,7 +235,7 @@ object Drivetrain : Subsystem {
                     rawGyroRotation = if (inputs.gyroConnected) {
                         Rotation2d(odometryYawPositons[i].degrees)
                     } else {
-                        rawGyroRotation.plus(Rotation2d(kinematics.toTwist2d(*moduleDeltas).dtheta))
+                        rawGyroRotation.plus(Rotation2d(kinematics.toTwist2d(*moduleDeltas).dtheta.radians))
                     }
                     poseEstimator.updateWithTime(odometryTimestamps[i], rawGyroRotation, modulePositions)
                 }
