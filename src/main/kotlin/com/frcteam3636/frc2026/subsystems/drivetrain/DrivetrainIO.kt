@@ -117,10 +117,7 @@ abstract class DrivetrainIO {
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
-    override val gyro = when (Robot.model) {
-        Robot.Model.SIMULATION -> GyroSim(modules)
-        Robot.Model.COMPETITION -> GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
-    }
+    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
 }
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
