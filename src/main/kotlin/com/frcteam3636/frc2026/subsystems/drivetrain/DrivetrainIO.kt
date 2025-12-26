@@ -4,7 +4,6 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Diagnostics
 import com.frcteam3636.frc2026.Pigeon2
-import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.DrivetrainCorner
