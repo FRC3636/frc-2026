@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.Preferences
+import edu.wpi.first.wpilibj.Threads
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -96,6 +97,19 @@ object Robot : LoggedRobot() {
         configureDashboard()
 
         statusSignals.addSignals(*Drivetrain.signals)
+
+        // BIG WARNING BIG WARNING BIG WARNING
+        // hi there. if you're a team looking at copying some code (which we are flattered)
+        // (hi 6696)
+        // then please do not copy this unless you know what it does.
+        // if you do know what it does then please ensure you loop times are 10ms max.
+        // if you are above 10ms or are experiencing loop overruns, this is not the magic fix to your loop times.
+        // sorry.
+        // we would recommend profiling your code with VisualVM first.
+        // this code will improve your loop times yes, but it will starve vendor threads
+        // and you will start seeing random things like CAN errors appear.
+        // thanks, 3636
+        Threads.setCurrentThreadPriority(true, 1)
     }
 
     /** Start logging or pull replay logs from a file */
