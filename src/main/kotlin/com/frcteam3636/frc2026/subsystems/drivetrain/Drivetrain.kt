@@ -104,11 +104,10 @@ object Drivetrain : Subsystem {
                         "Drivetrain/Wheel Radius Calculated/Final Wheel Position Rad",
                         io.modules.map {
                             it.angularDrivePosition.inRadians()
-                        }.toDoubleArray()
+                        }.toDoubleArray() // AKit doesn't accept united arrays?
                     )
 
                     val wheelRadius = ((wheelRadiusGyroDelta * DRIVE_BASE_RADIUS) / wheelDelta)
-                    Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Drive Base Radius", DRIVE_BASE_RADIUS)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Wheel Delta", wheelDelta)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Calibrated Radius", wheelRadius.meters)
                     Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", false)
