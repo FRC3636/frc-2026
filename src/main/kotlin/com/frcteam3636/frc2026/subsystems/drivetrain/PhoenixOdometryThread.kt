@@ -15,7 +15,7 @@ object PhoenixOdometryThread : Thread("PhoenixOdometry") {
         isDaemon = true
     }
 
-    private val timestampQueues: MutableList<Queue<Double>> = ArrayList()
+    private val timestampQueues: MutableList<Queue<Double>> = mutableListOf()
     private val signalsLock: Lock = ReentrantLock() // Prevents conflicts when registering signals
     private var phoenixSignals: Array<BaseStatusSignal> = emptyArray() // Phoenix API does not accept a mutable list
     private val phoenixQueues = ArrayList<Queue<Double>>()
