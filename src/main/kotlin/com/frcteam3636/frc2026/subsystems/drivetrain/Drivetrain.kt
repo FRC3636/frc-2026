@@ -458,16 +458,16 @@ object Drivetrain : Subsystem {
     object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
-        const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
+        const val TRANSLATION_SENSITIVITY = 1.0
 
         /** Unit: Rotations per second */
-        const val ROTATION_SENSITIVITY = 0.8
+        const val ROTATION_SENSITIVITY = 1.0
 
         val ROBOT_LENGTH = 25.5.inches
         val ROBOT_WIDTH = 25.5.inches
         val TRACK_WIDTH = abs(TunerConstants.FrontLeft!!.LocationY - TunerConstants.FrontRight!!.LocationY)
         val WHEEL_BASE = abs(TunerConstants.FrontRight!!.LocationX - TunerConstants.BackRight!!.LocationX)
-        const val WHEEL_COF = 1.8 // FIXME: figure this out man idk
+        const val WHEEL_COF = 2.255
 
         val BUMPER_WIDTH = 30.inches
         val BUMPER_LENGTH = 30.inches
