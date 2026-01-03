@@ -64,12 +64,10 @@ class Mk5nSwerveModule(
 
     private val maxQueueSize = 100  // or however many timestamps we expect
 
-    // preallocate to reduce GC pressure
-    private val emptySwerveModulePosition = SwerveModulePosition()
     override var odometryTimestamps: DoubleArray = DoubleArray(maxQueueSize)
     override var odometryDrivePositions = doubleArrayOf()
     override var odometryTurnPositions: Array<Rotation2d> = Array(maxQueueSize) { Rotation2d.kZero }
-    override var odometryPositions: Array<SwerveModulePosition> = Array(maxQueueSize) { emptySwerveModulePosition }
+    override var odometryPositions: Array<SwerveModulePosition> = Array(maxQueueSize) { SwerveModulePosition() }
     override var validTimestamps: Int = 0
     override var temperatures: SwerveModuleTemperature = SwerveModuleTemperature(0.0.celsius, 0.0.celsius)
 
