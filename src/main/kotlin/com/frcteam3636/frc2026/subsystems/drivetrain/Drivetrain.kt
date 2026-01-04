@@ -431,13 +431,9 @@ object Drivetrain : Subsystem {
     }
 
     fun alignWithAutopilot(): Command {
-        val target = APTarget(FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
-                Transform2d(Translation2d((-2).feet, 0.feet), Rotation2d.k180deg))
-
         autopilotRotationController.reset()
-
         return run {
-            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
+            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, Constants.ALIGN_TARGET)
 
             val omega = autopilotRotationController.calculate(estimatedPose.rotation.radians,
                 output.targetAngle.radians)
@@ -448,7 +444,7 @@ object Drivetrain : Subsystem {
                 omega.radiansPerSecond,
                 estimatedPose.rotation)
         }.until {
-            autoPilot.atTarget(estimatedPose, target)
+            autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
         }.finallyDo { ->
             desiredModuleStates = BRAKE_POSITION
         }
@@ -589,5 +585,8 @@ object Drivetrain : Subsystem {
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION =
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
+
+        val ALIGN_TARGET = APTarget(FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+                Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg))
     }
 }
