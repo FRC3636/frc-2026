@@ -23,11 +23,7 @@ import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
-import edu.wpi.first.math.geometry.Transform3d
-import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -435,14 +431,17 @@ object Drivetrain : Subsystem {
         return run {
             val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, Constants.ALIGN_TARGET)
 
-            val omega = autopilotRotationController.calculate(estimatedPose.rotation.radians,
-                output.targetAngle.radians)
+            val omega = autopilotRotationController.calculate(
+                estimatedPose.rotation.radians,
+                output.targetAngle.radians
+            )
 
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 output.vx,
                 output.vy,
                 omega.radiansPerSecond,
-                estimatedPose.rotation)
+                estimatedPose.rotation
+            )
         }.until {
             autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
         }.finallyDo { ->
@@ -586,7 +585,9 @@ object Drivetrain : Subsystem {
         val BRAKE_POSITION =
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
 
-        val ALIGN_TARGET = APTarget(FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
-                Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg))
+        val ALIGN_TARGET = APTarget(
+            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
+        )
     }
 }
