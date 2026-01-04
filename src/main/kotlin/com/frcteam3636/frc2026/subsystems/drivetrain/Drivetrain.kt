@@ -416,10 +416,9 @@ object Drivetrain : Subsystem {
     }
 
     @Suppress("unused")
-    fun stop(): Command =
-        runOnce {
-            desiredModuleStates = BRAKE_POSITION
-        }
+    fun stop() {
+        desiredModuleStates = BRAKE_POSITION
+    }
 
     var sysID = SysIdRoutine(
         SysIdRoutine.Config(

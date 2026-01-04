@@ -236,6 +236,7 @@ object Robot : LoggedRobot() {
 
     override fun autonomousExit() {
         autoCommand?.cancel()
+        Drivetrain.stop()
     }
 
     override fun teleopInit() {
