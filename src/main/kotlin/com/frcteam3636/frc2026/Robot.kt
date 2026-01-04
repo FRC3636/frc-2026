@@ -183,6 +183,8 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
+        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
+
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(

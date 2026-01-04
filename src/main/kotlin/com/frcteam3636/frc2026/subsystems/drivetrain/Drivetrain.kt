@@ -16,11 +16,16 @@ import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.*
 import com.frcteam3636.frc2026.utils.translation2d
+import com.therekrab.autopilot.APConstraints
+import com.therekrab.autopilot.APProfile
+import com.therekrab.autopilot.APTarget
+import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -116,6 +121,16 @@ object Drivetrain : Subsystem {
     )
 
     val odometryLock = ReentrantLock()
+
+    private val autoPilotConstraints = APConstraints().withAcceleration(5.0).withJerk(2.0)
+    private val autoPilotProfile = APProfile(autoPilotConstraints)
+        .withErrorXY(2.centimeters)
+        .withErrorTheta(1.degrees)
+        .withBeelineRadius(8.centimeters)
+
+    val autoPilot = Autopilot(autoPilotProfile)
+
+    private val autopilotRotationController = PIDController(PIDGains(5.0))
 
     private var rawGyroRotation = Rotation2d.kZero
 
@@ -413,6 +428,29 @@ object Drivetrain : Subsystem {
 
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos + offset)
 //        io.setGyro(zeroPos)
+    }
+
+    fun alignWithAutopilot(): Command {
+        val target = APTarget(FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+                Transform2d(Translation2d((-2).feet, 0.feet), Rotation2d.k180deg))
+
+        return run {
+            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
+
+            val omega = autopilotRotationController.calculate(estimatedPose.rotation.radians,
+                output.targetAngle.radians)
+
+            desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                output.vx,
+                output.vy,
+                omega.radiansPerSecond,
+                estimatedPose.rotation)
+        }.until {
+            autoPilot.atTarget(estimatedPose, target)
+        }.finallyDo { ->
+            desiredModuleStates = BRAKE_POSITION
+        }
+
     }
 
     @Suppress("unused")
