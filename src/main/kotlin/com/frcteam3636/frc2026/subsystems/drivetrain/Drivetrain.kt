@@ -434,6 +434,8 @@ object Drivetrain : Subsystem {
         val target = APTarget(FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
                 Transform2d(Translation2d((-2).feet, 0.feet), Rotation2d.k180deg))
 
+        autopilotRotationController.reset()
+
         return run {
             val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
 
