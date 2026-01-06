@@ -3,6 +3,7 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.degreesPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
@@ -64,7 +65,7 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 
     override var rotation: Rotation2d
         // Basically just pigeon.rotation2d but bypasses the refresh
-        get() = Rotation2d.fromDegrees(yawSignal.valueAsDouble)
+        get() = Rotation2d(yawSignal.valueAsDouble.degrees)
         set(goal) {
             pigeon.setYaw(goal.measure)
         }
