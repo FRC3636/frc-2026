@@ -4,7 +4,9 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.Robot.odometryLock
 import com.frcteam3636.frc2026.RobotState
+import com.frcteam3636.frc2026.generated.TunerConstants
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
@@ -16,13 +18,14 @@ import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.*
 import com.frcteam3636.frc2026.utils.translation2d
+import com.therekrab.autopilot.APConstraints
+import com.therekrab.autopilot.APProfile
+import com.therekrab.autopilot.APTarget
+import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform3d
-import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.*
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -35,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
@@ -115,7 +117,15 @@ object Drivetrain : Subsystem {
         )
     )
 
-    val odometryLock = ReentrantLock()
+    private val autoPilotConstraints = APConstraints().withAcceleration(5.0).withJerk(2.0)
+    private val autoPilotProfile = APProfile(autoPilotConstraints)
+        .withErrorXY(2.centimeters)
+        .withErrorTheta(1.degrees)
+        .withBeelineRadius(8.centimeters)
+
+    val autoPilot = Autopilot(autoPilotProfile)
+
+    private val autopilotRotationController = PIDController(PIDGains(5.0))
 
     private var rawGyroRotation = Rotation2d.kZero
 
@@ -416,6 +426,30 @@ object Drivetrain : Subsystem {
 //        io.setGyro(zeroPos)
     }
 
+    fun alignWithAutopilot(): Command {
+        autopilotRotationController.reset()
+        return run {
+            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, Constants.ALIGN_TARGET)
+
+            val omega = autopilotRotationController.calculate(
+                estimatedPose.rotation.radians,
+                output.targetAngle.radians
+            )
+
+            desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                output.vx,
+                output.vy,
+                omega.radiansPerSecond,
+                estimatedPose.rotation
+            )
+        }.until {
+            autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
+        }.finallyDo { ->
+            desiredModuleStates = BRAKE_POSITION
+        }
+
+    }
+
     @Suppress("unused")
     fun stop() {
         desiredModuleStates = BRAKE_POSITION
@@ -550,5 +584,10 @@ object Drivetrain : Subsystem {
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION =
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
+
+        val ALIGN_TARGET = APTarget(
+            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
+        )
     }
 }

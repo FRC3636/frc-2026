@@ -30,6 +30,7 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -62,6 +63,7 @@ object Robot : LoggedRobot() {
     private val canivore = CANBus("*")
 
     val statusSignals = StatusSignalCollection()
+    val odometryLock = ReentrantLock()
 
     /** A model of robot, depending on where we're deployed to. */
     enum class Model {
@@ -102,7 +104,7 @@ object Robot : LoggedRobot() {
         // hi there. if you're a team looking at copying some code (which we are flattered)
         // (hi 6696)
         // then please do not copy this unless you know what it does.
-        // if you do know what it does then please ensure you loop times are 10ms max.
+        // if you do know what it does then please ensure your loop times are 10ms max.
         // if you are above 10ms or are experiencing loop overruns, this is not the magic fix to your loop times.
         // sorry.
         // we would recommend profiling your code with VisualVM first.
@@ -182,6 +184,8 @@ object Robot : LoggedRobot() {
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
+
+        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
