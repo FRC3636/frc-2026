@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.generated
+package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs
@@ -68,6 +68,9 @@ object TunerConstants {
                 .withStatorCurrentLimitEnable(true)
         )
     private val encoderInitialConfigs = CANcoderConfiguration()
+
+    // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
+    private val pigeonConfigs: Pigeon2Configuration? = null
 
     // Theoretical free speed (m/s) at 12 V applied output;
     // This needs to be tuned to your individual robot

@@ -2,11 +2,11 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
+import com.frcteam3636.frc2026.subsystems.drivetrain.TunerConstants
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.Robot.odometryLock
 import com.frcteam3636.frc2026.RobotState
-import com.frcteam3636.frc2026.generated.TunerConstants
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
@@ -117,7 +117,7 @@ object Drivetrain : Subsystem {
         )
     )
 
-    private val autoPilotConstraints = APConstraints().withAcceleration(5.0).withJerk(2.0)
+    private val autoPilotConstraints = APConstraints().withAcceleration(1.0).withJerk(0.5)
     private val autoPilotProfile = APProfile(autoPilotConstraints)
         .withErrorXY(2.centimeters)
         .withErrorTheta(1.degrees)
@@ -396,20 +396,18 @@ object Drivetrain : Subsystem {
         return input.absoluteValue.pow(exponent).withSign(input)
     }
 
-    fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
-        run {
-            // Directly accessing Joystick.x/y gives inverted values - use a `Translation2d` instead.
-            drive(translationJoystick.fieldRelativeTranslation2d, rotationJoystick.translation2d)
-        }
+    fun driveWithJoysticks(translationJoystick: Joystick, rotationJoystick: Joystick): Command = run {
+        // Directly accessing Joystick.x/y gives inverted values - use a `Translation2d` instead.
+        drive(translationJoystick.fieldRelativeTranslation2d, rotationJoystick.translation2d)
+    }
 
     @Suppress("unused")
-    fun driveWithController(controller: CommandXboxController): Command =
-        run {
-            val translationInput = Translation2d(controller.leftX, controller.leftY)
-            val rotationInput = Translation2d(controller.rightX, controller.rightY)
+    fun driveWithController(controller: CommandXboxController): Command = run {
+        val translationInput = Translation2d(controller.leftX, controller.leftY)
+        val rotationInput = Translation2d(controller.rightY, controller.rightX)
 
-            drive(translationInput, rotationInput)
-        }
+        drive(translationInput, rotationInput)
+    }
 
     fun zeroGyro(isReversed: Boolean = false, offset: Rotation2d = Rotation2d.kZero) {
         // Tell the gyro that the robot is facing the other alliance.
@@ -586,7 +584,7 @@ object Drivetrain : Subsystem {
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
 
         val ALIGN_TARGET = APTarget(
-            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+            FIELD_LAYOUT.getTagPose(10).get().toPose2d() +
                     Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
         )
     }
