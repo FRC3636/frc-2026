@@ -12,7 +12,7 @@ class Climb : Subsystem {
 
     override fun periodic() {
         io.updateInputs(inputs)
-        Logger.processInputs("climb", inputs)
+        Logger.processInputs("Climb", inputs)
     }
 
     fun climbL1() : Command = Commands.sequence()
