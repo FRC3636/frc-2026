@@ -24,6 +24,11 @@ enum class CTREDeviceId(val num: Int, val bus: CANBus) {
     FrontRightTurningEncoder(12, canivoreBus),
 
     PigeonGyro(20, canivoreBus),
+
+    IntakeRunMotor(40, canivoreBus),
+    LeftPivotMotor(41, canivoreBus),
+    RightPivotMotor(42, canivoreBus),
+    IntakePivotEncoder(43, canivoreBus)
 }
 
 fun CANcoder(id: CTREDeviceId) = CANcoder(id.num, id.bus)
