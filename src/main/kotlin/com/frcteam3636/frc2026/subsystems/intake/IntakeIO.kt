@@ -8,6 +8,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
+import com.frcteam3636.frc2026.utils.math.amps
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
@@ -16,12 +18,17 @@ import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
+import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import kotlin.apply
 
 @Logged
 open class IntakeInputs {
-    var intakeMotorVelocity = 0.rotationsPerSecond
+    var runMotorVelocity = 0.rotationsPerSecond
+    var runMotorCurrent = 0.amps
+    var pivotAngle = 0.degrees
+    var pivotMotorCurrents = 0.amps
+
 }
 
 interface IntakeIO {
@@ -37,60 +44,32 @@ class IntakeIOReal : IntakeIO {
         val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
         val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
         val PROFILE_JERK = 0.0
-        val ENCODER_MAGNET_OFFSET = -0.17529
         val ENCODER_TO_PIVOT_GEAR_RATIO = 2.25
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
-        val ABSOLUTE_SENSOR_DISCONTINUITY_POINT = 0.6
+
+        val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
+        val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
     }
+
+    private val pivotMotorConfig = TalonFXConfiguration()
 
     private val runMotor = TalonFX(CTREDeviceId.IntakeRunMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
-            Slot0.apply {
-                pidGains = PID_GAINS
-            }
-            MotionMagic.apply {
-                MotionMagicCruiseVelocity = PROFILE_CRUISE_VELOCITY.inRotationsPerSecond()
-                MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
-                MotionMagicJerk = PROFILE_JERK
-            }
-            Feedback.apply {
-                FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
-                FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
-                SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
-                RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
-            }
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
                 Inverted = InvertedValue.Clockwise_Positive
             }
         })
     }
-
     private val leftMotor = TalonFX(CTREDeviceId.LeftPivotMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply {
-            Slot0.apply {
-                pidGains = PID_GAINS
-            }
-            MotionMagic.apply {
-                MotionMagicCruiseVelocity = PROFILE_CRUISE_VELOCITY.inRotationsPerSecond()
-                MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
-                MotionMagicJerk = PROFILE_JERK
-            }
-            Feedback.apply {
-                FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
-                FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
-                SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
-                RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
-            }
-            MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.Clockwise_Positive
-            }
-        })
+        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
+    }
+    private val rightMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
+        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
     }
 
-    private val rightMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply {
+    init {
+        pivotMotorConfig.apply {
             Slot0.apply {
                 pidGains = PID_GAINS
             }
@@ -107,13 +86,14 @@ class IntakeIOReal : IntakeIO {
             }
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.Clockwise_Positive
             }
-        })
+        }
+        leftMotor.configurator.apply(pivotMotorConfig)
+        rightMotor.configurator.apply(pivotMotorConfig)
     }
 
     override fun setSpeed(percent: Double) {
-        TODO("Not yet implemented")
+        runMotor.set(percent)
     }
 
     override fun setRunMotorVoltage(voltage: Voltage) {
@@ -121,12 +101,13 @@ class IntakeIOReal : IntakeIO {
     }
 
     override fun setPivotAngle(angle: Angle) {
+        Logger.recordOutput("Intake/Pivot Setpoint", angle)
         val controlRequest = MotionMagicVoltage(angle)
-
+        rightMotor.setControl(controlRequest.withPosition(angle))
     }
 
     override fun updateInputs(inputs: IntakeInputs) {
-        TODO("Not yet implemented")
+
     }
 
 
