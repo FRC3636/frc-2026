@@ -132,12 +132,13 @@ object Drivetrain : Subsystem {
     private var rawGyroRotation = Rotation2d.kZero
 
     // someone please give me a better way to do this
-    val lastModulePositions = arrayOf(
-        SwerveModulePosition(),
-        SwerveModulePosition(),
-        SwerveModulePosition(),
-        SwerveModulePosition()
-    )
+//    val lastModulePositions = arrayOf(
+//        SwerveModulePosition(),
+//        SwerveModulePosition(),
+//        SwerveModulePosition(),
+//        SwerveModulePosition()
+//    )
+    val lastModulePositions = Array(4) { SwerveModulePosition() }
 
     private val absolutePoseIOs = when (Robot.model) {
         Robot.Model.SIMULATION -> mapOf(
