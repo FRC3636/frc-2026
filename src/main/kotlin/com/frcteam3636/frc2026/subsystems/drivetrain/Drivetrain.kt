@@ -117,15 +117,17 @@ object Drivetrain : Subsystem {
         )
     )
 
-    private val autoPilotConstraints = APConstraints().withAcceleration(1.0).withJerk(0.5)
-    private val autoPilotProfile = APProfile(autoPilotConstraints)
+    val autoPilotConstraints: APConstraints = APConstraints()
+        .withVelocity(2.0)
+        .withAcceleration(1.0)
+        .withJerk(1.0)
+
+    val autoPilotProfile: APProfile = APProfile(autoPilotConstraints)
         .withErrorXY(2.centimeters)
-        .withErrorTheta(1.degrees)
+        .withErrorTheta(0.5.degrees)
         .withBeelineRadius(8.centimeters)
 
     val autoPilot = Autopilot(autoPilotProfile)
-
-    private val autopilotRotationController = PIDController(PIDGains(5.0))
 
     private var rawGyroRotation = Rotation2d.kZero
 
@@ -274,16 +276,16 @@ object Drivetrain : Subsystem {
 
             for (measurement in inputs.measurements) {
                 if (!measurement.isLowQuality) {
-                    if (measurement.pose.x < 0.0 || measurement.pose.y < 0.0) {
-                        rejectedPoses.add(measurement.pose)
-                        continue
-                    } else if (measurement.pose.x > FIELD_LAYOUT.fieldLength || measurement.pose.y > FIELD_LAYOUT.fieldWidth) {
-                        rejectedPoses.add(measurement.pose)
-                        continue
-                    } else if (abs(measurement.pose.rotation.degrees - estimatedPose.rotation.degrees) > 5 && !RobotState.beforeFirstEnable) {
-                        rejectedPoses.add(measurement.pose)
-                        continue
-                    }
+//                    if (measurement.pose.x < 0.0 || measurement.pose.y < 0.0) {
+//                        rejectedPoses.add(measurement.pose)
+//                        continue
+//                    } else if (measurement.pose.x > FIELD_LAYOUT.fieldLength || measurement.pose.y > FIELD_LAYOUT.fieldWidth) {
+//                        rejectedPoses.add(measurement.pose)
+//                        continue
+//                    } else if (abs(measurement.pose.rotation.degrees - estimatedPose.rotation.degrees) > 5 && !RobotState.beforeFirstEnable) {
+//                        rejectedPoses.add(measurement.pose)
+//                        continue
+//                    }
                     acceptedPoses.add(measurement.pose)
                     poseEstimator.addAbsolutePoseMeasurement(measurement)
                 } else {
@@ -425,11 +427,18 @@ object Drivetrain : Subsystem {
     }
 
     fun alignWithAutopilot(): Command {
-        autopilotRotationController.reset()
         return run {
-            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, Constants.ALIGN_TARGET)
+            val output = autoPilot.calculate(
+                estimatedPose,
+                measuredChassisSpeeds,
+                Constants.ALIGN_TARGET
+            )
 
-            val omega = autopilotRotationController.calculate(
+            val autoPilotRotationPID = PIDController(PIDGains(5.0)).apply{
+                enableContinuousInput(0.0, TAU)
+            }
+
+            val rotationOutput = autoPilotRotationPID.calculate(
                 estimatedPose.rotation.radians,
                 output.targetAngle.radians
             )
@@ -437,9 +446,10 @@ object Drivetrain : Subsystem {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                 output.vx,
                 output.vy,
-                omega.radiansPerSecond,
+                rotationOutput.radiansPerSecond,
                 estimatedPose.rotation
             )
+
         }.until {
             autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
         }.finallyDo { ->
@@ -584,8 +594,9 @@ object Drivetrain : Subsystem {
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
 
         val ALIGN_TARGET = APTarget(
-            FIELD_LAYOUT.getTagPose(10).get().toPose2d() +
-                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
+            Pose2d(Translation2d((546.87 + 48.0).inches, 158.3.inches), Rotation2d.k180deg)
+//            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+//                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
         )
     }
 }
