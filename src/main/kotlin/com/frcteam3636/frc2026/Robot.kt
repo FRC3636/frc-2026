@@ -4,6 +4,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -159,6 +160,7 @@ object Robot : LoggedRobot() {
         }
         Logger.start() // Start logging! No more data receivers, replay sources, or metadata values may be added.
     }
+
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
