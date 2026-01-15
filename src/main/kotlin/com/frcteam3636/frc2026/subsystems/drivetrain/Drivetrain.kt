@@ -434,7 +434,7 @@ object Drivetrain : Subsystem {
                 Constants.ALIGN_TARGET
             )
 
-            val autoPilotRotationPID = PIDController(PIDGains(5.0)).apply{
+            val autoPilotRotationPID = PIDController(PIDGains(2.0, 0.0, 0.0)).apply{
                 enableContinuousInput(0.0, TAU)
             }
 
