@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
+import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
@@ -22,6 +23,8 @@ import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
+import com.frcteam3636.frc2026.utils.math.toRotation2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
@@ -31,7 +34,6 @@ import jdk.jfr.Enabled
 import org.team9432.annotation.Logged
 
 @Logged
-
 open class TurretInputs{
     var turretAngle = Radians.zero()!!
     var turretCurrent = Amps.zero()!!
@@ -50,7 +52,7 @@ interface TurretIO{
         get() = emptyArray()
 }
 
-class TurretIOReal : TurretIO{
+class TurretIOReal : TurretIO {
     private var brakeMode = false
 
     private val turretTurningMotor = TalonFX(CTREDeviceId.TurretTurningMotor).apply {
@@ -142,6 +144,20 @@ class TurretIOReal : TurretIO{
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
         private val PROFILE_VELOCITY = 12.0.rotationsPerSecond
+    }
+}
+
+class TurretIOSim: TurretIO {
+    override fun turnToAngle(angle: Angle) {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateInputs(inputs: TurretInputs) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setBrakeMode(enabled: Boolean) {
+        TODO("Not yet implemented")
     }
 
 }
