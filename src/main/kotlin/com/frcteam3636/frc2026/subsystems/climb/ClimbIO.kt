@@ -7,7 +7,6 @@ import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
-import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.inches
@@ -17,7 +16,6 @@ import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.toAngular
 import com.frcteam3636.frc2026.utils.math.toLinear
-import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
 import org.littletonrobotics.junction.Logger
@@ -28,13 +26,11 @@ open class ClimbInputs {
     var height = 0.meters
     var current = 0.amps
     var velocity = 0.metersPerSecond
-    var hookAngle = 0.degrees
 }
 
 interface ClimbIO {
     fun setVoltage(volts: Voltage)
     fun goToHeight(height: Distance, slow: Boolean = false)
-    fun hookGoToAngle(angle: Angle)
     fun setEncoderPosition(position: Distance)
     fun updateInputs(inputs: ClimbInputs)
 }
@@ -82,12 +78,6 @@ class ClimbIOReal : ClimbIO {
     override fun goToHeight(height: Distance, slow: Boolean) {
         Logger.recordOutput("Climb/Height Setpoint", height)
         motor.setControl(getMotionMagicVoltage(slow).withPosition(height.toAngular(SPOOL_RADIUS)))
-    }
-
-    // Not sure about how the hook works. I assume it's something that
-    // rotates out with a motor, or extends in some way?
-    override fun hookGoToAngle(angle: Angle) {
-        TODO("Not yet implemented")
     }
 
     override fun setEncoderPosition(position: Distance) {
