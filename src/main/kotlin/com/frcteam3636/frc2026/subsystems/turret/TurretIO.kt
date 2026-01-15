@@ -19,12 +19,14 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
+import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.toRotation2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
@@ -40,6 +42,7 @@ open class TurretInputs{
     var setPoint = Radians.zero()!!
     var turretVelocity = RadiansPerSecond.zero()!!
     var turretMotorTemperature = Celsius.zero()!!
+    var seeTags = false
     var brakeMode = false
 }
 
@@ -89,7 +92,6 @@ class TurretIOReal : TurretIO {
     private val velocitySignal = turretTurningMotor.velocity
     private val currentSignal = turretTurningMotor.supplyCurrent
     private val temperatureSignal = turretTurningMotor.deviceTemp
-
 
     init{
         BaseStatusSignal.setUpdateFrequencyForAll(
