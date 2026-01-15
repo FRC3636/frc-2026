@@ -68,6 +68,7 @@ class IntakeIOReal : IntakeIO {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
     }
 
+
     init {
         pivotMotorConfig.apply {
             Slot0.apply {
@@ -107,7 +108,7 @@ class IntakeIOReal : IntakeIO {
     }
 
     override fun updateInputs(inputs: IntakeInputs) {
-
+        inputs.runMotorVelocity = runMotor.encoder.velocity.rpm
     }
 
 

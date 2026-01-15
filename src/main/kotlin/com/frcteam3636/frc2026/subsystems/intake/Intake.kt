@@ -25,18 +25,19 @@ object Intake : Subsystem {
         }
 
     fun intake(): Command = runEnd(
-        {io.setRunMotorVoltage(1.0.volts)},
-        {io.setRunMotorVoltage(0.volts)}
+
+        { io.setRunMotorVoltage(1.0.volts) },
+        { io.setRunMotorVoltage(0.volts) }
     )
 
     fun outtake(): Command = runEnd(
-        {io.setRunMotorVoltage(-1.0.volts)},
-        {io.setRunMotorVoltage(0.volts)}
+        { io.setRunMotorVoltage(-1.0.volts) },
+        { io.setRunMotorVoltage(0.volts) }
     )
 
     fun pivot(): Command = startEnd(
-        {io.setPivotAngle(Position.Deployed.angle)},
-        {io.setPivotAngle(Position.Stowed.angle)}
+        { io.setPivotAngle(Position.Deployed.angle) },
+        { io.setPivotAngle(Position.Stowed.angle) }
     ).onlyWhile { intakeDown }
 
 
