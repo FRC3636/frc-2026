@@ -110,7 +110,8 @@ class TurretIOReal : TurretIO {
             })
         }
     }
-    val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
+
+    private val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
         UpdateFreqHz = 0.0
     }
 
