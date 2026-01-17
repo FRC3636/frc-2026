@@ -118,7 +118,7 @@ object Hood: Subsystem {
 
     fun aimAtHub() {
         var distance = distanceToHub()
-        var angle = asin(angleInterpolationTable.get(distance.inMeters())) / 2
+        var angle = asin(angleInterpolationTable.get(distance.inMeters()))
         io.turnToAngle(angle.radians)
     }
 
