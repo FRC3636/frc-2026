@@ -2,11 +2,9 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.subsystems.drivetrain.TunerConstants
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.Robot.odometryLock
-import com.frcteam3636.frc2026.RobotState
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
@@ -25,7 +23,10 @@ import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform3d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -117,20 +118,6 @@ object Drivetrain : Subsystem {
         )
     )
 
-    val autoPilotConstraints: APConstraints = APConstraints()
-        .withVelocity(2.0)
-        .withAcceleration(1.0)
-        .withJerk(1.0)
-
-    val autoPilotProfile: APProfile = APProfile(autoPilotConstraints)
-        .withErrorXY(2.centimeters)
-        .withErrorTheta(0.5.degrees)
-        .withBeelineRadius(8.centimeters)
-
-    val autoPilot = Autopilot(autoPilotProfile)
-
-    private var rawGyroRotation = Rotation2d.kZero
-
     // someone please give me a better way to do this
 //    val lastModulePositions = arrayOf(
 //        SwerveModulePosition(),
@@ -159,19 +146,19 @@ object Drivetrain : Subsystem {
                 },
                 true,
             ),
-            "Limelight Right" to LimelightPoseProvider(
-                "limelight-right",
-                {
-                    poseEstimator.estimatedPosition.rotation
-                },
-                {
-                    inputs.gyroVelocity
-                },
-                {
-                    inputs.gyroConnected
-                },
-                true,
-            ),
+//            "Limelight Right" to LimelightPoseProvider(
+//                "limelight-right",
+//                {
+//                    poseEstimator.estimatedPosition.rotation
+//                },
+//                {
+//                    inputs.gyroVelocity
+//                },
+//                {
+//                    inputs.gyroConnected
+//                },
+//                true,
+//            ),
         )
     }.mapValues { Pair(it.value, LoggedAbsolutePoseProviderInputs()) }
 
@@ -426,20 +413,43 @@ object Drivetrain : Subsystem {
 //        io.setGyro(zeroPos)
     }
 
+    val autoPilotConstraints: APConstraints = APConstraints()
+        .withVelocity(6.0)
+        .withAcceleration(15.0)
+        .withJerk(5.0)
+
+    val autoPilotProfile: APProfile = APProfile(autoPilotConstraints)
+        .withErrorXY(5.centimeters)
+        .withErrorTheta(2.degrees)
+        .withBeelineRadius(80.centimeters)
+
+    val autoPilot = Autopilot(autoPilotProfile)
+
+    private var rawGyroRotation = Rotation2d.kZero
+
     fun alignWithAutopilot(): Command {
         return run {
+            // TODO: make better
+            val goodChassisSpeeds = if (measuredChassisSpeeds.translation2dPerSecond.toVector()
+                    .dot((estimatedPose.translation - Constants.ALIGN_TARGET.reference.translation).toVector()) <= 0
+            ) {
+                ChassisSpeeds(0.metersPerSecond, 0.metersPerSecond, measuredChassisSpeeds.angularVelocity)
+            } else {
+                measuredChassisSpeeds
+            }
+
             val output = autoPilot.calculate(
                 estimatedPose,
-                measuredChassisSpeeds,
+                goodChassisSpeeds,
                 Constants.ALIGN_TARGET
             )
 
-            val autoPilotRotationPID = PIDController(PIDGains(2.0, 0.0, 0.0)).apply{
+            val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
                 enableContinuousInput(0.0, TAU)
             }
 
             val rotationOutput = autoPilotRotationPID.calculate(
-                estimatedPose.rotation.radians,
+                poseEstimator.estimatedPosition.rotation.radians,
                 output.targetAngle.radians
             )
 
@@ -448,6 +458,17 @@ object Drivetrain : Subsystem {
                 output.vy,
                 rotationOutput.radiansPerSecond,
                 estimatedPose.rotation
+            )
+
+            Logger.recordOutput("Drivetrain/APEstimatedPose", estimatedPose)
+            Logger.recordOutput("Drivetrain/APMeasuredChassisSpeeds", measuredChassisSpeeds)
+            Logger.recordOutput("Drivetrain/APOutput", output)
+            Logger.recordOutput("Drivetrain/APOutputX", output.vx)
+            Logger.recordOutput("Drivetrain/APOutputY", output.vy)
+            Logger.recordOutput("Drivetrain/APRotationOutput", rotationOutput)
+            Logger.recordOutput(
+                "Drivetrain/APTarget",
+                Pose2d(Translation2d((546.87 + 48.0).inches, 158.3.inches), Rotation2d.kZero)
             )
 
         }.until {
