@@ -135,7 +135,8 @@ object Hood: Subsystem {
             .orElse(DriverStation.Alliance.Blue)
             .hubTranslation.z
 
-        val shootSpeed = (60 + sqrt( 60.0.pow(2.0) - (4.0 * GRAVITY.unaryMinus().inMetersPerSecondPerSecond()*verticalHubTranslation))).seconds
+        val shootSpeed = (Flywheel.inputs.angularVelocity + sqrt(Flywheel.inputs.angularVelocity
+        .pow(2.0) - (4.0 * GRAVITY.unaryMinus().inMetersPerSecondPerSecond()*verticalHubTranslation))).seconds
 
         val firstArcTime = (sqrt(2*verticalHubTranslation/GRAVITY.inMetersPerSecondPerSecond())).seconds
 
@@ -181,4 +182,5 @@ object Flywheel: Subsystem {
             io.setMotorVoltage(0.volts)
         }
     )
+
 }

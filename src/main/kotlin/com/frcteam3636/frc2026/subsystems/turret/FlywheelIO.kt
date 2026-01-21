@@ -9,6 +9,8 @@ import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.inVolts
+import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.metersPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 
 @Logged
@@ -45,5 +47,8 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setSpeed(percentage: Double) {
         motor.set(percentage)
+    }
+    companion object constants{
+        val flyWheelRadius = 0.0505.meters
     }
 }
