@@ -174,10 +174,11 @@ object Flywheel: Subsystem {
         Robot.Model.COMPETITION -> FlywheelIOReal()
     }
 
-    var inputs: FlywheelInputs = FlywheelInputs()
+    var inputs: FlywheelInputs = LoggedFlywheelInputs()
 
     override fun periodic() {
         io.updateInputs(inputs)
+        Logger.processInputs("Flywheel", inputs)
     }
 
     fun setVoltage(volts: Voltage): Command = startEnd(

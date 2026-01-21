@@ -13,12 +13,12 @@ import com.frcteam3636.frc2026.utils.math.inRadiansPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
-import com.frcteam3636.frc2026.utils.math.metersPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import edu.wpi.first.units.Units.MetersPerSecond
+import org.littletonrobotics.junction.inputs.LoggableInputs
 
 @Logged
-open class FlywheelInputs {
+open class FlywheelInputs : LoggableInputs {
     var motorVolts = 0.volts
     var angularVelocity = 0.radiansPerSecond
     var linearVelocity = MetersPerSecond.zero()!!
@@ -54,7 +54,8 @@ class FlywheelIOReal : FlywheelIO {
     override fun setSpeed(percentage: Double) {
         motor.set(percentage)
     }
-    companion object constants{
+
+    companion object Constants{
         val flywheelRadius = 0.0505.meters
     }
 }
