@@ -2,7 +2,6 @@ package com.frcteam3636.frc2026.subsystems.flywheel
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.configs.TalonFXConfigurator
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Voltage
@@ -11,7 +10,6 @@ import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
-import jdk.jfr.Percentage
 
 @Logged
 open class FlywheelInputs {

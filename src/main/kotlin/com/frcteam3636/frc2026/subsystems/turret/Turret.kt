@@ -3,6 +3,9 @@ package com.frcteam3636.frc2026.subsystems.turret
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.LimelightPoseProvider
+import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIO
+import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIOReal
+import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelInputs
 import com.frcteam3636.frc2026.subsystems.turret.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.angularVelocity
@@ -18,7 +21,9 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Time
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import java.lang.Math.pow
@@ -153,4 +158,27 @@ object Hood: Subsystem {
         io.setBrakeMode(false)
     }
 
+}
+
+object Flywheel: Subsystem {
+
+    private val io: FlywheelIO = when (Robot.model) {
+        Robot.Model.SIMULATION -> TODO()
+        Robot.Model.COMPETITION -> FlywheelIOReal()
+    }
+
+    var inputs: FlywheelInputs = FlywheelInputs()
+
+    override fun periodic() {
+        io.updateInputs(inputs)
+    }
+
+    fun setVoltage(volts: Voltage): Command = startEnd(
+        {
+            io.setMotorVoltage(volts)
+        },
+        {
+            io.setMotorVoltage(0.volts)
+        }
+    )
 }
