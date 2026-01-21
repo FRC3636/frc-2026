@@ -429,18 +429,20 @@ object Drivetrain : Subsystem {
 
     fun alignWithAutopilot(): Command {
         return run {
-            // TODO: make better
-            val goodChassisSpeeds = if (measuredChassisSpeeds.translation2dPerSecond.toVector()
-                    .dot((estimatedPose.translation - Constants.ALIGN_TARGET.reference.translation).toVector()) <= 0
-            ) {
-                ChassisSpeeds(0.metersPerSecond, 0.metersPerSecond, measuredChassisSpeeds.angularVelocity)
-            } else {
-                measuredChassisSpeeds
+
+            val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
+            val vectorToTarget = (estimatedPose.translation - Constants.ALIGN_TARGET.reference.translation).toVector()
+            // If we are moving away from the target, stop the robot immediately
+            val adjustedChassisSpeeds = measuredChassisSpeeds.apply {
+                if (vectorToTarget.dot(velocityVector) <= 0) {
+                    vxMetersPerSecond = 0.0
+                    vyMetersPerSecond = 0.0
+                }
             }
 
             val output = autoPilot.calculate(
                 estimatedPose,
-                goodChassisSpeeds,
+                adjustedChassisSpeeds,
                 Constants.ALIGN_TARGET
             )
 
