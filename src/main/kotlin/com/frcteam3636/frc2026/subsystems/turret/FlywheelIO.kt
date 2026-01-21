@@ -8,15 +8,20 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
+import com.frcteam3636.frc2026.utils.math.inMeters
+import com.frcteam3636.frc2026.utils.math.inRadiansPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.metersPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
+import edu.wpi.first.units.Units.MetersPerSecond
 
 @Logged
 open class FlywheelInputs {
     var motorVolts = 0.volts
     var angularVelocity = 0.radiansPerSecond
+    var linearVelocity = MetersPerSecond.zero()!!
 }
 
 interface FlywheelIO {
@@ -39,6 +44,7 @@ class FlywheelIOReal : FlywheelIO {
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = motor.motorVoltage.value
         inputs.angularVelocity = motor.velocity.value
+        inputs.linearVelocity = (motor.velocity.value.inRadiansPerSecond() * flywheelRadius.inMeters()).metersPerSecond
     }
 
     override fun setMotorVoltage(volts: Voltage) {
@@ -49,6 +55,6 @@ class FlywheelIOReal : FlywheelIO {
         motor.set(percentage)
     }
     companion object constants{
-        val flyWheelRadius = 0.0505.meters
+        val flywheelRadius = 0.0505.meters
     }
 }

@@ -135,19 +135,18 @@ object Hood: Subsystem {
             .orElse(DriverStation.Alliance.Blue)
             .hubTranslation.z
 
-        val shootSpeed = (Flywheel.inputs.angularVelocity + sqrt(Flywheel.inputs.angularVelocity
-        .pow(2.0) - (4.0 * GRAVITY.unaryMinus().inMetersPerSecondPerSecond()*verticalHubTranslation))).seconds
-
-        val firstArcTime = (sqrt(2*verticalHubTranslation/GRAVITY.inMetersPerSecondPerSecond())).seconds
-
+        val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(pow(launchVelocity.inMetersPerSecond(), 2.0) - 4 * (GRAVITY.inMetersPerSecondPerSecond().unaryMinus() / 2) * verticalHubTranslation.unaryMinus()))) / (GRAVITY.inMetersPerSecondPerSecond())).seconds
         val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY))).inMetersPerSecond() * 2.0 / GRAVITY.inMetersPerSecondPerSecond()))).seconds
         return firstArcTime + secondArcTime
     }
 
     fun aimAtHub() {
-        var offset = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond * flightTime())
-        var distance = distanceToHub(offset)
-        var angle = asin(angleInterpolationTable.get(distance.inMeters()))
+        val offset = Drivetrain.measuredChassisSpeeds.translation2dPerSecond * flightTime(
+            inputs.hoodAngle,
+            Flywheel.inputs.linearVelocity
+            ).inSeconds()
+        val distance = distanceToHub(offset)
+        val angle = asin(angleInterpolationTable.get(distance.inMeters()))
         io.turnToAngle(angle.radians)
     }
 
