@@ -5,6 +5,8 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.LimelightPoseProvider
 import com.frcteam3636.frc2026.subsystems.turret.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
+import com.frcteam3636.frc2026.utils.swerve.angularVelocity
+import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -12,16 +14,22 @@ import edu.wpi.first.math.interpolation.InterpolatingTreeMap
 import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
+import java.lang.Math.pow
 import java.sql.Driver
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.jvm.optionals.getOrElse
 import kotlin.math.asin
 import kotlin.math.atan
+import kotlin.math.pow
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 object Turret : Subsystem{
 
@@ -109,15 +117,30 @@ object Hood: Subsystem {
         Logger.processInputs("Hood", inputs)
     }
 
-    private fun distanceToHub(): Distance {
+    private fun distanceToHub(offset: Translation2d): Distance {
         val hubTranslation = DriverStation.getAlliance()
             .orElse(DriverStation.Alliance.Blue)
-            .hubTranslation
-        return Drivetrain.estimatedPose.translation.getDistance(hubTranslation.toTranslation2d()).meters
+            .hubTranslation.toTranslation2d() + offset
+        return Drivetrain.estimatedPose.translation.getDistance(hubTranslation).meters
+    }
+
+    private fun flightTime(launchAngle: Angle, launchVelocity: LinearVelocity): Time {
+        val translationalVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond
+        val verticalHubTranslation = DriverStation.getAlliance()
+            .orElse(DriverStation.Alliance.Blue)
+            .hubTranslation.z
+
+        val shootSpeed = (60 + sqrt( 60.0.pow(2.0) - (4.0 * GRAVITY.unaryMinus().inMetersPerSecondPerSecond()*verticalHubTranslation))).seconds
+
+        val firstArcTime = (sqrt(2*verticalHubTranslation/GRAVITY.inMetersPerSecondPerSecond())).seconds
+
+        val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY))).inMetersPerSecond() * 2.0 / GRAVITY.inMetersPerSecondPerSecond()))).seconds
+        return firstArcTime + secondArcTime
     }
 
     fun aimAtHub() {
-        var distance = distanceToHub()
+        var offset = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond * flightTime())
+        var distance = distanceToHub(offset)
         var angle = asin(angleInterpolationTable.get(distance.inMeters()))
         io.turnToAngle(angle.radians)
     }
