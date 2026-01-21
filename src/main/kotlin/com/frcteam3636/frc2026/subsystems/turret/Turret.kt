@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Time
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import java.lang.Math.pow
@@ -59,29 +60,32 @@ object Turret : Subsystem{
         Logger.processInputs("Turret", inputs)
     }
 
-    fun alignAtHub() {
-        val camError = Math.toRadians(turretLimelight.getEntry("tx").getDouble(0.0))
-        // align with limelight
-        if (camError != null && inputs.seeTags) {
-            val kP = -0.1
-            io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
-        } else {
-            // if no tags are seen then align with estimated pose
-            val hubTranslation = DriverStation.getAlliance()
-                .orElse(DriverStation.Alliance.Blue)
-                .hubTranslation
-            val turretAngle = atan((hubTranslation.y - Drivetrain.estimatedPose.y) / (hubTranslation.x - Drivetrain.estimatedPose.x)) - Drivetrain.estimatedPose.rotation.radians
-            io.turnToAngle(turretAngle.radians)
+    fun alignAtHub(): Command =
+        run {
+            val camError = Math.toRadians(turretLimelight.getEntry("tx").getDouble(0.0))
+            // align with limelight
+            if (camError != null && inputs.seeTags) {
+                val kP = -0.1
+                io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
+            } else {
+                // if no tags are seen then align with estimated pose
+                val hubTranslation = DriverStation.getAlliance()
+                    .orElse(DriverStation.Alliance.Blue)
+                    .hubTranslation
+                val turretAngle = atan((hubTranslation.y - Drivetrain.estimatedPose.y) / (hubTranslation.x - Drivetrain.estimatedPose.x)) - Drivetrain.estimatedPose.rotation.radians
+                io.turnToAngle(turretAngle.radians)
         }
     }
 
-    fun turretBrakeMode() {
-        io.setBrakeMode(true)
-    }
+    fun turretBrakeMode(): Command =
+        run {
+            io.setBrakeMode(true)
+        }
 
-    fun turretCoastMode() {
-        io.setBrakeMode(false)
-    }
+    fun turretCoastMode(): Command =
+        run {
+            io.setBrakeMode(false)
+        }
 
     val DriverStation.Alliance.hubTranslation
         get() = when (this) {
@@ -130,33 +134,35 @@ object Hood: Subsystem {
     }
 
     private fun flightTime(launchAngle: Angle, launchVelocity: LinearVelocity): Time {
-        val translationalVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond
         val verticalHubTranslation = DriverStation.getAlliance()
             .orElse(DriverStation.Alliance.Blue)
             .hubTranslation.z
 
-        val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(pow(launchVelocity.inMetersPerSecond(), 2.0) - 4 * (GRAVITY.inMetersPerSecondPerSecond().unaryMinus() / 2) * verticalHubTranslation.unaryMinus()))) / (GRAVITY.inMetersPerSecondPerSecond())).seconds
-        val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY))).inMetersPerSecond() * 2.0 / GRAVITY.inMetersPerSecondPerSecond()))).seconds
+        val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(launchVelocity.inMetersPerSecond().pow(2.0) - 4 * (GRAVITY.unaryMinus() / 2) * verticalHubTranslation.unaryMinus()))) / (GRAVITY)).seconds
+        val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY.metersPerSecondPerSecond))).inMetersPerSecond() * 2.0 / GRAVITY))).seconds
         return firstArcTime + secondArcTime
     }
 
-    fun aimAtHub() {
-        val offset = Drivetrain.measuredChassisSpeeds.translation2dPerSecond * flightTime(
-            inputs.hoodAngle,
-            Flywheel.inputs.linearVelocity
-            ).inSeconds()
-        val distance = distanceToHub(offset)
-        val angle = asin(angleInterpolationTable.get(distance.inMeters()))
-        io.turnToAngle(angle.radians)
-    }
+    fun aimAtHub(): Command =
+        run {
+            val offset = Drivetrain.measuredChassisSpeeds.translation2dPerSecond * flightTime(
+                inputs.hoodAngle,
+                Flywheel.inputs.linearVelocity
+                ).inSeconds()
+            val distance = distanceToHub(offset)
+            val angle = asin(angleInterpolationTable.get(distance.inMeters()))
+            io.turnToAngle(angle.radians)
+        }
 
-    fun hoodBrakeMode() {
-        io.setBrakeMode(true)
-    }
+    fun hoodBrakeMode(): Command =
+        run {
+            io.setBrakeMode(true)
+        }
 
-    fun hoodCoastMode() {
-        io.setBrakeMode(false)
-    }
+    fun hoodCoastMode(): Command =
+        run {
+            io.setBrakeMode(false)
+        }
 
 }
 
@@ -183,3 +189,10 @@ object Flywheel: Subsystem {
     )
 
 }
+
+fun shootSequence(): Command =
+    Commands.parallel(
+        Turret.alignAtHub(),
+        Hood.aimAtHub(),
+        Flywheel.setVoltage(6.0.volts)
+        )

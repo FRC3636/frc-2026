@@ -10,7 +10,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 const val TAU = PI * 2
-val GRAVITY = 9.81.metersPerSecondPerSecond
+const val GRAVITY = 9.81
 
 fun Translation2d.fromPolar(magnitude: Double, angle: Double): Translation2d {
     return Translation2d(magnitude * cos(angle), magnitude * sin(angle))
