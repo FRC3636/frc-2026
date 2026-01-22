@@ -6,17 +6,19 @@ import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIO
 import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIOReal
 import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelInputs
 import com.frcteam3636.frc2026.subsystems.turret.Shooter.Flywheel.velocityInterpolationTable
-import com.frcteam3636.frc2026.subsystems.turret.Shooter.Hood.flightTime
 import com.frcteam3636.frc2026.subsystems.turret.Shooter.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.MathUtil.clamp
+import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
 import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
+import edu.wpi.first.math.numbers.N1
+import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.wpilibj.DriverStation
@@ -51,9 +53,9 @@ object Shooter {
         }
 
         fun alignToHub() {
-            val camError = Math.toRadians(turretLimelight.getEntry("tx").getDouble(0.0))
+            val camError = (turretLimelight.getEntry("tx").getDouble(0.0).degrees.inRadians())
             // align with limelight
-            if (camError != null && inputs.seeTags) {
+            if (inputs.seeTags) {
                 val kP = -0.1
                 io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
             } else {
@@ -100,7 +102,7 @@ object Shooter {
 
         // distance -> sin(angle)
         // TODO: find values
-        private val angleInterpolationTable = InterpolatingTreeMap<Double, Double>(
+        private val angleInterpolationTable = InterpolatingTreeMap(
             InverseInterpolator.forDouble(),
             Interpolator.forDouble()
         ).apply {
@@ -113,12 +115,13 @@ object Shooter {
             Logger.processInputs("Hood", inputs)
         }
 
-        fun flightTime(launchAngle: Angle, launchVelocity: LinearVelocity): Time {
+        fun calculateFlightTime(launchAngle: Angle, launchVelocity: LinearVelocity): Time {
             val translationalVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond
             val verticalHubTranslation = DriverStation.getAlliance()
                 .orElse(DriverStation.Alliance.Blue)
                 .hubTranslation.z
 
+            // quadratic formula
             val firstArcTime = (((launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().unaryMinus() +
                     sqrt(launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().pow(2.0) -
                             4.0 * (GRAVITY.unaryMinus() / 2.0) * verticalHubTranslation.unaryMinus()))) /
@@ -128,19 +131,21 @@ object Shooter {
             return firstArcTime + secondArcTime
         }
 
-        fun aimAtHub(distance: Distance): Angle {
+        fun getHoodAngle(distance: Distance): Angle {
             return asin(angleInterpolationTable.get(distance.inMeters())).radians
         }
 
 
 
-        fun hoodBrakeMode() {
-            io.setBrakeMode(true)
-        }
+        fun hoodBrakeMode(): Command =
+            run {
+                io.setBrakeMode(true)
+            }
 
-        fun hoodCoastMode() {
-            io.setBrakeMode(false)
-        }
+        fun hoodCoastMode(): Command =
+            run {
+                io.setBrakeMode(false)
+            }
 
     }
 
@@ -159,7 +164,7 @@ object Shooter {
 
         // distance -> velocity
         // TODO: find values
-        val velocityInterpolationTable = InterpolatingTreeMap<Double, Double>(
+        val velocityInterpolationTable = InterpolatingTreeMap(
             InverseInterpolator.forDouble(),
             Interpolator.forDouble()
         ).apply {
@@ -188,13 +193,15 @@ object Shooter {
         )
     }
 
-    fun getOffset(): Translation2d {
+    val offset: Translation2d
+        get() = {
+            Drivetrain.measuredChassisSpeeds.translation2dPerSecond * Hood.calculateFlightTime(
+                Hood.inputs.hoodAngle,
+                Flywheel.inputs.linearVelocity
+            )
+        }
 
-        return Drivetrain.measuredChassisSpeeds.translation2dPerSecond * flightTime(
-            Hood.inputs.hoodAngle,
-            Flywheel.inputs.linearVelocity
-        ).inSeconds()
-    }
+
     fun distanceToHub(offset: Translation2d): Distance {
         val hubTranslation = DriverStation.getAlliance()
             .orElse(DriverStation.Alliance.Blue)
@@ -203,22 +210,26 @@ object Shooter {
     }
 
     data class ShooterProfile(
-        val getHoodAngle: () -> Angle,
-        val getVelocity: () -> AngularVelocity,
+        val hoodAngle: () -> Angle,
+        val flywheelVelocity: () -> AngularVelocity,
     )
 
-    enum class Target(val profile: ShooterProfile) {
+    // [x, y, z]
+    fun vectorToShooterProfile(velocityVector: Matrix<N3, N1>): ShooterProfile {
+
+    }
+
+    enum class Target(val shooterProfile: ShooterProfile) {
         AIM(
-            ShooterProfile(
-                {
-                    val distance = distanceToHub(getOffset())
-                    val angle = Hood.aimAtHub(distance)
-                    clamp(angle.inDegrees(), 40.0, 60.0).degrees
-                }, {
-                    val distance = distanceToHub(getOffset())
-                    velocityInterpolationTable.get(distance.inMeters()).rpm
-                }
-            )
+            ShooterProfile({
+                val distance = distanceToHub(offset)
+                val angle = Hood.getHoodAngle(distance).inRadians()
+                clamp(angle, 40.0.degrees.inRadians(), 60.0.degrees.inRadians()).radians
+            },
+            {
+                val distance = distanceToHub(offset)
+                velocityInterpolationTable.get(distance.inMeters()).rpm
+            },)
         ),
         TUNING(
             ShooterProfile(
