@@ -92,6 +92,7 @@ class HoodIOReal: HoodIO {
     }
 
     override fun turnToAngle(angle: Angle) {
+        assert(angle.inRadians() in MIN_HOOD_ANGLE..MAX_HOOD_ANGLE)
         hoodMotor.setControl(positionControl.withPosition(angle))
     }
 
@@ -121,6 +122,8 @@ class HoodIOReal: HoodIO {
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 10.0
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
+        private val MAX_HOOD_ANGLE = 50.degrees.inRadians()
+        private val MIN_HOOD_ANGLE = 30.degrees.inRadians()
     }
 }
 
