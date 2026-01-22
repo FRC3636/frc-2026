@@ -119,11 +119,13 @@ object Shooter {
                 .orElse(DriverStation.Alliance.Blue)
                 .hubTranslation.z
 
-            val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(
-                launchVelocity.inMetersPerSecond().pow(2.0) - 4.0 * (GRAVITY.unaryMinus() / 2.0) * verticalHubTranslation.unaryMinus()))) / (GRAVITY)).seconds
-            val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY.metersPerSecondPerSecond))).inMetersPerSecond() * 2.0 / GRAVITY))).seconds
+            val firstArcTime = (((launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().unaryMinus() +
+                    sqrt(launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().pow(2.0) -
+                            4.0 * (GRAVITY.unaryMinus() / 2.0) * verticalHubTranslation.unaryMinus()))) /
+                    GRAVITY.unaryMinus()).seconds
+            val secondVerticalVelocity = launchVelocity.getVerticalComponent(launchAngle) - firstArcTime * GRAVITY.metersPerSecondPerSecond
+            val secondArcTime = (((secondVerticalVelocity.inMetersPerSecond() * 2.0 / GRAVITY))).seconds
             return firstArcTime + secondArcTime
-
         }
 
         fun aimAtHub(distance: Distance): Angle {
@@ -222,8 +224,9 @@ object Shooter {
             ShooterProfile(
                 {
                     hoodTunable.get().degrees
-                },{
-                    hoodTunable.get().rpm
+                },
+                {
+                    flywheelTunable.get().rpm
                 }
             )
 
