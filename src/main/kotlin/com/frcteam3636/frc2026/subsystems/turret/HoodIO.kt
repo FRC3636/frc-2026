@@ -25,6 +25,7 @@ open class HoodInputs {
     var setPoint = Radians.zero()!!
     var hoodMotorTemperature = Celsius.zero()!!
     var brakeMode = false
+    var fixedHood = false
 }
 
 interface HoodIO {
@@ -37,7 +38,7 @@ interface HoodIO {
 }
 
 class HoodIOReal: HoodIO {
-
+    private var toggleHood = false
     private var brakeMode = false
 
     private val hoodMotor = TalonFX(CTREDeviceId.HoodMotor).apply {
@@ -114,6 +115,7 @@ class HoodIOReal: HoodIO {
             }
         )
     }
+
 
     companion object Constants {
         private val MAGNET_OFFSET = 0.0

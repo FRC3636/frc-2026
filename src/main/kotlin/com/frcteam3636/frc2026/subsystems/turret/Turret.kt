@@ -2,19 +2,15 @@ package com.frcteam3636.frc2026.subsystems.turret
 
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.drivetrain.LimelightPoseProvider
 import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIO
 import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIOReal
 import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelInputs
+import com.frcteam3636.frc2026.subsystems.turret.Shooter.Flywheel.velocityInterpolationTable
 import com.frcteam3636.frc2026.subsystems.turret.Shooter.Hood.flightTime
-import com.frcteam3636.frc2026.subsystems.turret.Shooter.Hood.inputs
 import com.frcteam3636.frc2026.subsystems.turret.Shooter.Turret.hubTranslation
-import com.frcteam3636.frc2026.subsystems.turret.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
-import com.frcteam3636.frc2026.utils.swerve.angularVelocity
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
-import edu.wpi.first.math.MathUtil
-import edu.wpi.first.math.MathUtil.*
+import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -22,28 +18,13 @@ import edu.wpi.first.math.interpolation.InterpolatingTreeMap
 import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Time
-import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.units.measure.*
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
-import jdk.jfr.Percentage
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
-import java.lang.Math.pow
-import java.sql.Driver
-import kotlin.jvm.optionals.getOrDefault
-import kotlin.jvm.optionals.getOrElse
-import kotlin.math.asin
-import kotlin.math.atan
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
 object Shooter {
     object Turret : Subsystem{
@@ -138,9 +119,11 @@ object Shooter {
                 .orElse(DriverStation.Alliance.Blue)
                 .hubTranslation.z
 
-            val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(pow(launchVelocity.inMetersPerSecond(), 2.0) - 4 * (GRAVITY.inMetersPerSecondPerSecond().unaryMinus() / 2) * verticalHubTranslation.unaryMinus()))) / (GRAVITY.inMetersPerSecondPerSecond())).seconds
-            val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY))).inMetersPerSecond() * 2.0 / GRAVITY.inMetersPerSecondPerSecond()))).seconds
+            val firstArcTime = (((launchVelocity.inMetersPerSecond().unaryMinus() + sqrt(
+                launchVelocity.inMetersPerSecond().pow(2.0) - 4.0 * (GRAVITY.unaryMinus() / 2.0) * verticalHubTranslation.unaryMinus()))) / (GRAVITY)).seconds
+            val secondArcTime = ((((((launchVelocity * sin(launchAngle.inRadians())) - (firstArcTime * GRAVITY.metersPerSecondPerSecond))).inMetersPerSecond() * 2.0 / GRAVITY))).seconds
             return firstArcTime + secondArcTime
+
         }
 
         fun aimAtHub(distance: Distance): Angle {
@@ -214,7 +197,7 @@ object Shooter {
         val hubTranslation = DriverStation.getAlliance()
             .orElse(DriverStation.Alliance.Blue)
             .hubTranslation.toTranslation2d() + offset
-        return Drivetrain.estimatedPose.translation.getDistance(hubTranslation).meters
+            return Drivetrain.estimatedPose.translation.getDistance(hubTranslation).meters
     }
 
     data class ShooterProfile(
@@ -228,46 +211,25 @@ object Shooter {
                 {
                     val distance = distanceToHub(getOffset())
                     val angle = Hood.aimAtHub(distance)
-                    clamp(angle.inDegrees(), 12.0, 60.0).degrees
+                    clamp(angle.inDegrees(), 40.0, 60.0).degrees
                 }, {
-                    val distance = distanceToHub(getOffset()).inMeters()
+                    val distance = distanceToHub(getOffset())
+                    velocityInterpolationTable.get(distance.inMeters()).rpm
                 }
             )
         ),
-        @Suppress("unused")
-        PETTINGZOO(
-            ShooterProfile(
-                {
-                    30.degrees
-                },
-                {
-                    1000.rpm
-                }
-            )
-        ),
-        STOWED(
-            ShooterProfile(
-                {
-                    13.degrees
-                },
-                {
-                    0.rpm // dude idek what to set this to lmao
-                }
-            )
-        ),
-        @Suppress("unused")
         TUNING(
             ShooterProfile(
                 {
                     hoodTunable.get().degrees
-                },
-                {
-                    flywheelTunable.get().rpm
+                },{
+                    hoodTunable.get().rpm
                 }
-            ),
+            )
+
         )
     }
 
     val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
-    val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", )
+    val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
 }
