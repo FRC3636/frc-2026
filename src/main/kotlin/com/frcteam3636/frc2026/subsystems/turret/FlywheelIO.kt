@@ -24,6 +24,7 @@ import com.frcteam3636.frc2026.utils.math.rpm
 import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Velocity
+import org.littletonrobotics.junction.inputs.LoggableInputs
 
 @Logged
 open class FlywheelInputs {
