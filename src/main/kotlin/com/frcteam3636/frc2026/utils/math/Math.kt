@@ -5,6 +5,7 @@ package com.frcteam3636.frc2026.utils.math
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Velocity
 import kotlin.math.PI
@@ -24,6 +25,10 @@ fun Translation2d.dot(other: Translation2d): Double {
 
 fun Angle.toRotation2d(): Rotation2d {
     return Rotation2d(this)
+}
+
+fun AngularVelocity.toLinearVelocity(radius: Double): LinearVelocity {
+    return (this.inRadiansPerSecond() / radius).metersPerSecond
 }
 
 fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {

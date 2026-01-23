@@ -75,7 +75,6 @@ class FlywheelIOReal : FlywheelIO {
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = flyWheelMotor.motorVoltage.value
         inputs.angularVelocity = flyWheelMotor.velocity.value
-        inputs.linearVelocity = (flyWheelMotor.velocity.value.inRadiansPerSecond() * flywheelRadius.inMeters()).metersPerSecond
     }
 
     override fun setMotorVoltage(volts: Voltage) {
@@ -92,7 +91,6 @@ class FlywheelIOReal : FlywheelIO {
     }
 
     companion object Constants{
-        val flywheelRadius = 0.0505.meters
         val PID_GAINS = PIDGains(5.0,0.0,0.0)
         val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         val PROFILE_VELOCITY = 2.0.rotationsPerSecond
