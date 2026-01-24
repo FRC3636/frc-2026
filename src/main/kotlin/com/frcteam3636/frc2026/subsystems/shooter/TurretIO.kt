@@ -1,13 +1,9 @@
-package com.frcteam3636.frc2026.subsystems.turret
+package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
-import com.ctre.phoenix6.configs.FeedbackConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.configs.TalonFXConfigurator
-import com.ctre.phoenix6.configs.TalonFXSConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
-import com.ctre.phoenix6.controls.RainbowAnimation
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
@@ -15,24 +11,16 @@ import com.ctre.phoenix6.signals.SensorDirectionValue
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
-import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.PIDGains
-import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
-import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.pidGains
-import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
-import com.frcteam3636.frc2026.utils.math.toRotation2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.Angle
-import jdk.jfr.Enabled
 import org.team9432.annotation.Logged
 
 @Logged
