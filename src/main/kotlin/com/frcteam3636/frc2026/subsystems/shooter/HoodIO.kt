@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.turret
+package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -14,7 +14,6 @@ import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.motorcontrol.Talon
 import org.team9432.annotation.Logged
 
 @Logged
