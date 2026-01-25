@@ -1,11 +1,7 @@
-package com.frcteam3636.frc2026.subsystems.flywheel
+package com.frcteam3636.frc2026.subsystems.shooter
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.configs.VoltageConfigs
-import com.ctre.phoenix6.controls.MotionMagicVelocityTorqueCurrentFOC
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage
-import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
@@ -14,20 +10,19 @@ import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.Units.MetersPerSecond
+import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Velocity
-import org.littletonrobotics.junction.inputs.LoggableInputs
 
 @Logged
 open class FlywheelInputs {
     var motorVolts = 0.volts
-    var angularVelocity = 0.radiansPerSecond
+    var angularVelocity = RPM.zero()!!
     var linearVelocity = MetersPerSecond.zero()!!
 }
 
 interface FlywheelIO {
     fun updateInputs(inputs: FlywheelInputs)
-    fun setMotorVoltage(volts: Voltage)
+    fun setVoltage(volts: Voltage)
     fun setSpeed(percentage: Double)
     fun setVelocity(velocity: AngularVelocity)
 }
@@ -77,7 +72,7 @@ class FlywheelIOReal : FlywheelIO {
         inputs.angularVelocity = flyWheelMotor.velocity.value
     }
 
-    override fun setMotorVoltage(volts: Voltage) {
+    override fun setVoltage(volts: Voltage) {
         flyWheelMotor.set(volts.inVolts())
     }
 
@@ -95,5 +90,6 @@ class FlywheelIOReal : FlywheelIO {
         val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         val PROFILE_VELOCITY = 2.0.rotationsPerSecond
         val PROFILE_JERK = 1.0
+        val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
   }
 }
