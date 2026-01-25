@@ -139,6 +139,10 @@ object Shooter {
 
         fun getHoodAngle(distance: Distance): Angle = (asin(angleInterpolationTable.get(distance.inMeters())) / 2).radians
 
+        fun setHoodAngle(angle: Angle): Command =
+            run {
+                io.turnToAngle(angle)
+            }
         fun setTarget(target: Target): Command =
             runOnce {
                 Hood.target = target
@@ -234,7 +238,7 @@ object Shooter {
 
     val getAdjustedVelocityVector: Vector<N3>
         get() {
-            val distance = distanceToHub
+            val distance = distanceToHub()
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
             val targetLinearVelocity =
                 Flywheel.getFlywheelVelocity(distance.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS)
@@ -244,7 +248,7 @@ object Shooter {
                 horizontalVelocity.getVerticalComponent(distance.angle.measure).inMetersPerSecond(),
                 targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
             )
-            val robotVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond
+            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
             val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
             return targetVelocityVector - robotVelocityVector
         }
