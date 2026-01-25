@@ -11,16 +11,13 @@ import com.ctre.phoenix6.signals.SensorDirectionValue
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
-import com.frcteam3636.frc2026.utils.math.PIDGains
-import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
-import com.frcteam3636.frc2026.utils.math.pidGains
-import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
-import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
+import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 
 @Logged
@@ -36,6 +33,7 @@ open class TurretInputs{
 
 interface TurretIO{
     fun turnToAngle(angle: Angle)
+    fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: TurretInputs)
     fun setBrakeMode(enabled: Boolean)
 
@@ -107,6 +105,11 @@ class TurretIOReal : TurretIO {
         turretTurningMotor.setControl(positionControl.withPosition(angle))
     }
 
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage in 0.volts..12.volts)
+        turretTurningMotor.setVoltage(voltage.inVolts())
+    }
+
     override fun updateInputs(inputs: TurretInputs) {
         inputs.turretAngle = positionSignal.value
         inputs.turretCurrent = currentSignal.value
@@ -140,6 +143,10 @@ class TurretIOReal : TurretIO {
 
 class TurretIOSim: TurretIO {
     override fun turnToAngle(angle: Angle) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVoltage(voltage: Voltage) {
         TODO("Not yet implemented")
     }
 

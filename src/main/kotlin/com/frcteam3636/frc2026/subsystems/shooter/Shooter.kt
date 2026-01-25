@@ -2,15 +2,9 @@ package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIO
-import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelIOReal
-import com.frcteam3636.frc2026.subsystems.flywheel.FlywheelInputs
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter.Flywheel.velocityInterpolationTable
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
-import edu.wpi.first.math.MathUtil.clamp
-import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.filter.Debouncer
@@ -19,7 +13,6 @@ import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
 import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
-import edu.wpi.first.math.numbers.N1
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.*
@@ -27,6 +20,9 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.button.Trigger
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -56,28 +52,59 @@ object Shooter {
             Logger.recordOutput("Shooter/Turret/Distance from hub", distanceToHub)
         }
 
-        fun alignToHub(offset: Angle = 0.0.degrees) {
-            val camError = (turretLimelight.getEntry("tx").getDouble(0.0).degrees - offset).inRadians()
-            // align with limelight
-            if (inputs.seeTags) {
-                val kP = -0.1
-                io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
-            } else {
-                // if no tags are seen then align with estimated pose
-                val hubTranslation = DriverStation.getAlliance()
-                    .orElse(DriverStation.Alliance.Blue)
-                    .hubTranslation
-                val turretAngle = atan((hubTranslation.y - Drivetrain.estimatedPose.y) / (hubTranslation.x - Drivetrain.estimatedPose.x)) - Drivetrain.estimatedPose.rotation.radians
+        fun alignToHub(offset: Angle = 0.0.radians): Command =
+            run {
+                val camError = (turretLimelight.getEntry("tx").getDouble(0.0).degrees - offset.inDegrees().degrees).inRadians()
+                // align with limelight
+                if (inputs.seeTags) {
+                    val kP = -0.1
+                    io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
+                } else {
+                    // if no tags are seen then align with estimated pose
+                    val hubTranslation = DriverStation.getAlliance()
+                        .orElse(DriverStation.Alliance.Blue)
+                        .hubTranslation
+                    val turretAngle = (atan((hubTranslation.y - Drivetrain.estimatedPose.y) / (hubTranslation.x - Drivetrain.estimatedPose.x)) +
+                            offset.inRadians() -
+                            Drivetrain.estimatedPose.rotation.radians).radians
+                    turnToTargetTurretAngle(turretAngle)
             }
         }
 
-        fun turretBrakeMode() {
-            io.setBrakeMode(true)
-        }
+        fun turnToTargetTurretAngle(angle: Angle): Command =
+            run {
+                io.turnToAngle(angle)
+            }
 
-        fun turretCoastMode() {
-            io.setBrakeMode(false)
-        }
+        fun turretBrakeMode(): Command =
+            run {
+                io.setBrakeMode(true)
+            }
+
+        fun turretCoastMode(): Command =
+            run {
+                io.setBrakeMode(false)
+            }
+
+        val sysID = SysIdRoutine(
+            SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                {
+                    state -> Logger.recordOutput("SysIdTestState", state.toString())
+                }
+            ),
+            SysIdRoutine.Mechanism(
+                io::setVoltage,
+                null,
+                this
+            )
+        )
+
+        fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
+
+        fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
         val DriverStation.Alliance.hubTranslation
             get() = when (this) {
@@ -114,6 +141,13 @@ object Shooter {
             put(1.5, 40.0)
         }
 
+        val atDesiredHoodAngle =
+            Trigger {
+                val error = abs((inputs.hoodAngle - target.profile.getAngle()).inDegrees())
+                Logger.recordOutput("Shooter/Hood/Angle Error", error)
+                error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
+            }
+
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
@@ -121,34 +155,32 @@ object Shooter {
             Logger.recordOutput("Shooter/Hood/Reference", target.profile.getAngle())
         }
 
-//        fun calculateFlightTime(launchAngle: Angle, launchVelocity: LinearVelocity): Time {
-//            val translationalVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond.norm.metersPerSecond
-//            val verticalHubTranslation = DriverStation.getAlliance()
-//                .orElse(DriverStation.Alliance.Blue)
-//                .hubTranslation.z
-//
-//            // quadratic formula
-//            val firstArcTime = (((launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().unaryMinus() +
-//                    sqrt(launchVelocity.getVerticalComponent(launchAngle).inMetersPerSecond().pow(2.0) -
-//                            4.0 * (GRAVITY.unaryMinus() / 2.0) * verticalHubTranslation.unaryMinus()))) /
-//                    GRAVITY.unaryMinus()).seconds
-//            val secondVerticalVelocity = launchVelocity.getVerticalComponent(launchAngle) - firstArcTime * GRAVITY.metersPerSecondPerSecond
-//            val secondArcTime = (((secondVerticalVelocity.inMetersPerSecond() * 2.0 / GRAVITY))).seconds
-//            return firstArcTime + secondArcTime
-//        }
+        val sysID = SysIdRoutine(
+            SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                {state -> Logger.recordOutput("SysIdTestState", state.toString())}
+            ),
+            SysIdRoutine.Mechanism(
+                io::setVoltage,
+                null,
+                this
+            )
+        )
+
+        fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
+
+        fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
         fun getHoodAngle(distance: Distance): Angle = (asin(angleInterpolationTable.get(distance.inMeters())) / 2).radians
 
-        fun setHoodAngle(angle: Angle): Command =
-            run {
-                io.turnToAngle(angle)
-            }
         fun setTarget(target: Target): Command =
             runOnce {
                 Hood.target = target
             }
 
-        fun turnToTargetAngle(angle: Angle): Command =
+        fun turnToTargetHoodAngle(): Command =
             run {
                 io.turnToAngle(target.profile.getAngle())
             }
@@ -174,12 +206,6 @@ object Shooter {
 
         var inputs = FlywheelInputs()
 
-        override fun periodic() {
-            io.updateInputs(inputs)
-//            Logger.processInputs("Flywheel", inputs)
-            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", Hood.target.profile.getVelocity())
-        }
-
         // distance -> velocity^2
         // TODO: find values
         val velocityInterpolationTable = InterpolatingTreeMap(
@@ -190,29 +216,67 @@ object Shooter {
             put(1.5, 4500.0)
         }
 
+        val atDesiredFlywheelVelocity =
+            Trigger {
+                val error = abs((inputs.angularVelocity - Hood.target.profile.getVelocity()).inRPM())
+                Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
+                error < Constants.FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
+            }
+
+        override fun periodic() {
+            io.updateInputs(inputs)
+//            Logger.processInputs("Flywheel", inputs)
+            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", Hood.target.profile.getVelocity())
+        }
+
+        @Suppress("Unused")
+        var sysID = SysIdRoutine(
+            SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                { state ->
+                    Logger.recordOutput("SysIdTestState", state.toString())
+                }
+            ),
+            SysIdRoutine.Mechanism(
+                io::setVoltage,
+                null, // recorded by URCL
+                this
+            )
+        )
+
+        @Suppress("unused")
+        fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
+
+        @Suppress("unused")
+        fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
+
         fun getFlywheelVelocity(distance: Distance): AngularVelocity = velocityInterpolationTable.get(distance.inMeters()).rpm
 
         fun setVoltage(volts: Voltage): Command = startEnd(
             {
-                io.setMotorVoltage(volts)
+                io.setVoltage(volts)
             },
             {
-                io.setMotorVoltage(0.volts)
+                io.setVoltage(0.volts)
             }
         )
 
-        fun setSpeed(distance: Double): Command = startEnd(
-            {
-                val speed = sqrt(velocityInterpolationTable.get(distance)).rpm
-                io.setVelocity(speed)
-            },
-            {
-                io.setVelocity(0.0.rpm)
-            }
-        )
+        fun setSpeed(): Command = run {
+            io.setVelocity(Hood.target.profile.getVelocity())
+        }
     }
 
-
+    fun shootSequence(target: Target): Command =
+        Commands.sequence(
+            Hood.setTarget(target),
+            Commands.parallel(
+                Turret.alignToHub(),
+                Hood.turnToTargetHoodAngle(),
+                Flywheel.setSpeed(),
+            )
+        )
 
     private val distanceToHub: Translation2d
         get() {
@@ -221,24 +285,15 @@ object Shooter {
                 .hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
         }
 
-//    fun getTargetVelocityVector(distance: Translation2d): Vector<N3> {
-//        val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
-//        val targetLinearVelocity = Flywheel.getFlywheelVelocity(distance.norm.meters).toLinearVelocity(Constants.FLYWHEEL_RADIUS.inMeters())
-//        val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
-//        return VecBuilder.fill(
-//            horizontalVelocity.getHorizontalComponent(distance.angle.measure).inMetersPerSecond(),
-//            horizontalVelocity.getVerticalComponent(distance.angle.measure).inMetersPerSecond(),
-//            targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond())
-//    }
-
     data class ShooterProfile(
+        val getHoodOffset: () -> Angle,
         val getAngle: () -> Angle,
         val getVelocity: () -> AngularVelocity
     )
 
     val getAdjustedVelocityVector: Vector<N3>
         get() {
-            val distance = distanceToHub()
+            val distance = distanceToHub
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
             val targetLinearVelocity =
                 Flywheel.getFlywheelVelocity(distance.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS)
@@ -254,12 +309,14 @@ object Shooter {
         }
 
     fun vectorToShooterProfile(vector: Vector<N3>): ShooterProfile {
+        val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
         val angle = atan(vector[2, 0] / sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2))).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
+            {turretOffset},
             {angle},
-            {velocity}
+            {velocity},
         )
     }
 
@@ -272,6 +329,9 @@ object Shooter {
         STOWED(
             ShooterProfile(
                 {
+                    0.0.radians
+                },
+                {
                     40.degrees.inRadians().radians
                 },
                 {
@@ -282,6 +342,9 @@ object Shooter {
 
         TUNING(
             ShooterProfile(
+                {
+                    0.0.radians
+                },
                 {
                     hoodTunable.get().degrees.inRadians().radians
                 },
@@ -298,5 +361,7 @@ object Shooter {
 
     object Constants {
         val FLYWHEEL_RADIUS = 0.0505.meters
+        val HOOD_ANGLE_TOLERANCE = 3.0.degrees
+        val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
     }
 }

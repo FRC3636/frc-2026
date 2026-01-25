@@ -14,11 +14,12 @@ import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 
 @Logged
 open class HoodInputs {
-    var hoodAngle = Degrees.zero()!!
+    var hoodAngle = Radians.zero()!!
     var hoodVelocity = RadiansPerSecond.zero()!!
     var hoodCurrent = Amps.zero()!!
     var setPoint = Radians.zero()!!
@@ -29,6 +30,7 @@ open class HoodInputs {
 
 interface HoodIO {
     fun turnToAngle(angle: Angle)
+    fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: HoodInputs)
     fun setBrakeMode(enabled: Boolean)
 
@@ -37,7 +39,6 @@ interface HoodIO {
 }
 
 class HoodIOReal: HoodIO {
-    private var toggleHood = false
     private var brakeMode = false
 
     private val hoodMotor = TalonFX(CTREDeviceId.HoodMotor).apply {
@@ -96,6 +97,11 @@ class HoodIOReal: HoodIO {
         hoodMotor.setControl(positionControl.withPosition(angle))
     }
 
+    override fun setVoltage(voltage: Voltage) {
+        assert(voltage in 0.volts..12.volts)
+        hoodMotor.setVoltage(voltage.inVolts())
+    }
+
     override fun updateInputs(inputs: HoodInputs) {
         inputs.hoodAngle = positionSignal.value
         inputs.hoodVelocity = velocitySignal.value
@@ -131,6 +137,10 @@ class HoodIOReal: HoodIO {
 class HoodIOSim: HoodIO {
 
     override fun turnToAngle(angle: Angle) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVoltage(voltage: Voltage) {
         TODO("Not yet implemented")
     }
 
