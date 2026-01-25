@@ -232,7 +232,7 @@ object Shooter {
                 horizontalVelocity.getVerticalComponent(distance.angle.measure).inMetersPerSecond(),
                 targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
             )
-            val robotVelocity = Drivetrain.measuredChassisSpeeds.translation2dPerSecond
+            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
             val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
             return targetVelocityVector - robotVelocityVector
         }

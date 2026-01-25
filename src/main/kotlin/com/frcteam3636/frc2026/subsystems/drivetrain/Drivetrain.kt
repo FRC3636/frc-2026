@@ -340,6 +340,8 @@ object Drivetrain : Subsystem {
      *
      * Note that the speeds are relative to the chassis, not the field.
      */
+    val measuredChassisSpeedsRelativeToField get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
+
     private var desiredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(desiredModuleStates)
         set(value) {
