@@ -22,7 +22,6 @@ import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.util.struct.Struct.kSizeBool
 import edu.wpi.first.util.struct.Struct.kSizeDouble
 import edu.wpi.first.util.struct.StructSerializable
-import edu.wpi.first.wpilibj.RobotController
 import org.photonvision.PhotonCamera
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
@@ -74,7 +73,7 @@ class LimelightPoseProvider(
     private var measurements = mutableListOf<AbsolutePoseMeasurement>()
     private var lock = ReentrantLock()
 
-    private var lastSeenHb: Double = 0.0
+    private var lastSeenHeartBeat: Double = 0.0
     private val table = NetworkTableInstance.getDefault().getTable(name)
     private val hbSubscriber = table.getDoubleTopic("hb").subscribe(0.0)
     private val txSubscriber = table.getDoubleTopic("tx").subscribe(0.0)
@@ -227,6 +226,8 @@ class LimelightPoseProvider(
         )
     }
 
+    var loopsSinceLastSeen = 0
+
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
 //        try {
 //            lock.lock()
@@ -257,7 +258,17 @@ class LimelightPoseProvider(
             tvSubscriber.get() == 0.toLong()
         )
 
-        inputs.connected = (RobotController.getFPGATime() - hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+//        inputs.connected = (RobotController.getFPGATime() - hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+//        inputs.connected = (hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+
+        // We assume the camera has disconnected if there are no new updates for several ticks.
+        val heartBeat = hbSubscriber.get()
+        inputs.connected = heartBeat > lastSeenHeartBeat || loopsSinceLastSeen < CONNECTED_TIMEOUT
+        if (heartBeat == lastSeenHeartBeat)
+            loopsSinceLastSeen++
+        else
+            loopsSinceLastSeen = 0
+        lastSeenHeartBeat = heartBeat
     }
 
     companion object {

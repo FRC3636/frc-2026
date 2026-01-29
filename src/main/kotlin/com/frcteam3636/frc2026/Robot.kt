@@ -185,6 +185,10 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
+        controller.b().onTrue(Commands.runOnce( {
+            Drivetrain.zeroGyro()
+        }))
+
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
 
 
