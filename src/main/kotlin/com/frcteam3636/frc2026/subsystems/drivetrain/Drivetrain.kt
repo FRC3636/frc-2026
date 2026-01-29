@@ -299,6 +299,7 @@ object Drivetrain : Subsystem {
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Chassis Speed Relative To the Field", measuredChassisSpeedsRelativeToField)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         Logger.recordOutput(
             "Drivetrain/Measured Velocity",
