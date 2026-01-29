@@ -61,12 +61,9 @@ object Shooter {
                     io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
                 } else {
                     // if no tags are seen then align with estimated pose
-                    val hubTranslation = DriverStation.getAlliance()
-                        .orElse(DriverStation.Alliance.Blue)
-                        .hubTranslation
-                    val turretAngle = (atan((hubTranslation.y - Drivetrain.estimatedPose.y) / (hubTranslation.x - Drivetrain.estimatedPose.x)) +
-                            offset.inRadians() -
-                            Drivetrain.estimatedPose.rotation.radians).radians
+                    val turretAngle = distanceToHub.angle.measure +
+                            offset -
+                            Drivetrain.estimatedPose.rotation.radians.radians
                     turnToTargetTurretAngle(turretAngle)
             }
         }
