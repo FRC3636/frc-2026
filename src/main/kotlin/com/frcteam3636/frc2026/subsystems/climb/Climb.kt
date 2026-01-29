@@ -60,11 +60,9 @@ class Climb : Subsystem {
     fun climbL1(): Command = Commands.sequence(
         goToHeight(Position.GROUND_L1),
         // TODO: Wait until the robot is in the right position to climb. Ideally it should already be in that position, but just in case.
+        // This is dependant on the auto system which to my knowledge isn't implemented yet.
         goToHeight(Position.STOWED, true),
     )
-
-    // Climb to next bar is really hard to tell what we'll be doing ...
-    // We'll have to see based on design.
 
     fun isAtTarget(): Boolean = abs((inputs.height - targetHeight).inMeters()) < CLIMBER_TOLERANCE.inMeters()
 }

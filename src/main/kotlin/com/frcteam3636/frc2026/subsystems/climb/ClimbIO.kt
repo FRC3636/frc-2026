@@ -77,6 +77,7 @@ class ClimbIOReal : ClimbIO {
             motor.velocity,
             motor.supplyCurrent
         )
+        motor.optimizeBusUtilization()
     }
 
     override fun setVoltage(volts: Voltage) {
