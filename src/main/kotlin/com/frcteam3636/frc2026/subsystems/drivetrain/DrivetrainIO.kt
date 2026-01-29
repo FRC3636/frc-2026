@@ -44,7 +44,7 @@ abstract class DrivetrainIO {
             inputs.measuredStates[i] = module.state     // no allocation
             inputs.measuredPositions[i] = module.position   // no allocation
             inputs.measuredStatesRelativeToField[i] = SwerveModuleState( module.state.speedMetersPerSecond,
-                module.position.angle + gyro.rotation )
+                module.position.angle + gyro.rotation)
         }
 
         inputs.gyroRotation = gyro.rotation
