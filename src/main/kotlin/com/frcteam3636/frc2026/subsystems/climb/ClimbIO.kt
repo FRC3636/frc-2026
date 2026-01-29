@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.climb
 
+import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.signals.NeutralModeValue
@@ -69,6 +70,13 @@ class ClimbIOReal : ClimbIO {
             }
         }
         motor.configurator.apply(motorConfig)
+
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            motor.position,
+            motor.velocity,
+            motor.supplyCurrent
+        )
     }
 
     override fun setVoltage(volts: Voltage) {
