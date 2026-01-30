@@ -25,7 +25,6 @@ open class HoodInputs {
     var setPoint = Radians.zero()!!
     var hoodMotorTemperature = Celsius.zero()!!
     var brakeMode = false
-    var fixedHood = false
 }
 
 interface HoodIO {
@@ -33,13 +32,13 @@ interface HoodIO {
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: HoodInputs)
     fun setBrakeMode(enabled: Boolean)
-
     val signals: Array<BaseStatusSignal>
         get() = emptyArray()
 }
 
 class HoodIOReal: HoodIO {
     private var brakeMode = false
+    private var fixedHood = false
 
     private val hoodMotor = TalonFX(CTREDeviceId.HoodMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
@@ -120,6 +119,7 @@ class HoodIOReal: HoodIO {
             }
         )
     }
+
 
 
     companion object Constants {

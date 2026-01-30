@@ -127,6 +127,7 @@ object Shooter {
 
         val inputs = LoggedHoodInputs()
         var target = Target.STOWED
+        var fixedHood = false
 
         // distance -> sin(2 * angle)
         // TODO: find values
@@ -190,6 +191,16 @@ object Shooter {
         fun hoodCoastMode(): Command =
             run {
                 io.setBrakeMode(false)
+            }
+
+        fun fixedHoodMode(): Command =
+            run {
+                fixedHood = true
+            }
+
+        fun adjustableHoodMode(): Command =
+            run {
+                fixedHood = false
             }
 
     }
@@ -283,8 +294,8 @@ object Shooter {
         }
 
     data class ShooterProfile(
+        val getTurretAngle: () -> Angle,
         val getHoodOffset: () -> Angle,
-        val getAngle: () -> Angle,
         val getVelocity: () -> AngularVelocity
     )
 
@@ -319,9 +330,26 @@ object Shooter {
         )
     }
 
+    fun vectorToFixedHoodShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile{
+        val (vector, error) = vectorAndAngle
+        val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
+        val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
+                Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
+        return ShooterProfile(
+            {turretOffset},
+            {Constants.FIXED_HOOD_ANGLE},
+            {velocity}
+        )
+    }
+
     enum class Target(val profile: ShooterProfile) {
 
         AIM(vectorToShooterProfile(getAdjustedVelocityVectorAndError)),
+
+        AIM_WITHOUT_HOOD(
+            vectorToFixedHoodShooterProfile(getAdjustedVelocityVectorAndError)
+        ),
+
 
         STOWED(
             ShooterProfile(
@@ -360,5 +388,6 @@ object Shooter {
         val FLYWHEEL_RADIUS = 0.0505.meters
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
+        val FIXED_HOOD_ANGLE = 40.radians
     }
 }
