@@ -299,7 +299,7 @@ object Shooter {
         val getVelocity: () -> AngularVelocity
     )
 
-    val getAdjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
+    val getAdjustedVelocityVectorAndHoodAngle: Pair<Vector<N3>, Angle>
         get() {
             val distance = distanceToHub
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
@@ -314,24 +314,25 @@ object Shooter {
             val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
             val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
             val adjustedVector = targetVelocityVector - robotVelocityVector
-            val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
-            return Pair(adjustedVector, angleError)
+            //Do we actully need this?
+            //val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
+            return Pair(adjustedVector, targetHoodAngle)
         }
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
-        val (vector, error) = vectorAndAngle
+        val (vector, hoodAngle) = vectorAndAngle
         val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
             {turretOffset},
-            {error},
+            {hoodAngle},
             {velocity},
         )
     }
 
     fun vectorToFixedHoodShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile{
-        val (vector, error) = vectorAndAngle
+        val vector = vectorAndAngle.first
         val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
