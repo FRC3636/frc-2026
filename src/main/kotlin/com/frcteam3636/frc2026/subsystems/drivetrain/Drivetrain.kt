@@ -31,6 +31,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
@@ -189,6 +190,32 @@ object Drivetrain : Subsystem {
     /** Whether every sensor used for pose estimation is connected. */
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
+
+    private val intakeLimelight = NetworkTableInstance.getDefault().getTable("intake-limelight")
+
+    fun driveToLargestFuelCluster(): Command =
+        Commands.run({
+            val results: DoubleArray = intakeLimelight.getDoubleArrayTopic("tx").subscribe(doubleArrayOf()).get()
+            if (!results.none()) {
+                val angles: DoubleArray = intakeLimelight.getDoubleArrayTopic("ty").subscribe(doubleArrayOf()).get()
+                val groupedResults = results.withIndex()
+                    .groupBy { (it.value / 5.0) * 5 }
+                val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
+                val groupedAngles = angles.slice(largestCluster.indices)
+                val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
+                val distance =
+                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
+                val targetHorizontalAngle = largestCluster.map { it.value }.average()
+                val targetPose = APTarget(
+                    Pose2d(
+                        estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
+                        Rotation2d.k180deg,
+                    )
+                )
+                alignWithAutopilot(targetPose)
+            }
+        })
+
 
     init {
         if (io is DrivetrainIOSim) {
@@ -427,11 +454,11 @@ object Drivetrain : Subsystem {
 
     private var rawGyroRotation = Rotation2d.kZero
 
-    fun alignWithAutopilot(): Command {
+    fun alignWithAutopilot(target: APTarget): Command {
         return run {
 
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
-            val vectorToTarget = (estimatedPose.translation - Constants.ALIGN_TARGET.reference.translation).toVector()
+            val vectorToTarget = (estimatedPose.translation - target.reference.translation).toVector()
             // If we are moving away from the target, stop the robot immediately
             val adjustedChassisSpeeds = measuredChassisSpeeds.apply {
                 if (vectorToTarget.dot(velocityVector) <= 0) {
@@ -443,14 +470,10 @@ object Drivetrain : Subsystem {
             val output = autoPilot.calculate(
                 estimatedPose,
                 adjustedChassisSpeeds,
-                Constants.ALIGN_TARGET
+                target
             )
 
-            val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
-                enableContinuousInput(0.0, TAU)
-            }
-
-            val rotationOutput = autoPilotRotationPID.calculate(
+            val rotationOutput = Constants.rotationPIDController.calculate(
                 poseEstimator.estimatedPosition.rotation.radians,
                 output.targetAngle.radians
             )
@@ -474,7 +497,7 @@ object Drivetrain : Subsystem {
             )
 
         }.until {
-            autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
+            autoPilot.atTarget(estimatedPose, target)
         }.finallyDo { ->
             desiredModuleStates = BRAKE_POSITION
         }
@@ -521,6 +544,7 @@ object Drivetrain : Subsystem {
     @Suppress("unused")
     object Constants {
         // Translation/rotation coefficient for teleoperated driver controls
+
         /** Unit: Percent of max robot speed */
         const val TRANSLATION_SENSITIVITY = 1.0
 
@@ -621,5 +645,12 @@ object Drivetrain : Subsystem {
 //            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
 //                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
         )
+
+        val rotationPIDController = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
+            enableContinuousInput(0.0, TAU)
+        }
+
+        val FUEL_RADIUS = .075.meters
+        val INTAKE_LIMELIGHT_HEIGHT = .25.meters // TODO: find actual height
     }
 }
