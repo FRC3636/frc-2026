@@ -141,7 +141,7 @@ object Shooter {
 
         val atDesiredHoodAngle =
             Trigger {
-                val error = abs((inputs.hoodAngle - target.profile.getAngle()).inDegrees())
+                val error = abs((inputs.hoodAngle - target.profile.getHoodAngle()).inDegrees())
                 Logger.recordOutput("Shooter/Hood/Angle Error", error)
                 error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
             }
@@ -150,7 +150,7 @@ object Shooter {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
             Logger.recordOutput("Shooter/Hood/Active profile", target)
-            Logger.recordOutput("Shooter/Hood/Reference", target.profile.getAngle())
+            Logger.recordOutput("Shooter/Hood/Reference", target.profile.getHoodAngle())
         }
 
         val sysID = SysIdRoutine(
@@ -180,7 +180,7 @@ object Shooter {
 
         fun turnToTargetHoodAngle(): Command =
             run {
-                io.turnToAngle(target.profile.getAngle())
+                io.turnToAngle(target.profile.getHoodAngle())
             }
 
         fun hoodBrakeMode(): Command =
@@ -295,11 +295,11 @@ object Shooter {
 
     data class ShooterProfile(
         val getTurretAngle: () -> Angle,
-        val getHoodOffset: () -> Angle,
+        val getHoodAngle: () -> Angle,
         val getVelocity: () -> AngularVelocity
     )
 
-    val getAdjustedVelocityVectorAndHoodAngle: Pair<Vector<N3>, Angle>
+    val getAdjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
         get() {
             val distance = distanceToHub
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
@@ -314,19 +314,18 @@ object Shooter {
             val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
             val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
             val adjustedVector = targetVelocityVector - robotVelocityVector
-            //Do we actully need this?
-            //val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
-            return Pair(adjustedVector, targetHoodAngle)
+            val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
+            return Pair(adjustedVector, angleError)
         }
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
-        val (vector, hoodAngle) = vectorAndAngle
+        val (vector, error) = vectorAndAngle
         val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
             {turretOffset},
-            {hoodAngle},
+            {Hood.getHoodAngle(distanceToHub.norm.meters)},
             {velocity},
         )
     }
