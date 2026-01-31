@@ -199,7 +199,7 @@ object Drivetrain : Subsystem {
             if (!results.none()) {
                 val angles: DoubleArray = intakeLimelight.getDoubleArrayTopic("ty").subscribe(doubleArrayOf()).get()
                 val groupedResults = results.withIndex()
-                    .groupBy { (it.value / 5.0) * 5 }
+                    .groupBy { (it.value / 5.0).toInt() }
                 val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
                 val groupedAngles = angles.slice(largestCluster.indices)
                 val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
