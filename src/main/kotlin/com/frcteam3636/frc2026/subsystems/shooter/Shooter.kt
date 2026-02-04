@@ -280,7 +280,7 @@ object Shooter {
         Commands.sequence(
             Hood.setTarget(target),
             Commands.parallel(
-                Turret.alignToHub(),
+                Turret.alignToHub(target.profile.getTurretError()),
                 Hood.turnToTargetHoodAngle(),
                 Flywheel.setSpeed(),
             )
@@ -294,10 +294,11 @@ object Shooter {
         }
 
     data class ShooterProfile(
-        val getTurretAngle: () -> Angle,
+        val getTurretError: () -> Angle,
         val getHoodAngle: () -> Angle,
         val getVelocity: () -> AngularVelocity
     )
+
 
     val adjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
         get() {
@@ -316,6 +317,16 @@ object Shooter {
             val adjustedVector = targetVelocityVector - robotVelocityVector
             val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
             return Pair(adjustedVector, angleError)
+        }
+
+    val feedShooterProfile : ShooterProfile
+        get() {
+
+            return ShooterProfile(
+                0.0.radians,
+                0.0.radians,
+                10.rpm
+            )
         }
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
@@ -389,4 +400,12 @@ object Shooter {
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
         val FIXED_HOOD_ANGLE = 40.radians
     }
+
+    enum class FeedPose(target : Translation2d) {
+        LeftSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
+        RightSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
+        LeftSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
+        RightSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
+    }
+
 }
