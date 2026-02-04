@@ -427,11 +427,11 @@ object Drivetrain : Subsystem {
 
     private var rawGyroRotation = Rotation2d.kZero
 
-    fun alignWithAutopilot(): Command {
+    fun alignWithAutopilot(target: APTarget): Command {
         return run {
 
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
-            val vectorToTarget = (estimatedPose.translation - Constants.ALIGN_TARGET.reference.translation).toVector()
+            val vectorToTarget = (estimatedPose.translation - target.reference.translation).toVector()
             // If we are moving away from the target, stop the robot immediately
             val adjustedChassisSpeeds = measuredChassisSpeeds.apply {
                 if (vectorToTarget.dot(velocityVector) <= 0) {
@@ -443,7 +443,7 @@ object Drivetrain : Subsystem {
             val output = autoPilot.calculate(
                 estimatedPose,
                 adjustedChassisSpeeds,
-                Constants.ALIGN_TARGET
+                target
             )
 
             val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
@@ -474,7 +474,7 @@ object Drivetrain : Subsystem {
             )
 
         }.until {
-            autoPilot.atTarget(estimatedPose, Constants.ALIGN_TARGET)
+            autoPilot.atTarget(estimatedPose, target)
         }.finallyDo { ->
             desiredModuleStates = BRAKE_POSITION
         }
