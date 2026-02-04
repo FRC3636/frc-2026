@@ -299,7 +299,7 @@ object Shooter {
         val getVelocity: () -> AngularVelocity
     )
 
-    val getAdjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
+    val adjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
         get() {
             val distance = distanceToHub
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
@@ -320,23 +320,22 @@ object Shooter {
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
         val (vector, error) = vectorAndAngle
-        val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
+        val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
-            {turretOffset},
-            {Hood.getHoodAngle(distanceToHub.norm.meters)},
+            {error},
+            {hoodAngle},
             {velocity},
         )
     }
 
     fun vectorToFixedHoodShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile{
-        val vector = vectorAndAngle.first
-        val turretOffset = atan(vector[1, 0] / vector[0, 0]).radians
+        val (vector,error) = vectorAndAngle
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
-            {turretOffset},
+            {error},
             {Constants.FIXED_HOOD_ANGLE},
             {velocity}
         )
@@ -344,10 +343,10 @@ object Shooter {
 
     enum class Target(val profile: ShooterProfile) {
 
-        AIM(vectorToShooterProfile(getAdjustedVelocityVectorAndError)),
+        AIM(vectorToShooterProfile(adjustedVelocityVectorAndError)),
 
         AIM_WITHOUT_HOOD(
-            vectorToFixedHoodShooterProfile(getAdjustedVelocityVectorAndError)
+            vectorToFixedHoodShooterProfile(adjustedVelocityVectorAndError)
         ),
 
 
