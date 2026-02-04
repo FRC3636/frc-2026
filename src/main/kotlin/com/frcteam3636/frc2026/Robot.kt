@@ -189,7 +189,7 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }))
 
-        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
+        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
