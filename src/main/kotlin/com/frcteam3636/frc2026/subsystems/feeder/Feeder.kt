@@ -27,4 +27,12 @@ object Feeder: Subsystem {
             io.setMotorVoltage(0.volts)
         }
     )
+
+    fun feed() : Command {
+        return runEnd({
+            setVoltage(10.0.volts)
+        },{
+            setVoltage(0.0.volts)
+        })
+    }
 }
