@@ -4,6 +4,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -58,6 +59,7 @@ object Robot : LoggedRobot() {
     private val controllerDev = CommandXboxController(4)
 
     private var autoCommand: Command? = null
+    private var lastSelectedAuto = AutoModes.None
 
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
@@ -97,6 +99,7 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+        Dashboard.initialize()
 
         statusSignals.addSignals(*Drivetrain.signals)
 
@@ -176,6 +179,17 @@ object Robot : LoggedRobot() {
 //        )
     }
 
+    override fun disabledPeriodic() {
+        val selectedAuto = Dashboard.autoChooser.selected
+        if (lastSelectedAuto != selectedAuto) {
+            lastSelectedAuto = selectedAuto
+            autoCommand = when (selectedAuto) {
+                AutoModes.None -> Commands.none()
+                AutoModes.TestAuto -> TestAuto.getPath(Drivetrain, false, false)
+            }
+        }
+    }
+
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
@@ -237,6 +251,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+        val selectedAuto = Dashboard.autoChooser.selected
         if (!RobotState.beforeFirstEnable)
             RobotState.beforeFirstEnable = false
         CommandScheduler.getInstance().schedule(autoCommand)
