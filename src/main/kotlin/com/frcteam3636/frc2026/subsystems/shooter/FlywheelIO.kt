@@ -9,9 +9,12 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.wpilibj.simulation.FlywheelSim
 
 @Logged
 open class FlywheelInputs {
@@ -92,4 +95,35 @@ class FlywheelIOReal : FlywheelIO {
         val PROFILE_JERK = 1.0
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
   }
+}
+
+class FlywheelIOSim: FlywheelIO {
+
+    private val flywheelMotor = DCMotor.getKrakenX60(1)
+
+    private val flywheelSim: FlywheelSim = FlywheelSim(
+        LinearSystemId.createFlywheelSystem(
+            flywheelMotor,
+            1.0,
+            5.0),
+        flywheelMotor,
+
+    )
+
+    override fun updateInputs(inputs: FlywheelInputs) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVoltage(volts: Voltage) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setSpeed(percentage: Double) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setVelocity(velocity: AngularVelocity) {
+        TODO("Not yet implemented")
+    }
+
 }

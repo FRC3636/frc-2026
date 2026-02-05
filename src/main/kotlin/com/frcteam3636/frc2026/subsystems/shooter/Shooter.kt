@@ -323,9 +323,9 @@ object Shooter {
         get() {
 
             return ShooterProfile(
-                0.0.radians,
-                0.0.radians,
-                10.rpm
+                { 0.0.radians },
+                { 0.0.radians },
+                { 10.rpm }
             )
         }
 
