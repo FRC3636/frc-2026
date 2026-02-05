@@ -191,9 +191,10 @@ object Drivetrain : Subsystem {
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
 
-    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
+    private val intakeLimelight = NetworkTableInstance.getDefault().getTable("limelight-intake")
     val detectionTxAndTy: Pair<Array<Double>, Array<Double>>
         get() {
+            val detections = intakeLimelight.getEntry("rawdetections").getDoubleArray(doubleArrayOf())
             val numDetections = detections.size / 12
             val detectionTx = Array(numDetections) {0.0}
             val detectionTy= Array(numDetections) {0.0}
