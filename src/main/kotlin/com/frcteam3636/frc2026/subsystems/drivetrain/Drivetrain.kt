@@ -191,15 +191,17 @@ object Drivetrain : Subsystem {
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
 
-    private val intakeLimelight = NetworkTableInstance.getDefault().getTable("intake-limelight")
+    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections")
+    private val detectionTx = detections.getDoubleArrayTopic("tx").subscribe(doubleArrayOf())
+    private val detectionTy = detections.getDoubleArrayTopic("ty").subscribe(doubleArrayOf())
 
     fun driveToLargestFuelCluster(): Command =
         Commands.run({
-            val results: DoubleArray = intakeLimelight.getDoubleArrayTopic("tx").subscribe(doubleArrayOf()).get()
+            val results: DoubleArray = detectionTx.get()
             if (!results.none()) {
-                val angles: DoubleArray = intakeLimelight.getDoubleArrayTopic("ty").subscribe(doubleArrayOf()).get()
+                val angles: DoubleArray = detectionTy.get()
                 val groupedResults = results.withIndex()
-                    .groupBy { (it.value / 5.0).toInt() }
+                    .groupBy { floor(it.value / 9.0) }
                 val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
                 val groupedAngles = angles.slice(largestCluster.indices)
                 val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
@@ -221,6 +223,7 @@ object Drivetrain : Subsystem {
         if (io is DrivetrainIOSim) {
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
+
 
         PhoenixOdometryThread.start()
     }
