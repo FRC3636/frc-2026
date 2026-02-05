@@ -191,19 +191,28 @@ object Drivetrain : Subsystem {
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
 
-    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections")
-    private val detectionTx = detections.getDoubleArrayTopic("tx").subscribe(doubleArrayOf())
-    private val detectionTy = detections.getDoubleArrayTopic("ty").subscribe(doubleArrayOf())
+    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
+    val detectionTxAndTy: Pair<Array<Double>, Array<Double>>
+        get() {
+            val numDetections = detections.size / 12
+            val detectionTx = Array(numDetections) {0.0}
+            val detectionTy= Array(numDetections) {0.0}
+            for (i in 0..numDetections) {
+                val baseIndex = i * numDetections
+                detectionTx[i] = detections[baseIndex + 1] * 27.0
+                detectionTy[i] = detections[baseIndex + 2] * 27.0
+            }
+            return Pair(detectionTx, detectionTy)
+        }
 
     fun driveToLargestFuelCluster(): Command =
         Commands.run({
-            val results: DoubleArray = detectionTx.get()
-            if (!results.none()) {
-                val angles: DoubleArray = detectionTy.get()
-                val groupedResults = results.withIndex()
+            val (txResults, tyResults) = detectionTxAndTy
+            if (!txResults.none()) {
+                val groupedResults = txResults.withIndex()
                     .groupBy { floor(it.value / 9.0) }
                 val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
-                val groupedAngles = angles.slice(largestCluster.indices)
+                val groupedAngles = tyResults.slice(largestCluster.indices)
                 val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
                 val distance =
                     ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
