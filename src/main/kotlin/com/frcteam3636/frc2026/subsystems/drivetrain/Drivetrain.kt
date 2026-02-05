@@ -12,6 +12,8 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
+import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
+import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.*
@@ -426,6 +428,12 @@ object Drivetrain : Subsystem {
     val autoPilot = Autopilot(autoPilotProfile)
 
     private var rawGyroRotation = Rotation2d.kZero
+
+    fun alignSideRelative(target: APTarget, flipH: Boolean, flipV: Boolean): Command {
+        var transformedTarget: APTarget = if (flipH) flipTargetHorizontal(target) else target
+        transformedTarget = if (flipV) flipTargetVertical(target) else transformedTarget
+        return alignWithAutopilot(transformedTarget)
+    }
 
     fun alignWithAutopilot(target: APTarget): Command {
         return run {

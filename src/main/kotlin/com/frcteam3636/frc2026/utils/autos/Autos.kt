@@ -12,7 +12,7 @@ import kotlin.math.PI
 const val FIELD_HEIGHT_METERS = 16.54048
 const val FIELD_WIDTH_METERS = 8.06958
 
-private fun flipTargetHorizontal(target: APTarget): APTarget {
+fun flipTargetHorizontal(target: APTarget): APTarget {
     return APTarget(
         Pose2d (
             Translation2d (
@@ -24,7 +24,7 @@ private fun flipTargetHorizontal(target: APTarget): APTarget {
     )
 }
 
-private fun flipTargetVertical(target: APTarget): APTarget {
+fun flipTargetVertical(target: APTarget): APTarget {
     return APTarget (
         Pose2d (
             Translation2d (
