@@ -205,6 +205,10 @@ object Robot : LoggedRobot() {
 
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
+        // Angles robot for shooting, just in case the
+        // turret stops working.
+        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
+
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(

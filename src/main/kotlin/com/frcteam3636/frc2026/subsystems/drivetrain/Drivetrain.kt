@@ -29,10 +29,12 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
@@ -320,6 +322,32 @@ object Drivetrain : Subsystem {
             Logger.recordOutput("Drivetrain/Desired States", *stateArr)
         }
 
+    // This is literally copied straight from the Shooter code on a different branch,
+    // and should probably be moved to some kind of common file before it gets merged
+    // to main.
+    private val toHub: Translation2d
+        get() {
+            return DriverStation.getAlliance()
+                .orElse(DriverStation.Alliance.Blue)
+                .hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
+        }
+
+    // As well as this
+    val DriverStation.Alliance.hubTranslation
+        get() = when (this) {
+            DriverStation.Alliance.Blue -> Translation3d(
+                4.62534.meters,
+                (8.07 / 2).meters,
+                1.83.meters,
+            )
+
+            else -> Translation3d(
+                (16.54 - 4.62534).meters,
+                (8.07 / 2).meters,
+                1.83.meters,
+            )
+        }
+
     /**
      * The current speed of chassis relative to the ground,
      * assuming that the wheels have perfect traction with the ground.
@@ -433,6 +461,28 @@ object Drivetrain : Subsystem {
         var transformedTarget: APTarget = if (flipH) flipTargetHorizontal(target) else target
         transformedTarget = if (flipV) flipTargetVertical(target) else transformedTarget
         return alignWithAutopilot(transformedTarget)
+    }
+
+    // TODO: Compensate for the error probably caused by the turret being stuck at the wrong angle.
+    // TODO: This might be done by passing it in for offset.
+    fun alignToHub(offset: Angle = 0.0.radians): Command = run {
+        val target = toHub.angle.measure + offset - estimatedPose.rotation.radians.radians
+
+        val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
+            enableContinuousInput(0.0, TAU)
+        }
+
+        val rotationOutput = autoPilotRotationPID.calculate(
+            poseEstimator.estimatedPosition.rotation.radians,
+            target.inRadians()
+        )
+
+        desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            0.0.metersPerSecond,
+            0.0.metersPerSecond,
+            rotationOutput.radiansPerSecond,
+            estimatedPose.rotation
+        )
     }
 
     fun alignWithAutopilot(target: APTarget): Command {
