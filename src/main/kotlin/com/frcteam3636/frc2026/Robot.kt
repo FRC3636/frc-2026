@@ -189,6 +189,10 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }))
 
+        controller.rightTrigger().onTrue(Commands.run({
+            Drivetrain.driveToLargestFuelCluster()
+        }))
+
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
         joystickLeft.button(1).whileTrue(Drivetrain.driveToLargestFuelCluster())
 
