@@ -8,73 +8,52 @@ import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.NeutralModeValue
-import com.ctre.phoenix6.signals.StaticFeedforwardSignValue
-import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
-import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.REVMotorControllerId
+import com.frcteam3636.frc2026.SparkMax
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
-import com.frcteam3636.frc2026.utils.swerve.SwerveModuleTemperature
-import com.frcteam3636.frc2026.utils.swerve.speed
+import com.revrobotics.PersistMode
+import com.revrobotics.ResetMode
+import com.revrobotics.spark.FeedbackSensor
+import com.revrobotics.spark.SparkBase
+import com.revrobotics.spark.SparkLowLevel
+import com.revrobotics.spark.config.FeedForwardConfig
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode
+import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.measure.*
-import edu.wpi.first.wpilibj.simulation.DCMotorSim
-import java.util.*
+import edu.wpi.first.units.Units.Radians
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.Voltage
+import org.littletonrobotics.junction.Logger
+import kotlin.math.PI
+import kotlin.math.roundToInt
 
 interface SwerveModule {
-    // The current "state" of the swerve module.
-    //
-    // This is essentially the velocity of the wheel,
-    // and includes both the speed and the angle
-    // in which the module is currently traveling.
+    // This is the speed and the angle of the module.
     val state: SwerveModuleState
-
-    // The desired state of the module.
-    //
     // This is the wheel velocity that we're trying to get to.
     var desiredState: SwerveModuleState
-
-    // The measured position of the module.
-    //
-    // This is a vector with direction equal to the current angle of the module,
+    // This is the measured position of the module, a vector with direction equal to the current angle of the module,
     // and magnitude equal to the total signed distance traveled by the wheel.
     val position: SwerveModulePosition
-    val angularDrivePosition: Angle
-    var odometryTimestamps: DoubleArray
-    var odometryTurnPositions: Array<Rotation2d>
-    var odometryDrivePositions: DoubleArray
-    var odometryPositions: Array<SwerveModulePosition>
-    var validTimestamps: Int
-    var temperatures: SwerveModuleTemperature
-    val signals: Array<BaseStatusSignal>
-        get() = emptyArray()
 
     fun periodic() {}
-    fun characterize(voltage: Voltage, turningAngle: Angle?)
+    fun characterize(voltage: Voltage, measure: Angle?)
+    fun getSignals(): Array<BaseStatusSignal> { return arrayOf() }
 }
 
-class Mk5nSwerveModule(
-    val drivingMotor: SwerveDrivingMotor, val turningMotor: SwerveTurningMotor, private val chassisAngle: Rotation2d
-) : SwerveModule {
-    private var timestampQueue: Queue<Double> = PhoenixOdometryThread.makeTimestampQueue()
-
-    private val maxQueueSize = 100  // or however many timestamps we expect
-
-    override var odometryTimestamps: DoubleArray = DoubleArray(maxQueueSize)
-    override var odometryDrivePositions = doubleArrayOf()
-    override var odometryTurnPositions: Array<Rotation2d> = Array(maxQueueSize) { Rotation2d.kZero }
-    override var odometryPositions: Array<SwerveModulePosition> = Array(maxQueueSize) { SwerveModulePosition() }
-    override var validTimestamps: Int = 0
-    override var temperatures: SwerveModuleTemperature = SwerveModuleTemperature(0.0.celsius, 0.0.celsius)
+class GeneralSwerveModule(
+    private val drivingMotor: DrivingMotor, private val turningMotor: TurningMotor, private val chassisAngle: Rotation2d
+): SwerveModule {
 
     override val state: SwerveModuleState
         get() = SwerveModuleState(
-            drivingMotor.velocity,
-            Rotation2d.fromRadians(turningMotor.position.inRadians()) + chassisAngle
+            drivingMotor.velocity.inMetersPerSecond(), Rotation2d.fromRadians(turningMotor.position.inRadians()) + chassisAngle
         )
 
     override val position: SwerveModulePosition
@@ -82,142 +61,84 @@ class Mk5nSwerveModule(
             drivingMotor.position, Rotation2d.fromRadians(turningMotor.position.inRadians()) + chassisAngle
         )
 
-    override val angularDrivePosition: Angle
-        get() = drivingMotor.angularPosition
-
-    override fun characterize(voltage: Voltage, turningAngle: Angle?) {
+    override fun characterize(voltage: Voltage, measure: Angle?) {
         drivingMotor.setVoltage(voltage)
-        if (turningAngle != null) {
-            turningMotor.position = turningAngle
-        }
+        turningMotor.setPosition(Radians.of(-chassisAngle.radians))
     }
 
-    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, -chassisAngle)
+    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
         get() = SwerveModuleState(field.speedMetersPerSecond, field.angle + chassisAngle)
         set(value) {
+            // corrected is the module-relative angle
             val corrected = SwerveModuleState(value.speedMetersPerSecond, value.angle - chassisAngle)
             // optimize the state to avoid rotating more than 90 degrees
-            corrected.optimize(
-                Rotation2d(turningMotor.position)
-            )
+            corrected.optimize(Rotation2d.fromRadians(turningMotor.position.inRadians()))
 
-            corrected.cosineScale(Rotation2d(turningMotor.position))
-
-            drivingMotor.velocity = corrected.speed + (turningMotor.velocity * COUPLING_RATIO).toLinear(WHEEL_RADIUS)
-            turningMotor.position = corrected.angle.measure
-
+            drivingMotor.setVelocity(corrected.speedMetersPerSecond.metersPerSecond)
+            turningMotor.setPosition(Radians.of(corrected.angle.radians))
 
             field = corrected
         }
 
-    override val signals: Array<BaseStatusSignal>
-        get() = turningMotor.signals + drivingMotor.signals
-
-    override fun periodic() {
-        validTimestamps = timestampQueue.size
-
-        // Fill the odometryTimestamps array in-place
-        for ((i, timestamp) in timestampQueue.withIndex()) {
-            odometryTimestamps[i] = timestamp
-        }
-
-        drivingMotor.periodic()
-        turningMotor.periodic()
-        odometryTurnPositions = turningMotor.odometryTurnPositions
-        odometryDrivePositions = drivingMotor.odometryDrivePositions
-
-        // Update positions in-place
-        @Suppress("EmptyRange") // for some reason intellij determines this using the default value lol
-        for (index in 0..<validTimestamps) {
-            val distance = (odometryDrivePositions[index].radians -
-                    (odometryTurnPositions[index].rotations.rotations * COUPLING_RATIO)).toLinear(WHEEL_RADIUS)
-            val angle = odometryTurnPositions[index] + chassisAngle
-
-            val pos = odometryPositions[index]
-            pos.distanceMeters = distance.inMeters()
-            pos.angle = angle
-        }
-
-        timestampQueue.clear()
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return turningMotor.getSignals() + drivingMotor.getSignals()
     }
 }
 
-interface SwerveDrivingMotor {
+interface DrivingMotor {
     val position: Distance
-    val angularPosition: Angle
-    var velocity: LinearVelocity
-    var odometryDrivePositions: DoubleArray
-    val temperature: Temperature
-    val signals: Array<BaseStatusSignal>
+    val velocity: LinearVelocity
     fun setVoltage(voltage: Voltage)
-    fun periodic() {}
+    fun setVelocity(velocity: LinearVelocity)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
-interface SwerveTurningMotor {
-    var position: Angle
-    val velocity: AngularVelocity
-    var odometryTurnPositions: Array<Rotation2d>
-    val temperature: Temperature
-    val signals: Array<BaseStatusSignal>
-
-    fun periodic() {}
+interface TurningMotor {
+    val position: Angle
+    fun setPosition(position: Angle)
+    fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf()
+    }
 }
 
-class DrivingTalon(id: CTREDeviceId) : SwerveDrivingMotor {
+//This is a Kraken
+class DrivingTalon(id: CTREDeviceId) : DrivingMotor {
 
     private val inner = TalonFX(id).apply {
-        configurator.apply(TalonFXConfiguration().apply {
-            Slot0.apply {
-                pidGains = DRIVING_PID_GAINS
-                motorFFGains = DRIVING_FF_GAINS
+        configurator.apply(
+            TalonFXConfiguration().apply {
+                Slot0.apply {
+                    pidGains = DRIVING_PID_GAINS_TALON
+                    motorFFGains = DRIVING_FF_GAINS_TALON
+                }
+                CurrentLimits.apply {
+                    SupplyCurrentLimit = DRIVING_CURRENT_LIMIT.inAmps()
+                    SupplyCurrentLimitEnable = true
+                }
             }
-            CurrentLimits.apply {
-                StatorCurrentLimit = DRIVING_CURRENT_LIMIT.inAmps()
-                StatorCurrentLimitEnable = true
-            }
-            TorqueCurrent.apply {
-                PeakForwardTorqueCurrent = DRIVING_CURRENT_LIMIT.inAmps()
-                PeakReverseTorqueCurrent = -DRIVING_CURRENT_LIMIT.inAmps()
-            }
-            Feedback.apply {
-                SensorToMechanismRatio = DRIVING_GEAR_RATIO
-            }
-        })
+        )
     }
 
-    override var odometryDrivePositions = doubleArrayOf()
-
-    private val positionSignal = inner.position
-    private val velocitySignal = inner.velocity
-    private val temperatureSignal = inner.deviceTemp
-
-    private val positionQueue: Queue<Double> =
-        PhoenixOdometryThread.registerSignal(positionSignal.clone())
-
     init {
-        BaseStatusSignal.setUpdateFrequencyForAll(250.0, positionSignal)
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, velocitySignal, temperatureSignal)
-        inner.optimizeBusUtilization(0.0)
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position, inner.velocity)
+        inner.optimizeBusUtilization()
     }
 
     override val position: Distance
-        get() = positionSignal.value.toLinear(WHEEL_RADIUS)
-
-    override val angularPosition: Angle
-        get() = positionSignal.value
+        get() = inner.position.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
     private var velocityControl = VelocityVoltage(0.0).apply {
         EnableFOC = true
     }
 
-    override var velocity: LinearVelocity
-        get() = velocitySignal.value.toLinear(WHEEL_RADIUS)
-        set(value) {
-            inner.setControl(velocityControl.withVelocity(value.toAngular(WHEEL_RADIUS)))
-        }
+    override val velocity: LinearVelocity
+        get() = inner.velocity.value.toLinear(WHEEL_RADIUS) * DRIVING_GEAR_RATIO_TALON
 
-    override val temperature: Temperature
-        get() = temperatureSignal.value
+    override fun setVelocity(velocity: LinearVelocity) {
+        inner.setControl(velocityControl.withVelocity(velocity.toAngular(WHEEL_RADIUS) / DRIVING_GEAR_RATIO_TALON))
+    }
 
     private val voltageControl = VoltageOut(0.0).apply {
         EnableFOC = true
@@ -227,159 +148,187 @@ class DrivingTalon(id: CTREDeviceId) : SwerveDrivingMotor {
         inner.setControl(voltageControl.withOutput(voltage.inVolts()))
     }
 
-    override val signals: Array<BaseStatusSignal> = arrayOf(positionSignal, velocitySignal, temperatureSignal)
-
-    override fun periodic() {
-        odometryDrivePositions = positionQueue.map { it.rotations.inRadians() }.toDoubleArray()
-        positionQueue.clear()
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.getPosition(false), inner.getVelocity(false))
     }
 }
 
-class TurningTalon(id: CTREDeviceId, encoderId: CTREDeviceId, magnetOffset: Double) : SwerveTurningMotor {
+//This is a Neo
+class DrivingSparkMAX(private val id: REVMotorControllerId) : DrivingMotor {
+
+    private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless).apply {
+        val innerConfig = SparkMaxConfig().apply {
+            idleMode(IdleMode.kBrake)
+            smartCurrentLimit(DRIVING_CURRENT_LIMIT.inAmps().toInt())
+            inverted(false)
+
+            encoder.apply {
+                positionConversionFactor(WHEEL_CIRCUMFERENCE.inMeters() / DRIVING_GEAR_RATIO_NEO)
+                velocityConversionFactor(WHEEL_CIRCUMFERENCE.inMeters() / DRIVING_GEAR_RATIO_NEO / 60.0)
+            }
+
+            closedLoop.apply {
+                pid(DRIVING_PID_GAINS_NEO.p, DRIVING_PID_GAINS_NEO.i, DRIVING_PID_GAINS_NEO.d)
+//                velocityFF(DRIVING_FF_GAINS_NEO.v)
+                feedForward = FeedForwardConfig().apply { DRIVING_FF_GAINS_NEO } // Possibly completely incorrect
+                feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            }
+        }
+        configure(innerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
+    }
+
+    override val position: Distance
+        get() = inner.absoluteEncoder.position.meters
+
+    override val velocity: LinearVelocity
+        get() = inner.encoder.velocity.metersPerSecond
+
+    override fun setVelocity(velocity: LinearVelocity) {
+        Logger.recordOutput("/Drivetrain/$id/OutputVel", velocity)
+        inner.closedLoopController.setSetpoint(velocity.inMetersPerSecond(), SparkBase.ControlType.kVelocity)
+    }
+
+    override fun setVoltage(voltage: Voltage) {
+        inner.setVoltage(voltage.inVolts())
+    }
+}
+
+//This is for a Mk5n swerve module
+class TurningTalon(id: CTREDeviceId, encoderID: CTREDeviceId, magnetOffset: Double): TurningMotor {
+
+    private val encoder = com.ctre.phoenix6.hardware.CANcoder(encoderID.num, encoderID.bus).apply {
+        configurator.apply(
+            CANcoderConfiguration().apply {
+                MagnetSensor.MagnetOffset = magnetOffset
+            }
+        )
+    }
 
     private val inner = TalonFX(id).apply {
         configurator.apply(TalonFXConfiguration().apply {
             Slot0.apply {
-                pidGains = TURNING_PID_GAINS
-                motorFFGains = TURNING_FF_GAINS
-                StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign
-            }
-            ClosedLoopGeneral.apply {
-                ContinuousWrap = true
+                pidGains = TURNING_PID_GAINS_TALON
+                motorFFGains = TURNING_FF_GAINS_TALON
             }
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
             }
             Feedback.apply {
                 FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
-                RotorToSensorRatio = TURNING_GEAR_RATIO
-                FeedbackRemoteSensorID = encoderId.num
+                SensorToMechanismRatio = TURNING_CANCODER_TO_MECHANISM_RATIO
+                RotorToSensorRatio = TURNING_MOTOR_TO_MECHANISM_RATIO
+                FeedbackRemoteSensorID = encoderID.num
+            }
+            CurrentLimits.apply {
+                StatorCurrentLimit = TURNING_CURRENT_LIMIT.inAmps()
+                StatorCurrentLimitEnable = true
             }
         })
     }
 
-    private val positionSignal = inner.position
-    private val velocitySignal = inner.velocity
-    private val temperatureSignal = inner.deviceTemp
-
-    private val positionQueue: Queue<Double> =
-        PhoenixOdometryThread.registerSignal(positionSignal.clone())
-    override var odometryTurnPositions: Array<Rotation2d> = emptyArray()
-
     init {
-        CANcoder(encoderId).apply {
-            configurator.apply(CANcoderConfiguration().apply {
-                MagnetSensor.MagnetOffset = magnetOffset
-            })
-        }
-        BaseStatusSignal.setUpdateFrequencyForAll(250.0, positionSignal)
-        BaseStatusSignal.setUpdateFrequencyForAll(100.0, velocitySignal, temperatureSignal)
-        inner.optimizeBusUtilization(0.0)
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, inner.position)
+        inner.optimizeBusUtilization()
     }
 
-    private val positonControl = PositionVoltage(0.0).apply {
+    override val position: Angle
+        get() = Radians.of( inner.position.value.inRadians() * 2 * PI)
+
+    override fun setPosition(position: Angle) {
+        inner.setControl(positionControl.withPosition(position.inRadians() / TAU))
+    }
+
+    private val positionControl = PositionVoltage(0.0).apply {
         EnableFOC = true
     }
 
-    override val temperature: Temperature
-        get() = temperatureSignal.value
-
-    override var position: Angle
-        set(value) {
-            inner.setControl(positonControl.withPosition(value))
-        }
-        get() = positionSignal.value
-
-    override val velocity: AngularVelocity
-        get() = velocitySignal.value
-
-    override val signals: Array<BaseStatusSignal> = arrayOf(positionSignal, temperatureSignal, velocitySignal)
-
-    override fun periodic() {
-        odometryTurnPositions = positionQueue.map { Rotation2d(it.rotations) }.toTypedArray()
-        positionQueue.clear()
+    override fun getSignals(): Array<BaseStatusSignal> {
+        return arrayOf(inner.getPosition(false))
     }
 }
 
-class SimSwerveModule : SwerveModule {
+//This is for a MAX swerve module
+class TurningSparkMax(id: REVMotorControllerId): TurningMotor {
 
-    override var odometryDrivePositions: DoubleArray = doubleArrayOf()
-    override var odometryTurnPositions: Array<Rotation2d> = emptyArray()
-    override var odometryPositions: Array<SwerveModulePosition> = emptyArray()
-    override var temperatures: SwerveModuleTemperature = SwerveModuleTemperature(0.0.celsius, 0.0.celsius)
-    override var validTimestamps: Int = 0
-    private val driveMotorSystem = LinearSystemId.createDCMotorSystem(
-        DCMotor.getKrakenX60Foc(1),
-        0.01,
-        DRIVING_GEAR_RATIO
-    )
-    private val driveMotor = DCMotorSim(driveMotorSystem, DCMotor.getKrakenX60Foc(1).withReduction(DRIVING_GEAR_RATIO))
+    private val inner = SparkMax(id, SparkLowLevel.MotorType.kBrushless).apply {
+        configure(
+            SparkMaxConfig().apply {
+                idleMode(IdleMode.kBrake)
+                smartCurrentLimit(TURNING_CURRENT_LIMIT.inAmps().roundToInt())
 
-    private val turnMotorSystem = LinearSystemId.createDCMotorSystem(
-        DCMotor.getKrakenX44Foc(1),
-        0.01,
-        TURNING_GEAR_RATIO
-    )
-    private val turnMotor = DCMotorSim(turnMotorSystem, DCMotor.getKrakenX60(1).withReduction(TURNING_GEAR_RATIO))
+                absoluteEncoder.apply {
+                    inverted(true)
+                    positionConversionFactor(TAU)
+                    velocityConversionFactor(TAU / 60)
+                }
 
-    private val drivingFeedforward = SimpleMotorFeedforward(MotorFFGains(v = 3.3))
-    private val drivingFeedback = PIDController(PIDGains(1.0))
-
-    private val turningFeedback = PIDController(PIDGains(15.0)).apply { enableContinuousInput(0.0, TAU) }
-
-    override var odometryTimestamps: DoubleArray = doubleArrayOf()
-
-    override val state: SwerveModuleState
-        get() = SwerveModuleState(
-            driveMotor.angularVelocity.toLinear(WHEEL_RADIUS),
-            Rotation2d.fromRadians(turnMotor.angularPositionRad)
+                closedLoop.apply {
+                    pid(TURNING_PID_GAINS_NEO.p, TURNING_PID_GAINS_NEO.i, TURNING_PID_GAINS_NEO.d)
+                    feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                    positionWrappingEnabled(true)
+                    positionWrappingMinInput(0.0)
+                    positionWrappingMaxInput(TAU)
+                }
+            },
+            ResetMode.kResetSafeParameters, PersistMode.kPersistParameters
         )
+    }
 
-    override val angularDrivePosition: Angle
-        get() = driveMotor.angularPosition
-
-    override var desiredState: SwerveModuleState = SwerveModuleState(0.0, Rotation2d())
-        set(value) {
-            field = value.apply {
-                optimize(state.angle)
-            }
+    override val position: Angle
+        get() {
+            val rawPosition = inner.absoluteEncoder.position
+            val correctedPosition = (rawPosition).mod(TAU)
+            return Radians.of(correctedPosition)
         }
 
+    override fun setPosition(position: Angle) {
+        inner.closedLoopController.setSetpoint(
+            (position.inRadians()).mod(TAU),
+            SparkBase.ControlType.kPosition
+        )
+    }
+
+    override fun getSignals(): Array<BaseStatusSignal>{
+        return arrayOf()
+    }
+
+}
+
+class SimSwerveModule(
+    override val state: SwerveModuleState,
+    override var desiredState: SwerveModuleState,
     override val position: SwerveModulePosition
-        get() = SwerveModulePosition(
-            driveMotor.angularPosition.toLinear(WHEEL_RADIUS),
-            Rotation2d.fromRadians(turnMotor.angularPositionRad)
-        )
-
-    override fun periodic() {
-        turnMotor.update(Robot.period)
-        driveMotor.update(Robot.period)
-        // Set the new input voltages
-        turnMotor.inputVoltage = turningFeedback.calculate(state.angle.radians, desiredState.angle.radians)
-        driveMotor.inputVoltage =
-            drivingFeedforward.calculate(desiredState.speedMetersPerSecond) + drivingFeedback.calculate(
-                state.speedMetersPerSecond, desiredState.speedMetersPerSecond
-            )
-    }
-
-    override fun characterize(voltage: Voltage, turningAngle: Angle?) {
-        return // we don't need this in sim
+) : SwerveModule {
+    // TODO("Not yet implemented")
+    override fun characterize(voltage: Voltage, measure: Angle?) {
+        TODO("Not yet implemented")
     }
 }
 
-// take the known wheel diameter, divide it by two to get the radius, then get the
-// circumference
-internal val WHEEL_RADIUS = 1.976.inches
+// Constants
+internal val WHEEL_RADIUS = 1.5.inches
+internal val WHEEL_CIRCUMFERENCE = WHEEL_RADIUS * TAU
 
-const val DRIVING_GEAR_RATIO = TunerConstants.kDriveGearRatio
-const val TURNING_GEAR_RATIO = TunerConstants.kSteerGearRatio
+internal const val DRIVING_GEAR_RATIO_TALON = 1.0 / 3.56
 
-internal val DRIVING_PID_GAINS: PIDGains = TunerConstants.driveGains!!.pidGains
-internal val DRIVING_FF_GAINS: MotorFFGains = TunerConstants.driveGains!!.motorFFGains
+private const val DRIVING_MOTOR_PINION_TEETH = 14
+const val DRIVING_GEAR_RATIO_NEO = (45.0 * 22.0) / (DRIVING_MOTOR_PINION_TEETH * 15.0)
 
-internal val TURNING_PID_GAINS: PIDGains = TunerConstants.steerGains!!.pidGains
-internal val TURNING_FF_GAINS: MotorFFGains = TunerConstants.steerGains!!.motorFFGains
+const val TURNING_CANCODER_TO_MECHANISM_RATIO = 1.0 // TODO: Fix values
+const val TURNING_MOTOR_TO_MECHANISM_RATIO = 1.0
 
-internal val DRIVING_CURRENT_LIMIT = TunerConstants.kSlipCurrent // FIXME: Calculate
+internal val NEO_FREE_SPEED = 5676.rpm
+internal val NEO_DRIVING_FREE_SPEED = NEO_FREE_SPEED.toLinear(WHEEL_CIRCUMFERENCE) / DRIVING_GEAR_RATIO_NEO
 
-const val COUPLING_RATIO = 0.64
+internal val DRIVING_PID_GAINS_TALON: PIDGains = PIDGains(.19426, 0.0)
+internal val DRIVING_PID_GAINS_NEO: PIDGains = PIDGains(0.04, 0.0, 0.0)
+internal val DRIVING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.22852, 0.1256, 0.022584)
+internal val DRIVING_FF_GAINS_NEO: MotorFFGains = MotorFFGains(0.0, 1 / NEO_DRIVING_FREE_SPEED.inMetersPerSecond(), 0.0) // TODO: ensure this is right
+
+internal val TURNING_PID_GAINS_NEO: PIDGains = PIDGains(1.7, 0.0, 0.125)
+internal val TURNING_FF_GAINS_NEO: MotorFFGains = MotorFFGains(0.1, 2.66, 0.0) // TODO: I'm pretty sure we want only a PID controller on a turning motor
+internal val TURNING_PID_GAINS_TALON: PIDGains = PIDGains(1.7, 0.0, 0.125)
+internal val TURNING_FF_GAINS_TALON: MotorFFGains = MotorFFGains(0.1, 2.66, 0.0) // TODO: fix values
+
+internal val DRIVING_CURRENT_LIMIT = 37.amps
+internal val TURNING_CURRENT_LIMIT = 20.amps
