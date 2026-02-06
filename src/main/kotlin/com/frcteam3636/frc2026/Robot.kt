@@ -101,7 +101,7 @@ object Robot : LoggedRobot() {
         configureDashboard()
         Dashboard.initialize()
 
-        statusSignals.addSignals(*Drivetrain.signals)
+//        statusSignals.addSignals(*Drivetrain.signals)
 
         // BIG WARNING BIG WARNING BIG WARNING
         // hi there. if you're a team looking at copying some code (which we are flattered)
@@ -203,6 +203,10 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }))
 
+        controller.rightBumper().whileTrue(
+            Drivetrain.driveToLargestFuelCluster()
+        )
+
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
         // Angles robot for shooting, just in case the
@@ -219,17 +223,17 @@ object Robot : LoggedRobot() {
                     .andThen(StatusLogger::stop)
             )
 
-            controllerDev.y().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kForward))
-            controllerDev.a().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kReverse))
-            controllerDev.b().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kForward))
-            controllerDev.x().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kReverse))
-
-            controllerDev.povUp().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-            controllerDev.povDown().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-            controllerDev.povRight().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward))
-            controllerDev.povLeft().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse))
-
-            joystickDev.button(1).whileTrue(Drivetrain.calculateWheelRadius())
+//            controllerDev.y().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kForward))
+//            controllerDev.a().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kReverse))
+//            controllerDev.b().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kForward))
+//            controllerDev.x().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kReverse))
+//
+//            controllerDev.povUp().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
+//            controllerDev.povDown().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
+//            controllerDev.povRight().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward))
+//            controllerDev.povLeft().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse))
+//
+//            joystickDev.button(1).whileTrue(Drivetrain.calculateWheelRadius())
         }
     }
 

@@ -110,7 +110,7 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
             .div(moduleStates.size.toDouble())
 
         val referenceModule = modules.frontLeft.state
-        val referenceModulePosition = Drivetrain.Constants.MODULE_POSITIONS.frontLeft.position.translation
+        val referenceModulePosition = Drivetrain.Constants.MODULE_POSITIONS.frontLeft.translation
 
 
         val referenceModuleVelocity = Translation2d(referenceModule.speedMetersPerSecond, referenceModule.angle)
