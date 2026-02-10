@@ -59,18 +59,12 @@ object Shooter {
                 if (inputs.seeTags) {
                     val kP = -0.1
                     io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
-                } else {
-                    // if no tags are seen then align with estimated pose
-                    val turretAngle = distanceToHub.angle.measure +
-                            offset -
-                            Drivetrain.estimatedPose.rotation.radians.radians
-                    turnToTargetTurretAngle(turretAngle)
-            }
+                }
         }
 
-        fun turnToTargetTurretAngle(angle: Angle): Command =
+        fun turnToTargetTurretAngle(): Command =
             run {
-                io.turnToAngle(angle)
+                io.turnToAngle(Hood.target.profile.getTurretAngle())
             }
 
         fun turretBrakeMode(): Command =
@@ -280,11 +274,21 @@ object Shooter {
         Commands.sequence(
             Hood.setTarget(target),
             Commands.parallel(
-                Turret.alignToHub(target.profile.getTurretError()),
+//                Turret.alignToHub(target.profile.getTurretError()),
+                Turret.turnToTargetTurretAngle(),
                 Hood.turnToTargetHoodAngle(),
                 Flywheel.setSpeed(),
             )
         )
+
+//    fun simSequence(target: Target): Command =
+//        Commands.sequence(
+//            Hood.setTarget(target),
+//            Commands.run {
+//                SimulatedArena.getInstance()
+//                    .addGamePieceProjectile()
+//            }
+//        )
 
     private val distanceToHub: Translation2d
         get() {
@@ -295,6 +299,7 @@ object Shooter {
 
     data class ShooterProfile(
         val getTurretError: () -> Angle,
+        val getTurretAngle: () -> Angle,
         val getHoodAngle: () -> Angle,
         val getVelocity: () -> AngularVelocity
     )
@@ -321,8 +326,8 @@ object Shooter {
 
     val feedShooterProfile : ShooterProfile
         get() {
-
             return ShooterProfile(
+                { 0.0.radians },
                 { 0.0.radians },
                 { 0.0.radians },
                 { 10.rpm }
@@ -331,11 +336,12 @@ object Shooter {
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
         val (vector, error) = vectorAndAngle
-        val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
-                Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
+        val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
+        val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
             {error},
+            {turretAngle},
             {hoodAngle},
             {velocity},
         )
@@ -343,10 +349,12 @@ object Shooter {
 
     fun vectorToFixedHoodShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile{
         val (vector,error) = vectorAndAngle
+        val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
             {error},
+            {turretAngle},
             {Constants.FIXED_HOOD_ANGLE},
             {velocity}
         )
@@ -367,6 +375,9 @@ object Shooter {
                     0.0.radians
                 },
                 {
+                    0.0.radians
+                },
+                {
                     40.degrees.inRadians().radians
                 },
                 {
@@ -377,6 +388,9 @@ object Shooter {
 
         TUNING(
             ShooterProfile(
+                {
+                    0.0.radians
+                },
                 {
                     0.0.radians
                 },

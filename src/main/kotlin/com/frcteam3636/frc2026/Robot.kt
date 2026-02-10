@@ -12,6 +12,7 @@ import com.revrobotics.util.StatusLogger
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -252,5 +254,16 @@ object Robot : LoggedRobot() {
     }
 
     override fun testExit() {
+    }
+
+    override fun simulationInit() {
+        SimulatedArena.getInstance().resetFieldForAuto()
+    }
+
+    override fun simulationPeriodic() {
+        SimulatedArena.getInstance().simulationPeriodic()
+        val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
+            .getGamePiecesArrayByType("Fuel")
+        Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
     }
 }

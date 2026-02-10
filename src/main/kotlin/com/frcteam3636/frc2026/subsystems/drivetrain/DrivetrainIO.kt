@@ -14,7 +14,10 @@ import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Voltage
+import org.ironmaple.simulation.drivesims.COTS
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
 import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
 import kotlin.math.atan2
@@ -127,6 +130,23 @@ class DrivetrainIOSim : DrivetrainIO() {
     val vision = VisionSystemSim("main").apply {
         addAprilTags(FIELD_LAYOUT)
     }
+
+    val driveTrainSimulationConfig: DriveTrainSimulationConfig = DriveTrainSimulationConfig.Default()
+        .withGyro(COTS.ofPigeon2())
+        .withSwerveModule(COTS.ofMark4n(
+            DCMotor.getKrakenX60(1),
+            DCMotor.getKrakenX44(1),
+            COTS.WHEELS.SLS_PRINTED_WHEELS.cof,
+            3
+        ))
+        .withTrackLengthTrackWidth(
+            Drivetrain.Constants.ROBOT_LENGTH,
+            Drivetrain.Constants.ROBOT_WIDTH
+        )
+        .withBumperSize(
+            Drivetrain.Constants.BUMPER_LENGTH,
+            Drivetrain.Constants.BUMPER_WIDTH
+        )
 
     override val modules = PerCorner.generate { SimSwerveModule() }
     override val gyro = GyroSim(modules.map { it })
