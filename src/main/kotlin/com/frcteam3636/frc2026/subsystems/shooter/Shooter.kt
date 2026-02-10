@@ -2,6 +2,7 @@ package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
@@ -23,6 +24,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -284,10 +287,12 @@ object Shooter {
 //    fun simSequence(target: Target): Command =
 //        Commands.sequence(
 //            Hood.setTarget(target),
-//            Commands.run {
+//            Commands.run({
 //                SimulatedArena.getInstance()
-//                    .addGamePieceProjectile()
-//            }
+//                    .addGamePiece(RebuiltFuelOnField(
+//                        DrivetrainIOSim
+//                    ))
+//            })
 //        )
 
     private val distanceToHub: Translation2d
