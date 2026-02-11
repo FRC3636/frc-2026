@@ -18,7 +18,7 @@ object Feeder : Subsystem {
             io.setSpeed(1.0)
         },
         {
-
+            io.setSpeed(0.0)
         }
     )
 
@@ -27,7 +27,7 @@ object Feeder : Subsystem {
             io.setSpeed(-1.0)
         },
         {
-
+            io.setSpeed(0.0)
         }
 
     )
