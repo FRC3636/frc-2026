@@ -4,6 +4,8 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -12,6 +14,7 @@ import com.revrobotics.util.StatusLogger
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -24,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -160,6 +164,7 @@ object Robot : LoggedRobot() {
         Logger.start() // Start logging! No more data receivers, replay sources, or metadata values may be added.
     }
 
+
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
@@ -190,6 +195,20 @@ object Robot : LoggedRobot() {
         }))
 
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
+
+        controller.rightBumper().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    if (Intake.intakeDown) {
+                        Intake.intakeDown = false
+                    }
+                    else {
+                        Intake.intakeDown = true
+                    }
+                }),
+                Intake.setPivotPosition(Position.Deployed),
+            )
+        )
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
@@ -256,5 +275,16 @@ object Robot : LoggedRobot() {
     }
 
     override fun testExit() {
+    }
+
+    override fun simulationInit() {
+        SimulatedArena.getInstance().resetFieldForAuto()
+    }
+
+    override fun simulationPeriodic() {
+        SimulatedArena.getInstance().simulationPeriodic()
+        val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
+            .getGamePiecesArrayByType("Fuel")
+        Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
     }
 }

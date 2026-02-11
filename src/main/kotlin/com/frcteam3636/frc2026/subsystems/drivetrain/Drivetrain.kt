@@ -38,6 +38,8 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
@@ -193,6 +195,11 @@ object Drivetrain : Subsystem {
     init {
         if (io is DrivetrainIOSim) {
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
+            val swerveDriveSimulation = SwerveDriveSimulation(
+                io.driveTrainSimulationConfig,
+                Pose2d(3.0, 3.0, Rotation2d())
+            )
+            SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation)
         }
 
         PhoenixOdometryThread.start()
@@ -288,6 +295,7 @@ object Drivetrain : Subsystem {
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Chassis Speed Relative To the Field", measuredChassisSpeedsRelativeToField)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         Logger.recordOutput(
             "Drivetrain/Measured Velocity",
@@ -329,6 +337,8 @@ object Drivetrain : Subsystem {
      *
      * Note that the speeds are relative to the chassis, not the field.
      */
+    val measuredChassisSpeedsRelativeToField get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
+
     private var desiredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(desiredModuleStates)
         set(value) {
@@ -367,6 +377,19 @@ object Drivetrain : Subsystem {
                 estimatedPose.rotation
             )
         }
+    }
+
+    private fun simDrive(translationInput: Translation2d, rotationInput: Translation2d) {
+        DrivetrainIOSim().selfControlledSwerveDriveSimulation.runChassisSpeeds(
+            ChassisSpeeds(
+                translationInput.x,
+                translationInput.y,
+                rotationInput.y * TAU,
+            ),
+            Translation2d(),
+            true,
+            true
+        )
     }
 
     @Suppress("SameParameterValue")
