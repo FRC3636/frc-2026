@@ -457,7 +457,7 @@ object Drivetrain : Subsystem {
 
     private var rawGyroRotation = Rotation2d.kZero
 
-    fun alignSideRelative(target: APTarget, flipH: Boolean, flipV: Boolean): Command {
+    fun alignAndFlip(target: APTarget, flipH: Boolean, flipV: Boolean): Command {
         var transformedTarget: APTarget = if (flipH) flipTargetHorizontal(target) else target
         transformedTarget = if (flipV) flipTargetVertical(target) else transformedTarget
         return alignWithAutopilot(transformedTarget)
