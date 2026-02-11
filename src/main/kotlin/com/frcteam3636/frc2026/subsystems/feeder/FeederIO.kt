@@ -1,10 +1,14 @@
 package com.frcteam3636.frc2026.subsystems.feeder
 
+import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.configs.TalonFXConfigurator
+import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
-import edu.wpi.first.epilogue.Logged
+import org.team9432.annotation.Logged
 
 @Logged
 open class FeederInputs {
@@ -19,6 +23,25 @@ interface FeederIO {
 
 class FeederIOReal : FeederIO {
     private val feederMotor = TalonFX(CTREDeviceId.FeederMotor)
+    private val feederMotorConfig = TalonFXConfiguration()
+
+    init {
+        feederMotorConfig.apply {
+            MotorOutput.apply {
+                NeutralMode = NeutralModeValue.Brake
+            }
+        }
+        feederMotor.configurator.apply(feederMotorConfig)
+
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            feederMotor.position,
+            feederMotor.velocity,
+            feederMotor.supplyCurrent
+        )
+        feederMotor.optimizeBusUtilization()
+    }
+
 
     override fun setSpeed(percent: Double) {
         assert(percent in -1.0..1.0)
