@@ -390,6 +390,19 @@ object Drivetrain : Subsystem {
         }
     }
 
+    private fun simDrive(translationInput: Translation2d, rotationInput: Translation2d) {
+        DrivetrainIOSim().selfControlledSwerveDriveSimulation.runChassisSpeeds(
+            ChassisSpeeds(
+                translationInput.x,
+                translationInput.y,
+                rotationInput.y * TAU,
+            ),
+            Translation2d(),
+            true,
+            true
+        )
+    }
+
     @Suppress("SameParameterValue")
     private fun driveWithoutDeadband(translationInput: Translation2d, rotationInput: Translation2d) {
         desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(

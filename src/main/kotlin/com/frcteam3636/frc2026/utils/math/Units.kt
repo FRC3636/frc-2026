@@ -91,7 +91,6 @@ inline val Number.celsius: Temperature get() = Celsius.of(this.toDouble())
 inline val Number.fahrenheit: Temperature get() = Fahrenheit.of(this.toDouble())
 
 inline val Number.voltsPerSecond: Velocity<VoltageUnit> get() = Volts.per(Second).of(this.toDouble())
-
 // Measure -> Number
 
 inline fun Distance.inMeters() = `in`(Meters)

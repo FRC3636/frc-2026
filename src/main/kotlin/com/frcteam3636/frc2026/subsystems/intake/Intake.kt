@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
+import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
@@ -16,7 +17,10 @@ object Intake : Subsystem {
         Deployed(0.degrees),
     }
 
-    private val io: IntakeIO = IntakeIOReal()
+    private val io: IntakeIO = when (Robot.model) {
+        Robot.Model.SIMULATION -> IntakeIOSim()
+        Robot.Model.COMPETITION -> IntakeIOReal()
+    }
 
     fun setPivotPosition(position: Position): Command =
         runOnce {

@@ -133,7 +133,7 @@ class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : Drivetra
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */
 class DrivetrainIOSim : DrivetrainIO() {
-    val vision = VisionSystemSim("main").apply {
+    public val vision = VisionSystemSim("main").apply {
         addAprilTags(FIELD_LAYOUT)
     }
 
@@ -154,9 +154,13 @@ class DrivetrainIOSim : DrivetrainIO() {
             Drivetrain.Constants.BUMPER_WIDTH
         )
 
-    val swerveDriveSimulation = SwerveDriveSimulation(
+    val swerveDriveSimulation: SwerveDriveSimulation = SwerveDriveSimulation(
         driveTrainSimulationConfig,
-        Pose2d(0.0, 0.0, Rotation2d())
+        Pose2d(0.0, 0.0, Rotation2d()
+        )
+    )
+    val selfControlledSwerveDriveSimulation: SelfControlledSwerveDriveSimulation = SelfControlledSwerveDriveSimulation(
+        swerveDriveSimulation
     )
 
     override val modules = PerCorner.generate { SimSwerveModule() }
@@ -172,8 +176,6 @@ class DrivetrainIOSim : DrivetrainIO() {
     init {
         SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation)
     }
-
-
 
     fun registerPoseProviders(providers: Iterable<AbsolutePoseProvider>) {
         for (provider in providers) {

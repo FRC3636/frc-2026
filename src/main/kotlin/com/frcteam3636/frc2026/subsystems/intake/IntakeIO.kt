@@ -7,27 +7,33 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
+import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
 import com.frcteam3636.frc2026.utils.math.PIDGains
-import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
+import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
+import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
+import org.ironmaple.simulation.IntakeSimulation
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import kotlin.apply
 
 @Logged
 open class IntakeInputs {
-    var runMotorVelocity = 0.rotationsPerSecond
-    var runMotorCurrent = 0.amps
+    var intakeMotorVelocity = 0.rotationsPerSecond
+    var intakeMotorCurrent = Amps.zero()!!
     var pivotAngle = 0.degrees
-    var pivotMotorCurrents = 0.amps
+    var leftPivotMotorCurrent = Amps.zero()!!
+    var rightPivotMotorCurrent = Amps.zero()!!
+
 
 }
 
@@ -53,7 +59,7 @@ class IntakeIOReal : IntakeIO {
 
     private val pivotMotorConfig = TalonFXConfiguration()
 
-    private val runMotor = TalonFX(CTREDeviceId.IntakeRunMotor).apply {
+    private val intakePivotMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
@@ -61,10 +67,10 @@ class IntakeIOReal : IntakeIO {
             }
         })
     }
-    private val leftMotor = TalonFX(CTREDeviceId.LeftPivotMotor).apply {
+    private val leftPivotMotor = TalonFX(CTREDeviceId.LeftPivotMotor).apply {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
     }
-    private val rightMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
+    private val rightPivotMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
     }
 
@@ -89,27 +95,73 @@ class IntakeIOReal : IntakeIO {
                 NeutralMode = NeutralModeValue.Brake
             }
         }
-        leftMotor.configurator.apply(pivotMotorConfig)
-        rightMotor.configurator.apply(pivotMotorConfig)
+        leftPivotMotor.configurator.apply(pivotMotorConfig)
+        rightPivotMotor.configurator.apply(pivotMotorConfig)
     }
 
     override fun setSpeed(percent: Double) {
-        runMotor.set(percent)
+        intakePivotMotor.set(percent)
     }
 
     override fun setRunMotorVoltage(voltage: Voltage) {
-        runMotor.setVoltage(voltage.inVolts())
+        intakePivotMotor.setVoltage(voltage.inVolts())
     }
 
     override fun setPivotAngle(angle: Angle) {
         Logger.recordOutput("Intake/Pivot Setpoint", angle)
         val controlRequest = MotionMagicVoltage(angle)
-        rightMotor.setControl(controlRequest.withPosition(angle))
+        rightPivotMotor.setControl(controlRequest.withPosition(angle))
     }
 
     override fun updateInputs(inputs: IntakeInputs) {
-        inputs.runMotorVelocity = runMotor.encoder.velocity.rpm
+        inputs.intakeMotorVelocity = intakePivotMotor.velocity.value
+        inputs.intakeMotorCurrent = intakePivotMotor.supplyCurrent.value
+
+        inputs.leftPivotMotorCurrent = leftPivotMotor.supplyCurrent.value
+        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
+        inputs.pivotAngle = leftPivotMotor.position.value
+
+    }
+}
+
+class IntakeIOSim: IntakeIO {
+
+    val intakeSimulation = IntakeSimulation.OverTheBumperIntake(
+        "Fuel",
+        DrivetrainIOSim().swerveDriveSimulation,
+        Drivetrain.Constants.BUMPER_WIDTH,
+        0.182.meters,
+        IntakeSimulation.IntakeSide.BACK,
+        40
+    )
+
+    fun setRunning(runIntake: Boolean) {
+        if (runIntake) {
+            intakeSimulation.startIntake()
+        } else {
+            intakeSimulation.stopIntake()
+        }
     }
 
+    val isFuelInsideIntake: Boolean
+        get() {
+            return intakeSimulation.gamePiecesAmount != 0
+        }
 
+
+
+    override fun setSpeed(percent: Double) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setRunMotorVoltage(voltage: Voltage) {
+        TODO("Not yet implemented")
+    }
+
+    override fun setPivotAngle(angle: Angle) {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateInputs(inputs: IntakeInputs) {
+    }
 }

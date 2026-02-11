@@ -30,7 +30,7 @@ enum class CTREDeviceId(val num: Int, val bus: CANBus) {
 
     PigeonGyro(20, canivoreBus),
 
-    IntakeRunMotor(40, canivoreBus),
+    IntakeMotor(40, canivoreBus),
     LeftPivotMotor(41, canivoreBus),
     RightPivotMotor(42, canivoreBus),
     IntakePivotEncoder(43, canivoreBus),

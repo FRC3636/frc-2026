@@ -3,12 +3,12 @@ package com.frcteam3636.frc2026.subsystems.shooter
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter.Turret.hubTranslation
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
@@ -18,6 +18,7 @@ import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -100,20 +101,6 @@ object Shooter {
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        val DriverStation.Alliance.hubTranslation
-            get() = when (this) {
-                DriverStation.Alliance.Blue -> Translation3d(
-                    4.62534.meters,
-                    (8.07 / 2).meters,
-                    1.83.meters,
-                )
-
-                else -> Translation3d(
-                    (16.54 - 4.62534).meters,
-                    (8.07 / 2).meters,
-                    1.83.meters,
-                )
-            }
     }
 
     object Hood: Subsystem {
@@ -297,9 +284,7 @@ object Shooter {
 
     private val distanceToHub: Translation2d
         get() {
-            return DriverStation.getAlliance()
-                .orElse(DriverStation.Alliance.Blue)
-                .hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
+            return Constants.hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
         }
 
     data class ShooterProfile(
@@ -309,7 +294,26 @@ object Shooter {
         val getVelocity: () -> AngularVelocity
     )
 
+    /*fun getFixedPoseTurretProfile(pose : Pose2d){
 
+        val distanceToPose = Drivetrain.estimatedPose.minus(pose).translation.norm.meters
+        val adjustedDistance = (Constants.hubTranslation.z/((distanceToPose.inMeters()/2.0).pow(2) - distanceToPose.inMeters())).meters
+        val targetLinearVelocity = Flywheel.getFlywheelVelocity(adjustedDistance).toLinear(Constants.FLYWHEEL_RADIUS)
+        val targetHoodAngle = Hood.getHoodAngle(adjustedDistance)
+        val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
+        val targetVelocityVector = VecBuilder.fill(
+            horizontalVelocity.getHorizontalComponent(distanceToPose.angle.measure).inMetersPerSecond(),
+            horizontalVelocity.getVerticalComponent(distanceToPose.angle.measure).inMetersPerSecond(),
+            targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
+        )
+        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
+        val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
+        val adjustedVector = targetVelocityVector - robotVelocityVector
+        val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
+
+
+    }
+    */
     val adjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
         get() {
             val distance = distanceToHub
@@ -329,15 +333,7 @@ object Shooter {
             return Pair(adjustedVector, angleError)
         }
 
-    val feedShooterProfile : ShooterProfile
-        get() {
-            return ShooterProfile(
-                { 0.0.radians },
-                { 0.0.radians },
-                { 0.0.radians },
-                { 10.rpm }
-            )
-        }
+
 
     fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
         val (vector, error) = vectorAndAngle
@@ -418,6 +414,21 @@ object Shooter {
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
         val FIXED_HOOD_ANGLE = 40.radians
+
+        val hubTranslation
+            get() = when (DriverStation.getAlliance().get()) {
+                Alliance.Blue  -> Translation3d(
+                    4.62534.meters,
+                    (8.07 / 2).meters,
+                    1.83.meters,
+                )
+
+                else -> Translation3d(
+                    (16.54 - 4.62534).meters,
+                    (8.07 / 2).meters,
+                    1.83.meters,
+                )
+            }
     }
 
     enum class FeedPose(target : Translation2d) {
