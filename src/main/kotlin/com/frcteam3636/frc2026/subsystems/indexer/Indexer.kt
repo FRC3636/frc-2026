@@ -1,0 +1,34 @@
+package com.frcteam3636.frc2026.subsystems.indexer
+
+import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.utils.math.amps
+import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
+import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Subsystem
+import org.littletonrobotics.junction.Logger
+import org.team9432.annotation.Logged
+
+object Indexer : Subsystem {
+    private val io: IndexerIO = when (Robot.model) {
+        Robot.Model.SIMULATION -> TODO("Add sim io")
+        Robot.Model.COMPETITION -> IndexerIOReal()
+    }
+
+    var inputs = LoggedIndexerInputs()
+
+    override fun periodic() {
+        io.updateInputs(inputs)
+        Logger.processInputs("Indexer", inputs)
+    }
+
+    fun index(): Command = Commands.startEnd(
+        {
+            io.setSpeed(1.0)
+        },
+        {
+            io.setSpeed(0.0)
+        }
+    )
+}
