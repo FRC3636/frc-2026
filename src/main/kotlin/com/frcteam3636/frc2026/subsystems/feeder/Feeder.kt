@@ -1,11 +1,15 @@
 package com.frcteam3636.frc2026.subsystems.feeder
 
+import com.frcteam3636.frc2026.Robot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 
 object Feeder : Subsystem {
-    private val io = FeederIOReal()
+    private val io: FeederIO = when (Robot.model) {
+        Robot.Model.SIMULATION -> TODO("Add sim")
+        Robot.Model.COMPETITION -> FeederIOReal()
+    }
     val inputs = LoggedFeederInputs()
 
     override fun periodic() {
@@ -29,7 +33,6 @@ object Feeder : Subsystem {
         {
             io.setSpeed(0.0)
         }
-
     )
 
 }
