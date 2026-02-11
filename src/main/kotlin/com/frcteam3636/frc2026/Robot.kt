@@ -261,7 +261,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        val selectedAuto = Dashboard.autoChooser.selected
+//        val selectedAuto = Dashboard.autoChooser.selected
         if (!RobotState.beforeFirstEnable)
             RobotState.beforeFirstEnable = false
         CommandScheduler.getInstance().schedule(autoCommand)
