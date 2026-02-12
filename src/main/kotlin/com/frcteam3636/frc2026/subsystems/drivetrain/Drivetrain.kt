@@ -199,10 +199,10 @@ object Drivetrain : Subsystem {
             val numDetections = detections.size / 12
             val detectionTx = Array(numDetections) {0.0}
             val detectionTy= Array(numDetections) {0.0}
-            for (i in 0..numDetections) {
+            for (i in 0..< numDetections) {
                 val baseIndex = i * numDetections
-                detectionTx[i] = detections[baseIndex + 1] * 27.0
-                detectionTy[i] = detections[baseIndex + 2] * 27.0
+                detectionTx[i] = detections[baseIndex + 1]
+                detectionTy[i] = detections[baseIndex + 2]
             }
             return Pair(detectionTx, detectionTy)
         }
@@ -216,26 +216,22 @@ object Drivetrain : Subsystem {
                 val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
                 val groupedAngles = tyResults.slice(largestCluster.indices)
                 val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
-                val distance =
-                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
+                val adjustedAngle = smallestVerticalAngle.degrees + Constants.INTAKE_LIMELIGHT_ANGLE_OFFSET
                 val targetHorizontalAngle = largestCluster.map { it.value }.average()
+                val distance =
+                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) /
+                            tan(adjustedAngle.inRadians()) /
+                            cos(abs(targetHorizontalAngle).degrees.inRadians())).inMeters()
                 inputs.fuelClusterDistance = distance.meters
-//                val targetPose = Pose2d(
-//                    estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
-//                    Rotation2d.k180deg,
-//                )
+                val targetPose = Pose2d(
+                    estimatedPose.translation + Translation2d(
+                        distance,
+                        estimatedPose.rotation - Rotation2d(targetHorizontalAngle)),
+                    Rotation2d.k180deg,
+                )
+                alignWithAutopilot(APTarget(targetPose))
             }
         })
-
-    fun testLogging(): Command =
-        Commands.run({
-            println(Preferences.getNetworkTable())
-            Logger.recordOutput("Drivetrain/apple", 5.0)
-            Preferences.getNetworkTable().getEntry("Test").setValue(15.0)
-            Preferences.getNetworkTable()
-            inputs.fuelClusterDistance = 5.meters
-        })
-
 
     init {
         if (io is DrivetrainIOSim) {
@@ -672,6 +668,7 @@ object Drivetrain : Subsystem {
         }
 
         val FUEL_RADIUS = .075.meters
-        val INTAKE_LIMELIGHT_HEIGHT = .25.meters // TODO: find actual height
+        val INTAKE_LIMELIGHT_HEIGHT = .165.meters
+        val INTAKE_LIMELIGHT_ANGLE_OFFSET = 16.degrees
     }
 }

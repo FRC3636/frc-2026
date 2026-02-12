@@ -189,9 +189,9 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }))
 
-        controller.rightTrigger().onTrue(Commands.run({
+        controller.rightTrigger().whileTrue(
             Drivetrain.driveToLargestFuelCluster()
-        }))
+        )
 
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
         joystickLeft.button(1).whileTrue(Drivetrain.driveToLargestFuelCluster())
@@ -260,5 +260,9 @@ object Robot : LoggedRobot() {
     }
 
     override fun testExit() {
+    }
+
+    override fun simulationPeriodic() {
+        Logger.recordOutput("Drivetrain/test", 5.0)
     }
 }
