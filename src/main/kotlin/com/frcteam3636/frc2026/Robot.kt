@@ -142,7 +142,7 @@ object Robot : LoggedRobot() {
             // Enables power distribution logging
             PowerDistribution(
                 1, PowerDistribution.ModuleType.kRev
-            )
+            ).apply { switchableChannel = true }
         } else {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
@@ -168,21 +168,13 @@ object Robot : LoggedRobot() {
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
-        Drivetrain.register()
+//        Drivetrain.register()
         Feeder.register()
         Indexer.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
-    private fun configureAutos() {
-//        NamedCommands.registerCommand(
-//            "revAim",
-//            Commands.parallel(
-//                Shooter.Pivot.followMotionProfile(Shooter.Pivot.Target.AIM),
-//                Shooter.Flywheels.rev(580.0, 0.0)
-//            )
-//        )
-    }
+    private fun configureAutos() {}
 
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
@@ -208,6 +200,20 @@ object Robot : LoggedRobot() {
         controller.b().onTrue(Commands.runOnce( {
             Drivetrain.zeroGyro()
         }))
+
+        controller.a().whileTrue(
+            Commands.parallel(
+                Indexer.index(),
+                Feeder.feed()
+            )
+        )
+
+        controller.x().whileTrue(
+            Commands.parallel(
+                Indexer.outdex(),
+                Feeder.outtake()
+            )
+        )
 
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 

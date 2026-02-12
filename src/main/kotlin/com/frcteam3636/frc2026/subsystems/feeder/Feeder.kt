@@ -19,16 +19,16 @@ object Feeder : Subsystem {
 
     fun feed(): Command = startEnd(
         {
-            io.setSpeed(0.75)
+            io.setSpeed(1.0)
         },
         {
             io.setSpeed(0.0)
         }
     )
 
-    fun reverse(): Command = startEnd(
+    fun outtake(): Command = startEnd(
         {
-            io.setSpeed(-0.75)
+            io.setSpeed(-0.25)
         },
         {
             io.setSpeed(0.0)
