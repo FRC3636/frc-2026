@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.littletonrobotics.junction.AutoLogOutput
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
@@ -218,13 +219,21 @@ object Drivetrain : Subsystem {
                 val distance =
                     ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
                 val targetHorizontalAngle = largestCluster.map { it.value }.average()
-                val targetPose = Pose2d(
-                    estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
-                    Rotation2d.k180deg,
-                )
-                Logger.recordOutput("Drivetrain/Target Fuel Pose", targetPose)
-                alignWithAutopilot(APTarget(targetPose))
+                inputs.fuelClusterDistance = distance.meters
+//                val targetPose = Pose2d(
+//                    estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
+//                    Rotation2d.k180deg,
+//                )
             }
+        })
+
+    fun testLogging(): Command =
+        Commands.run({
+            println(Preferences.getNetworkTable())
+            Logger.recordOutput("Drivetrain/apple", 5.0)
+            Preferences.getNetworkTable().getEntry("Test").setValue(15.0)
+            Preferences.getNetworkTable()
+            inputs.fuelClusterDistance = 5.meters
         })
 
 

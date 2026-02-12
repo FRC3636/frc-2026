@@ -29,6 +29,7 @@ open class DrivetrainInputs {
     var moduleTemperatures = PerCorner.generate {
         SwerveModuleTemperature(0.0.celsius, 0.0.celsius)
     }
+    var fuelClusterDistance = 0.meters
 }
 
 abstract class DrivetrainIO {
