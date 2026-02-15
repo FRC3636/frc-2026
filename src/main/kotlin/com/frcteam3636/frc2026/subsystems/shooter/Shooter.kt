@@ -2,13 +2,12 @@ package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
+import com.frcteam3636.frc2026.utils.flipHorizontally
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.filter.Debouncer
-import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
@@ -25,8 +24,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
-import org.ironmaple.simulation.SimulatedArena
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -49,6 +46,8 @@ object Shooter {
                 field = value
             }
 
+
+
         override fun periodic() {
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
@@ -65,10 +64,30 @@ object Shooter {
                     io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
                 }
         }
+        fun getClosetTarget() : Translation2d{
+            var ourAllianceZone = Zones.BlueAllianceZone
+            var opposingAllianceZone = Zones.RedAllianceZone
+            if(DriverStation.getAlliance().get() == Alliance.Red){
+                ourAllianceZone = Zones.BlueAllianceZone
+                opposingAllianceZone = Zones.RedAllianceZone
+            }
+
+            val target =  when(Drivetrain.estimatedPose.x){
+                in ourAllianceZone.startX.inMeters()..ourAllianceZone.endX.inMeters() -> Constants.hubTranslation.toTranslation2d()
+                in opposingAllianceZone.startX.inMeters()..ourAllianceZone.endX.inMeters() -> FeedPose.RightSideNeutralZone.target
+                else -> FeedPose.RightSideAllianceZone.target
+            }
+            if(Drivetrain.estimatedPose.translation.y < 4.035.meters.inMeters()){
+                return target.flipHorizontally()
+            }
+            return target
+            }
+
+
 
         fun turnToTargetTurretAngle(): Command =
             run {
-                io.turnToAngle(Hood.target.profile.getTurretAngle())
+                io.turnToAngle(Hood.target.turretAngle)
             }
 
         fun turretBrakeMode(): Command =
@@ -100,7 +119,7 @@ object Shooter {
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
-
+        val test = FeedPose.RightSideNeutralZone as Translation2d
     }
 
     object Hood: Subsystem {
@@ -110,7 +129,7 @@ object Shooter {
         }
 
         val inputs = LoggedHoodInputs()
-        var target = Target.STOWED
+        var target = Target.STOWED.profile
         var fixedHood = false
 
         // distance -> sin(2 * angle)
@@ -125,7 +144,7 @@ object Shooter {
 
         val atDesiredHoodAngle =
             Trigger {
-                val error = abs((inputs.hoodAngle - target.profile.getHoodAngle()).inDegrees())
+                val error = abs((inputs.hoodAngle - target.hoodAngle).inDegrees())
                 Logger.recordOutput("Shooter/Hood/Angle Error", error)
                 error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
             }
@@ -133,8 +152,8 @@ object Shooter {
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
-            Logger.recordOutput("Shooter/Hood/Active profile", target)
-            Logger.recordOutput("Shooter/Hood/Reference", target.profile.getHoodAngle())
+            Logger.recordOutput("Shooter/Hood/Shooter Target", target.target)
+            Logger.recordOutput("Shooter/Hood/Reference", target.hoodAngle)
         }
 
         val sysID = SysIdRoutine(
@@ -157,14 +176,14 @@ object Shooter {
 
         fun getHoodAngle(distance: Distance): Angle = (asin(angleInterpolationTable.get(distance.inMeters())) / 2).radians
 
-        fun setTarget(target: Target): Command =
+        fun setTarget(target: ShooterProfile): Command =
             runOnce {
                 Hood.target = target
             }
 
         fun turnToTargetHoodAngle(): Command =
             run {
-                io.turnToAngle(target.profile.getHoodAngle())
+                io.turnToAngle(target.hoodAngle)
             }
 
         fun hoodBrakeMode(): Command =
@@ -210,7 +229,7 @@ object Shooter {
 
         val atDesiredFlywheelVelocity =
             Trigger {
-                val error = abs((inputs.angularVelocity - Hood.target.profile.getVelocity()).inRPM())
+                val error = abs((inputs.angularVelocity - Hood.target.angularVelocity).inRPM())
                 Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
                 error < Constants.FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
             }
@@ -218,7 +237,7 @@ object Shooter {
         override fun periodic() {
             io.updateInputs(inputs)
 //            Logger.processInputs("Flywheel", inputs)
-            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", Hood.target.profile.getVelocity())
+            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", Hood.target.angularVelocity)
         }
 
         @Suppress("Unused")
@@ -256,15 +275,29 @@ object Shooter {
         )
 
         fun setSpeed(): Command = run {
-            io.setVelocity(Hood.target.profile.getVelocity())
+            io.setVelocity(Hood.target.angularVelocity)
         }
+    }
+    fun shootAtTranslation(target: Translation2d = Turret.getClosetTarget()): Command {
+        var shooterProfile = getTurretProfileFromTranslation2d(target)
+        if(target == Constants.hubTranslation.toTranslation2d()){
+          shooterProfile = Target.AIM_AT_HUB.profile
+        }
+        return Commands.sequence(
+            Hood.setTarget(shooterProfile),
+            Commands.parallel(
+                Turret.turnToTargetTurretAngle(),
+                Hood.turnToTargetHoodAngle(),
+                Flywheel.setSpeed()
+            )
+        )
     }
 
     fun shootSequence(target: Target): Command =
         Commands.sequence(
-            Hood.setTarget(target),
+            Hood.setTarget(target.profile),
             Commands.parallel(
-//                Turret.alignToHub(target.profile.getTurretError()),
+                Turret.alignToHub(target.profile.turretError),
                 Turret.turnToTargetTurretAngle(),
                 Hood.turnToTargetHoodAngle(),
                 Flywheel.setSpeed(),
@@ -288,16 +321,24 @@ object Shooter {
         }
 
     data class ShooterProfile(
-        val getTurretError: () -> Angle,
-        val getTurretAngle: () -> Angle,
-        val getHoodAngle: () -> Angle,
-        val getVelocity: () -> AngularVelocity
+        val turretError: Angle,
+        val turretAngle: Angle,
+        val hoodAngle: Angle,
+        val angularVelocity: AngularVelocity,
+        val target: Translation2d
     )
 
-    /*fun getFixedPoseTurretProfile(pose : Pose2d){
+    fun getTurretProfileFromTranslation2d(targetTranslation : Translation2d) : ShooterProfile{
 
-        val distanceToPose = Drivetrain.estimatedPose.minus(pose).translation.norm.meters
-        val adjustedDistance = (Constants.hubTranslation.z/((distanceToPose.inMeters()/2.0).pow(2) - distanceToPose.inMeters())).meters
+        val distanceToPose = Drivetrain.estimatedPose.translation.minus(targetTranslation)
+        val distanceToHub = Constants.hubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)
+        val parabolicA = (distanceToHub)/(distanceToPose.norm.meters.inMeters().pow(2) + (distanceToPose.norm.meters * distanceToHub).inMeters())
+        val parabolicB = (-parabolicA * distanceToPose.norm)
+        val parabolicSolutions = Pair(
+            (-parabolicB - sqrt(parabolicB.pow(2) - (4 * parabolicA * Constants.hubTranslation.y)))
+            ,(-parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * Constants.hubTranslation.y)))
+        )
+        val adjustedDistance = max(parabolicSolutions.first, parabolicSolutions.second).meters
         val targetLinearVelocity = Flywheel.getFlywheelVelocity(adjustedDistance).toLinear(Constants.FLYWHEEL_RADIUS)
         val targetHoodAngle = Hood.getHoodAngle(adjustedDistance)
         val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
@@ -310,12 +351,12 @@ object Shooter {
         val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
         val adjustedVector = targetVelocityVector - robotVelocityVector
         val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
-
-
+        return vectorToShooterProfile(Triple(adjustedVector, angleError, targetTranslation))
     }
-    */
-    val adjustedVelocityVectorAndError: Pair<Vector<N3>, Angle>
+
+    val adjustedVelocityVectorAndError: Triple<Vector<N3>, Angle, Translation2d>
         get() {
+            val target = Constants.hubTranslation.toTranslation2d()
             val distance = distanceToHub
             val targetHoodAngle = Hood.getHoodAngle(distance.norm.meters)
             val targetLinearVelocity =
@@ -330,40 +371,42 @@ object Shooter {
             val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
             val adjustedVector = targetVelocityVector - robotVelocityVector
             val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
-            return Pair(adjustedVector, angleError)
+            return Triple(adjustedVector, angleError, target)
         }
 
 
 
-    fun vectorToShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile {
-        val (vector, error) = vectorAndAngle
+    fun vectorToShooterProfile(vectorAndAngle: Triple<Vector<N3>, Angle, Translation2d>): ShooterProfile {
+        val (vector, error, target) = vectorAndAngle
         val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
         val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
-            {error},
-            {turretAngle},
-            {hoodAngle},
-            {velocity},
+            error,
+            turretAngle,
+            hoodAngle,
+            velocity,
+            target
         )
     }
 
-    fun vectorToFixedHoodShooterProfile(vectorAndAngle: Pair<Vector<N3>, Angle>): ShooterProfile{
-        val (vector,error) = vectorAndAngle
+    fun vectorToFixedHoodShooterProfile(vectorAndAngle: Triple<Vector<N3>, Angle, Translation2d>): ShooterProfile{
+        val (vector,error, target) = vectorAndAngle
         val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
         val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
                 Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         return ShooterProfile(
-            {error},
-            {turretAngle},
-            {Constants.FIXED_HOOD_ANGLE},
-            {velocity}
+            error,
+            turretAngle,
+            Constants.FIXED_HOOD_ANGLE,
+            velocity,
+            target
         )
     }
 
     enum class Target(val profile: ShooterProfile) {
-
-        AIM(vectorToShooterProfile(adjustedVelocityVectorAndError)),
+        
+        AIM_AT_HUB(vectorToShooterProfile(adjustedVelocityVectorAndError)),
 
         AIM_WITHOUT_HOOD(
             vectorToFixedHoodShooterProfile(adjustedVelocityVectorAndError)
@@ -372,35 +415,41 @@ object Shooter {
 
         STOWED(
             ShooterProfile(
-                {
+
                     0.0.radians
-                },
-                {
+                ,
+
                     0.0.radians
-                },
-                {
+                ,
+
                     40.degrees.inRadians().radians
-                },
-                {
+                ,
+
                     0.rpm
-                }
+                ,
+
+                    Translation2d()
+
             )
         ),
 
         TUNING(
             ShooterProfile(
-                {
+
                     0.0.radians
-                },
-                {
+                ,
+
                     0.0.radians
-                },
-                {
+                ,
+
                     hoodTunable.get().degrees.inRadians().radians
-                },
-                {
+                ,
+
                     flywheelTunable.get().rpm
-                }
+                ,
+
+                Translation2d()
+
             )
         )
 
@@ -414,6 +463,7 @@ object Shooter {
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
         val FIXED_HOOD_ANGLE = 40.radians
+
 
         val hubTranslation
             get() = when (DriverStation.getAlliance().get()) {
@@ -431,11 +481,21 @@ object Shooter {
             }
     }
 
-    enum class FeedPose(target : Translation2d) {
+    enum class FeedPose(val target : Translation2d) {
         LeftSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         RightSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         LeftSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
         RightSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
     }
 
+    enum class Zones(val startX : Distance, val endX : Distance){
+        BlueAllianceZone(0.meters, 4.03.meters),
+        RedAllianceZone(4.03.meters, 11.22.meters),
+        NeutralZone(11.22.meters, 15.23.meters),
+    }
+
 }
+
+
+
+
