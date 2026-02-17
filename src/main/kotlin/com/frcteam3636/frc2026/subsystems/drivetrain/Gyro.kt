@@ -10,6 +10,7 @@ import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.AngularVelocity
+import org.ironmaple.simulation.drivesims.GyroSimulation
 import java.util.*
 import kotlin.math.sign
 
@@ -127,4 +128,17 @@ class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
         velocity = turnRate.degrees.degreesPerSecond
         rotation = rotation.plus(turnRate.times(Robot.period))
     }
+}
+
+class GyroMapleSim(gyroSimulation: GyroSimulation) : Gyro {
+
+    override var rotation: Rotation2d = gyroSimulation.gyroReading
+
+    override var velocity: AngularVelocity = gyroSimulation.measuredAngularVelocity
+
+    override var odometryYawPositions: DoubleArray = doubleArrayOf()
+
+    override var odometryYawTimestamps: DoubleArray = doubleArrayOf()
+
+    override val connected: Boolean = true
 }

@@ -204,15 +204,9 @@ object Drivetrain : Subsystem {
         get() = absolutePoseIOs.values.all { it.second.connected }
 
     init {
-        if (io is DrivetrainIOSim) {
-            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
-            val swerveDriveSimulation = SwerveDriveSimulation(
-                io.driveTrainSimulationConfig,
-                Pose2d(3.0, 3.0, Rotation2d())
-            )
-            SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation)
-        }
-
+//        if (io is DrivetrainIOSim) {
+//            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
+//        }
         PhoenixOdometryThread.start()
     }
 
@@ -220,7 +214,7 @@ object Drivetrain : Subsystem {
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     override fun periodic() {
-        if (Robot.model != Robot.Model.SIMULATION) {
+        if (io is DrivetrainIOReal) {
             try {
                 odometryLock.lock()
                 io.updateInputs(inputs)
@@ -259,14 +253,16 @@ object Drivetrain : Subsystem {
             } finally {
                 odometryLock.unlock()
             }
-        } else {
+        } else if (io is DrivetrainIOSim) {
             io.updateInputs(inputs)
             Logger.processInputs("Drivetrain", inputs)
-            rawGyroRotation = inputs.gyroRotation
-            poseEstimator.update(
-                rawGyroRotation,
-                inputs.measuredPositions.toTypedArray()
-            )
+//            rawGyroRotation = inputs.gyroRotation
+//            poseEstimator.update(
+//                rawGyroRotation,
+//                inputs.measuredPositions.toTypedArray()
+//            )
+            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
+            poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
         }
 
         Logger.recordOutput("Drivetrain/Raw Gyro Rotation", rawGyroRotation)
@@ -390,18 +386,19 @@ object Drivetrain : Subsystem {
         }
     }
 
-    private fun simDrive(translationInput: Translation2d, rotationInput: Translation2d) {
-        DrivetrainIOSim().selfControlledSwerveDriveSimulation.runChassisSpeeds(
-            ChassisSpeeds(
-                translationInput.x,
-                translationInput.y,
-                rotationInput.y * TAU,
-            ),
-            Translation2d(),
-            true,
-            true
-        )
-    }
+    fun simDrive(translationJoystick: Joystick, rotationJoystick: Joystick): Command =
+        run {
+            DrivetrainIOSim().simulatedDrive.runChassisSpeeds(
+                ChassisSpeeds(
+                    translationJoystick.x,
+                    translationJoystick.y,
+                    rotationJoystick.x,
+                ),
+                Translation2d(),
+                true,
+                true
+            )
+        }
 
     @Suppress("SameParameterValue")
     private fun driveWithoutDeadband(translationInput: Translation2d, rotationInput: Translation2d) {
