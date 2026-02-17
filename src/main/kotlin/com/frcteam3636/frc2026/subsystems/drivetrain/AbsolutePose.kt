@@ -140,15 +140,24 @@ class LimelightPoseProvider(
 
         if (!isLL4) {
             gyroState[0] = gyroAngle.degrees
+            gyroState[1] = gyroVelocity.inDegreesPerSecond()
             gyroPublisher.accept(gyroState)
             NetworkTableInstance.getDefault().flush()
         } else {
+            // Idk why this was set to before first enable, we need to update the gyro pose every frame right?
+            gyroState[0] = gyroAngle.degrees
+            // Also we weren't setting yaw per second which I think is important for MT2
+            gyroState[1] = gyroVelocity.inDegreesPerSecond()
+            gyroPublisher.accept(gyroState)
+            NetworkTableInstance.getDefault().flush()
+
             if (RobotState.beforeFirstEnable) {
-                gyroState[0] = gyroAngle.degrees
                 imuModePublisher.accept(1.toLong())
-                gyroPublisher.accept(gyroState)
-                NetworkTableInstance.getDefault().flush()
+
+                // This was never set to false earlier for some reason
+                wasIMUChanged = false
             }
+
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
                 throttlePublisher.accept(100.toLong())
                 isThrottled = true
@@ -184,7 +193,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
                 APRIL_TAG_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
@@ -221,7 +230,8 @@ class LimelightPoseProvider(
             rawArray[0],
             rawArray[1],
             Rotation2d(
-                rawArray[3].degrees.inRadians(),
+                // Previously was index 3 (roll), but should be 5 (yaw)?
+                rawArray[5].degrees.inRadians(),
             )
         )
     }
@@ -272,11 +282,6 @@ class LimelightPoseProvider(
     }
 
     companion object {
-        /**
-         * The acceptable distance for a single-April-Tag reading.
-         * Only used when computing pose through MegaTagV1.
-         */
-        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.

@@ -84,8 +84,9 @@ object Drivetrain : Subsystem {
             Commands.waitSeconds(1.0),
             Commands.runOnce({
                 Logger.recordOutput("Drivetrain/Wheel Radius Calculated/Running", true)
+                val modules = io.modules.toTypedArray()
                 for (i in 0..3) {
-                    wheelRadiusModuleStates[i] = io.modules.toTypedArray()[i].angularDrivePosition.inRadians()
+                    wheelRadiusModuleStates[i] = modules[i].angularDrivePosition.inRadians()
                 }
                 wheelRadiusLastAngle = inputs.gyroRotation
                 wheelRadiusGyroDelta = 0.0
@@ -179,26 +180,30 @@ object Drivetrain : Subsystem {
     private val rejectedPoses: MutableList<Pose2d> = mutableListOf()
 
     /** Helper for estimating the location of the drivetrain on the field */
-    val poseEstimator =
-        SwerveDrivePoseEstimator(
-            kinematics, // swerve drive kinematics
-            inputs.gyroRotation, // initial gyro rotation
-            inputs.measuredPositions.toTypedArray(), // initial module positions
-            Pose2d.kZero, // initial pose
-            VecBuilder.fill(0.02, 0.02, 0.005),
-            // Overwrite each measurement
-            VecBuilder.fill(0.0, 0.0, 0.0)
-        )
+    @Suppress("UNNECESSARY_LATEINIT")
+    lateinit var poseEstimator: SwerveDrivePoseEstimator
 
     /** Whether every sensor used for pose estimation is connected. */
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
 
     init {
+        io.updateInputs(inputs)
+
+        poseEstimator =
+            SwerveDrivePoseEstimator(
+                kinematics, // swerve drive kinematics
+                inputs.gyroRotation, // initial gyro rotation
+                inputs.measuredPositions.toTypedArray(), // initial module positions
+                Pose2d.kZero, // initial pose
+                VecBuilder.fill(0.02, 0.02, 0.005),
+                // Overwrite each measurement
+                VecBuilder.fill(0.0, 0.0, 0.0)
+            )
+
         if (io is DrivetrainIOSim) {
             io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
         }
-
         PhoenixOdometryThread.start()
     }
 
@@ -213,7 +218,7 @@ object Drivetrain : Subsystem {
                 Logger.processInputs("Drivetrain", inputs)
                 val odometryTimestamps = io.odometryTimestamps
                 val odometryPositions = io.odometryPositions
-                val odometryYawPositons = io.odometryYawPositions
+                val odometryYawPositions = io.odometryYawPositions
                 val validTimestamps = io.validTimestamps
                 Logger.recordOutput("Drivetrain/Valid Timestamps", io.validTimestamps)
                 for (i in 0..<validTimestamps) {
@@ -232,11 +237,14 @@ object Drivetrain : Subsystem {
                         moduleDeltas[index].angle = deltaAngle
 
                         // Update last positions
-                        lastModulePositions[index] = modulePositions[index]
+                        lastModulePositions[index] = SwerveModulePosition(
+                            modulePositions[index].distanceMeters,
+                            modulePositions[index].angle
+                        )
                     }
 
                     rawGyroRotation = if (inputs.gyroConnected) {
-                        Rotation2d(odometryYawPositons[i].degrees)
+                        Rotation2d(odometryYawPositions[i].degrees)
                     } else {
                         rawGyroRotation.plus(Rotation2d(kinematics.toTwist2d(*moduleDeltas).dtheta.radians))
                     }
@@ -329,7 +337,7 @@ object Drivetrain : Subsystem {
         get() {
             return DriverStation.getAlliance()
                 .orElse(DriverStation.Alliance.Blue)
-                .hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
+                .hubTranslation.toTranslation2d() - estimatedPose.translation
         }
 
     // As well as this
@@ -455,11 +463,16 @@ object Drivetrain : Subsystem {
 
     val autoPilot = Autopilot(autoPilotProfile)
 
+    val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
+        enableContinuousInput(0.0, TAU)
+    }
+
     private var rawGyroRotation = Rotation2d.kZero
 
     fun alignAndFlip(target: APTarget, flipH: Boolean, flipV: Boolean): Command {
-        var transformedTarget: APTarget = if (flipH) flipTargetHorizontal(target) else target
-        transformedTarget = if (flipV) flipTargetVertical(target) else transformedTarget
+        var transformedTarget = target
+        if (flipH) transformedTarget = flipTargetHorizontal(transformedTarget)
+        if (flipV) transformedTarget = flipTargetVertical(transformedTarget)
         return alignWithAutopilot(transformedTarget)
     }
 
@@ -467,10 +480,6 @@ object Drivetrain : Subsystem {
     // TODO: This might be done by passing it in for offset.
     fun alignToHub(offset: Angle = 0.0.radians): Command = run {
         val target = toHub.angle.measure + offset - estimatedPose.rotation.radians.radians
-
-        val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
-            enableContinuousInput(0.0, TAU)
-        }
 
         val rotationOutput = autoPilotRotationPID.calculate(
             poseEstimator.estimatedPosition.rotation.radians,
@@ -504,10 +513,6 @@ object Drivetrain : Subsystem {
                 target
             )
 
-            val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
-                enableContinuousInput(0.0, TAU)
-            }
-
             val rotationOutput = autoPilotRotationPID.calculate(
                 poseEstimator.estimatedPosition.rotation.radians,
                 output.targetAngle.radians
@@ -526,10 +531,7 @@ object Drivetrain : Subsystem {
             Logger.recordOutput("Drivetrain/APOutputX", output.vx)
             Logger.recordOutput("Drivetrain/APOutputY", output.vy)
             Logger.recordOutput("Drivetrain/APRotationOutput", rotationOutput)
-            Logger.recordOutput(
-                "Drivetrain/APTarget",
-                Pose2d(Translation2d((546.87 + 48.0).inches, 158.3.inches), Rotation2d.kZero)
-            )
+            Logger.recordOutput("Drivetrain/APTarget", target.reference)
 
         }.until {
             autoPilot.atTarget(estimatedPose, target)

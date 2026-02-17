@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.configs.MountPoseConfigs
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Diagnostics
 import com.frcteam3636.frc2026.Pigeon2
@@ -44,7 +45,7 @@ abstract class DrivetrainIO {
             inputs.measuredPositions[i] = module.position   // no allocation
         }
 
-        inputs.gyroRotation = gyro.rotation
+        inputs.gyroRotation = gyro.rotation.unaryMinus()
         inputs.gyroVelocity = gyro.velocity
         inputs.gyroConnected = gyro.connected
         inputs.moduleTemperatures = modules.map { it.temperatures }
@@ -116,7 +117,16 @@ abstract class DrivetrainIO {
 
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
-    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro))
+    val gyroConfig: MountPoseConfigs = MountPoseConfigs()
+        .withMountPosePitch(180.degrees)
+
+    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro)).apply {
+        gyroConfig
+    }
+//    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro)).apply {
+//        MountPoseConfigs()
+//            .withMountPoseYaw(180.degrees)
+//    }
 }
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */

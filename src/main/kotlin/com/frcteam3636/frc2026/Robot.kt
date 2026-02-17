@@ -219,7 +219,7 @@ object Robot : LoggedRobot() {
 
         // Angles robot for shooting, just in case the
         // turret stops working.
-        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
+//        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
