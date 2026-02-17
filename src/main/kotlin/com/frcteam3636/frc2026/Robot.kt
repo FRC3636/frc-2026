@@ -6,6 +6,7 @@ import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
+import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -211,6 +212,9 @@ object Robot : LoggedRobot() {
             )
         )
 
+        controller.rightTrigger().whileTrue(
+            Shooter.simSequence()
+        )
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(
@@ -287,5 +291,6 @@ object Robot : LoggedRobot() {
         val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
             .getGamePiecesArrayByType("Fuel")
         Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
+        Shooter.simSequence()
     }
 }

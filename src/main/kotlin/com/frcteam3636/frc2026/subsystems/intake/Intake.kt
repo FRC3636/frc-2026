@@ -44,8 +44,8 @@ object Intake : Subsystem {
         { io.setPivotAngle(Position.Stowed.angle) }
     ).onlyWhile { intakeDown }
 
-
-
-
-
+//    fun simIntake(): Command = startEnd(
+//        { IntakeIOSim.setRunning(true) },
+//        { IntakeIOSim.setRunning(false) }
+//    )
 }

@@ -2,6 +2,7 @@ package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
 import com.frcteam3636.frc2026.utils.flipHorizontally
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
@@ -24,6 +25,9 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -46,8 +50,6 @@ object Shooter {
                 field = value
             }
 
-
-
         override fun periodic() {
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
@@ -64,6 +66,7 @@ object Shooter {
                     io.turnToAngle(inputs.turretAngle + (camError * kP).radians)
                 }
         }
+
         fun getClosetTarget() : Translation2d{
             var ourAllianceZone = Zones.BlueAllianceZone
             var opposingAllianceZone = Zones.RedAllianceZone
@@ -82,8 +85,6 @@ object Shooter {
             }
             return target
             }
-
-
 
         fun turnToTargetTurretAngle(): Command =
             run {
@@ -278,6 +279,7 @@ object Shooter {
             io.setVelocity(Hood.target.angularVelocity)
         }
     }
+
     fun shootAtTranslation(target: Translation2d = Turret.getClosetTarget()): Command {
         var shooterProfile = getTurretProfileFromTranslation2d(target)
         if(target == Constants.hubTranslation.toTranslation2d()){
@@ -304,16 +306,37 @@ object Shooter {
             )
         )
 
-//    fun simSequence(target: Target): Command =
-//        Commands.sequence(
-//            Hood.setTarget(target),
-//            Commands.run({
-//                SimulatedArena.getInstance()
-//                    .addGamePiece(RebuiltFuelOnField(
-//                        DrivetrainIOSim
-//                    ))
-//            })
-//        )
+    fun simSequence(): Command =
+        Commands.run({
+            SimulatedArena.getInstance()
+                .addGamePieceProjectile(
+                    RebuiltFuelOnFly(
+                        DrivetrainIOSim().swerveDriveSimulation.simulatedDriveTrainPose.translation,
+                        Translation2d(-.184, .184),
+                        DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
+                            DrivetrainIOSim().swerveDriveSimulation.simulatedDriveTrainPose.rotation,
+                            0.3835.meters,
+                            8.metersPerSecond,
+                            60.degrees
+                        )
+                        .withTargetPosition {
+                            Constants.hubTranslation
+                        }
+                        .withTargetTolerance(
+                            Translation3d(
+                                (41.7 / 2).inches,
+                                (41.7 / 2).inches,
+                                0.inches
+                            )
+                        )
+                        .withHitTargetCallBack {
+                            println("Hit hub, +1 point!")
+                        }
+                        .withProjectileTrajectoryDisplayCallBack{
+                            (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses)
+                        }
+                )
+        })
 
     private val distanceToHub: Translation2d
         get() {
