@@ -391,10 +391,10 @@ object Drivetrain : Subsystem {
 
     fun simDrive(xboxController: CommandXboxController): Command =
         run {
-                if(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(0.0,xboxController.rightX)))
+                if(!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(xboxController.rightX,0.0))))
                 desiredChassisSpeeds = ChassisSpeeds(
                     xboxController.leftX * 5.0,
-                    xboxController.leftY * 5.0,
+                    (xboxController.leftY * 5.0).unaryMinus(),
                     xboxController.rightX * 5.0,
                 )
 
