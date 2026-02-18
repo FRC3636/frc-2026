@@ -161,9 +161,8 @@ class DrivetrainIOSim : DrivetrainIO() {
         Pose2d(3.0, 3.0, Rotation2d()
         )
     )
-    val simulatedDrive: SelfControlledSwerveDriveSimulation = SelfControlledSwerveDriveSimulation(
-        swerveDriveSimulation
-    )
+
+    val simulatedDrive: SelfControlledSwerveDriveSimulation = SelfControlledSwerveDriveSimulation(swerveDriveSimulation)
 
     fun updateChassisSpeeds(chassisSpeeds: ChassisSpeeds) {
         simulatedDrive.runChassisSpeeds(chassisSpeeds, Translation2d(), true, false)

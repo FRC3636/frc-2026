@@ -391,22 +391,18 @@ object Drivetrain : Subsystem {
 
     fun simDrive(xboxController: CommandXboxController): Command =
         run {
-                if(!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(xboxController.rightX,0.0))))
+            if(!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(xboxController.rightX,0.0))))
                 desiredChassisSpeeds = ChassisSpeeds(
-                    xboxController.leftX * 5.0,
-                    (xboxController.leftY * 5.0).unaryMinus(),
-                    xboxController.rightX * 5.0,
+                    calculateInputCurve(xboxController.leftX),
+                    calculateInputCurve(xboxController.leftY).unaryMinus(),
+                    calculateInputCurve(xboxController.rightX),
                 )
-
-
         }
-
-
 
     fun resetSimPose() : Command = run{
         estimatedPose = Pose2d(Translation2d(3.0, 3.0), Rotation2d(0.0.radians))
-
     }
+
     @Suppress("SameParameterValue")
     private fun driveWithoutDeadband(translationInput: Translation2d, rotationInput: Translation2d) {
         desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(

@@ -185,7 +185,7 @@ object Robot : LoggedRobot() {
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         if (model == Model.SIMULATION) {
-            Drivetrain.defaultCommand = Drivetrain.simDrive(joystickLeft.hid, joystickRight.hid)
+            Drivetrain.defaultCommand = Drivetrain.simDrive(CommandXboxController(0))
         } else {
             Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         }
@@ -214,6 +214,10 @@ object Robot : LoggedRobot() {
 
         controller.rightTrigger().whileTrue(
             Shooter.simSequence()
+        )
+
+        controller.leftTrigger().whileTrue(
+            Intake.intake()
         )
 
         if (Preferences.getBoolean("DeveloperMode", false)) {

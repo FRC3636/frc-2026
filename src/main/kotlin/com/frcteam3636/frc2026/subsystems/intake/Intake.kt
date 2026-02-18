@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.subsystems.shooter.LoggedTurretInputs
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
@@ -22,17 +23,26 @@ object Intake : Subsystem {
         Robot.Model.COMPETITION -> IntakeIOReal()
     }
 
+    private val inputs = LoggedIntakeInputs()
+
     fun setPivotPosition(position: Position): Command =
         runOnce {
             Logger.recordOutput("Intake/Pivot/Active Setpoint", position.angle)
             io.setPivotAngle(position.angle)
         }
 
-    fun intake(): Command = runEnd(
-
-        { io.setRunMotorVoltage(1.0.volts) },
-        { io.setRunMotorVoltage(0.volts) }
-    )
+    fun intake(): Command =
+        if (io is IntakeIOSim) {
+            runEnd(
+                {io.setRunning(true)},
+                {io.setRunning(false)}
+            )
+        } else {
+            runEnd(
+                { io.setRunMotorVoltage(1.0.volts) },
+                { io.setRunMotorVoltage(0.volts) }
+            )
+        }
 
     fun outtake(): Command = runEnd(
         { io.setRunMotorVoltage(-1.0.volts) },
@@ -44,8 +54,8 @@ object Intake : Subsystem {
         { io.setPivotAngle(Position.Stowed.angle) }
     ).onlyWhile { intakeDown }
 
-//    fun simIntake(): Command = startEnd(
-//        { IntakeIOSim.setRunning(true) },
-//        { IntakeIOSim.setRunning(false) }
-//    )
+    override fun periodic() {
+        io.updateInputs(inputs)
+        Logger.processInputs("Intake", inputs)
+    }
 }

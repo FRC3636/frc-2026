@@ -133,7 +133,7 @@ class IntakeIOSim: IntakeIO {
         0.182.meters,
         IntakeSimulation.IntakeSide.BACK,
         40
-    )
+    )!!
 
     fun setRunning(runIntake: Boolean) {
         if (runIntake) {
@@ -148,8 +148,6 @@ class IntakeIOSim: IntakeIO {
             return intakeSimulation.gamePiecesAmount != 0
         }
 
-
-
     override fun setSpeed(percent: Double) {
         TODO("Not yet implemented")
     }
@@ -163,5 +161,7 @@ class IntakeIOSim: IntakeIO {
     }
 
     override fun updateInputs(inputs: IntakeInputs) {
+        Logger.recordOutput("FieldSimulation/NumberOfFuel", intakeSimulation.gamePiecesAmount)
+        print("Number of fuel: " + intakeSimulation.gamePiecesAmount)
     }
 }
