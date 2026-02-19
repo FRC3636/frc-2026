@@ -12,9 +12,13 @@ import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Torque
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.team9432.annotation.Logged
 
 @Logged
@@ -23,7 +27,7 @@ open class HoodInputs {
     var hoodVelocity = RadiansPerSecond.zero()!!
     var hoodCurrent = Amps.zero()!!
     var setPoint = Radians.zero()!!
-    var hoodMotorTemperature = Celsius.zero()!!
+    var motorTemperature = Celsius.zero()!!
     var brakeMode = false
 }
 
@@ -40,7 +44,7 @@ class HoodIOReal: HoodIO {
     private var brakeMode = false
     private var fixedHood = false
 
-    private val hoodMotor = TalonFX(CTREDeviceId.HoodMotor).apply {
+    private val motor = TalonFX(CTREDeviceId.HoodMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
 
             MotorOutput.apply {
@@ -64,10 +68,10 @@ class HoodIOReal: HoodIO {
         })
     }
 
-    private val positionSignal = hoodMotor.position
-    private val velocitySignal = hoodMotor.velocity
-    private val currentSignal = hoodMotor.supplyCurrent
-    private val temperatureSignal = hoodMotor.deviceTemp
+    private val positionSignal = motor.position
+    private val velocitySignal = motor.velocity
+    private val currentSignal = motor.supplyCurrent
+    private val temperatureSignal = motor.deviceTemp
 
     init {
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -77,7 +81,7 @@ class HoodIOReal: HoodIO {
             currentSignal,
             temperatureSignal
         )
-        hoodMotor.optimizeBusUtilization()
+        motor.optimizeBusUtilization()
 
         CANcoder(CTREDeviceId.HoodEncoder).apply {
             CANcoderConfiguration().apply {
@@ -93,25 +97,25 @@ class HoodIOReal: HoodIO {
 
     override fun turnToAngle(angle: Angle) {
         assert(angle.inRadians() in MIN_HOOD_ANGLE..MAX_HOOD_ANGLE)
-        hoodMotor.setControl(positionControl.withPosition(angle))
+        motor.setControl(positionControl.withPosition(angle))
     }
 
     override fun setVoltage(voltage: Voltage) {
         assert(voltage in 0.volts..12.volts)
-        hoodMotor.setVoltage(voltage.inVolts())
+        motor.setVoltage(voltage.inVolts())
     }
 
     override fun updateInputs(inputs: HoodInputs) {
         inputs.hoodAngle = positionSignal.value
         inputs.hoodVelocity = velocitySignal.value
         inputs.hoodCurrent = currentSignal.value
-        inputs.hoodMotorTemperature = temperatureSignal.value
+        inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
     }
 
     override fun setBrakeMode(enabled: Boolean) {
         brakeMode = enabled
-        hoodMotor.setNeutralMode(
+        motor.setNeutralMode(
             if (enabled) {
                 NeutralModeValue.Brake
             } else {
@@ -119,8 +123,6 @@ class HoodIOReal: HoodIO {
             }
         )
     }
-
-
 
     companion object Constants {
         private val MAGNET_OFFSET = 0.0
@@ -135,21 +137,30 @@ class HoodIOReal: HoodIO {
 }
 
 class HoodIOSim: HoodIO {
+    private val motor = DCMotor.getKrakenX60(1)
+    private val system = LinearSystemId.createDCMotorSystem(motor, 1.0,1.0)
+    private val sim = DCMotorSim(system, motor)
+    private var breakMode = false
 
     override fun turnToAngle(angle: Angle) {
-        TODO("Not yet implemented")
+        if(!breakMode){
+            sim.setAngle(angle.inRadians())
+        }
+
     }
 
     override fun setVoltage(voltage: Voltage) {
-        TODO("Not yet implemented")
+        sim.inputVoltage = voltage.inVolts()
     }
 
     override fun updateInputs(inputs: HoodInputs) {
-        TODO("Not yet implemented")
+        inputs.hoodAngle = sim.angularPosition
+        inputs.brakeMode = breakMode
+        inputs.hoodCurrent = motor.getCurrent(sim.torqueNewtonMeters).amps
     }
 
     override fun setBrakeMode(enabled: Boolean) {
-        TODO("Not yet implemented")
+        breakMode = enabled
     }
 
 }

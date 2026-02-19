@@ -128,7 +128,7 @@ class IntakeIOSim: IntakeIO {
 
     val intakeSimulation = IntakeSimulation.OverTheBumperIntake(
         "Fuel",
-        DrivetrainIOSim().swerveDriveSimulation,
+        Drivetrain.getSwerveDriveSimulation(),
         Drivetrain.Constants.BUMPER_WIDTH,
         0.182.meters,
         IntakeSimulation.IntakeSide.BACK,
@@ -162,6 +162,5 @@ class IntakeIOSim: IntakeIO {
 
     override fun updateInputs(inputs: IntakeInputs) {
         Logger.recordOutput("FieldSimulation/NumberOfFuel", intakeSimulation.gamePiecesAmount)
-        print("Number of fuel: " + intakeSimulation.gamePiecesAmount)
     }
 }

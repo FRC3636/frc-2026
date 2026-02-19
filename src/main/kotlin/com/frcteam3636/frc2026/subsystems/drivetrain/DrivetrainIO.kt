@@ -168,6 +168,8 @@ class DrivetrainIOSim : DrivetrainIO() {
         simulatedDrive.runChassisSpeeds(chassisSpeeds, Translation2d(), true, false)
     }
 
+
+
     override val modules = PerCorner.generate { SimSwerveModule() }
     override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
     override fun updateInputs(inputs: DrivetrainInputs) {
@@ -189,5 +191,6 @@ class DrivetrainIOSim : DrivetrainIO() {
         }
     }
 }
+
 
 val FIELD_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField)

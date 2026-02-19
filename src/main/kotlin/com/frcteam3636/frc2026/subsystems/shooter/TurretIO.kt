@@ -8,30 +8,34 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.SensorDirectionValue
+import com.ctre.phoenix6.sim.TalonFXSimState
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.team9432.annotation.Logged
 
 @Logged
-open class TurretInputs{
-    var turretAngle = Radians.zero()!!
-    var turretCurrent = Amps.zero()!!
+open class TurretInputs {
+    var angle = Radians.zero()!!
+    var motorCurrent = Amps.zero()!!
     var setPoint = Radians.zero()!!
-    var turretVelocity = RadiansPerSecond.zero()!!
-    var turretMotorTemperature = Celsius.zero()!!
+    var motorVelocity = RadiansPerSecond.zero()!!
+    var motorTemperature = Celsius.zero()!!
     var seeTags = false
     var brakeMode = false
 }
 
-interface TurretIO{
+interface TurretIO {
     fun turnToAngle(angle: Angle)
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: TurretInputs)
@@ -44,7 +48,7 @@ interface TurretIO{
 class TurretIOReal : TurretIO {
     private var brakeMode = false
 
-    private val turretTurningMotor = TalonFX(CTREDeviceId.TurretTurningMotor).apply {
+    private val motor = TalonFX(CTREDeviceId.TurretTurningMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
 
             MotorOutput.apply {
@@ -55,7 +59,7 @@ class TurretIOReal : TurretIO {
                 pidGains = PID_GAINS
             }
             MotionMagic.apply {
-                //MotionMagicCruiseVelocity = PROFILE_CRUISE_VELOCITY.inRotationsPerSecond()
+                MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
                 MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
                 MotionMagicJerk = PROFILE_JERK
             }
@@ -74,12 +78,17 @@ class TurretIOReal : TurretIO {
         })
     }
 
-    private val positionSignal = turretTurningMotor.position
-    private val velocitySignal = turretTurningMotor.velocity
-    private val currentSignal = turretTurningMotor.supplyCurrent
-    private val temperatureSignal = turretTurningMotor.deviceTemp
+    private var setPoint = 0.0.radians
 
-    init{
+    private val positionSignal = motor.position
+    private val velocitySignal = motor.velocity
+    private val currentSignal = motor.supplyCurrent
+    private val temperatureSignal = motor.deviceTemp
+    private val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
+        UpdateFreqHz = 0.0
+    }
+
+    init {
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
             positionSignal,
@@ -87,7 +96,7 @@ class TurretIOReal : TurretIO {
             velocitySignal,
             temperatureSignal
         )
-        turretTurningMotor.optimizeBusUtilization()
+        motor.optimizeBusUtilization()
 
         CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
             configurator.apply(CANcoderConfiguration().apply {
@@ -97,30 +106,27 @@ class TurretIOReal : TurretIO {
         }
     }
 
-    private val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
-        UpdateFreqHz = 0.0
-    }
-
     override fun turnToAngle(angle: Angle) {
-        turretTurningMotor.setControl(positionControl.withPosition(angle))
+        setPoint = angle
+        motor.setControl(positionControl.withPosition(angle))
     }
 
     override fun setVoltage(voltage: Voltage) {
         assert(voltage in 0.volts..12.volts)
-        turretTurningMotor.setVoltage(voltage.inVolts())
+        motor.setVoltage(voltage.inVolts())
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        inputs.turretAngle = positionSignal.value
-        inputs.turretCurrent = currentSignal.value
-        inputs.turretVelocity = velocitySignal.value
-        inputs.turretMotorTemperature = temperatureSignal.value
+        inputs.angle = positionSignal.value
+        inputs.motorCurrent = currentSignal.value
+        inputs.motorVelocity = velocitySignal.value
+        inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
     }
 
     override fun setBrakeMode(enabled: Boolean) {
         brakeMode = enabled
-        turretTurningMotor.setNeutralMode(
+        motor.setNeutralMode(
             if (enabled) {
                 NeutralModeValue.Brake
             } else {
@@ -128,7 +134,6 @@ class TurretIOReal : TurretIO {
             }
         )
     }
-
 
     companion object Constants{
         private val PID_GAINS = PIDGains(62.0, 0.0, 0.0)
@@ -142,20 +147,27 @@ class TurretIOReal : TurretIO {
 }
 
 class TurretIOSim: TurretIO {
+    private val motor = DCMotor.getKrakenX60(1)
+    private val system = LinearSystemId.createDCMotorSystem(motor, 1.0,1.0)
+    private val sim = DCMotorSim(system, motor)
+    private var brakeMode = false
+
     override fun turnToAngle(angle: Angle) {
-        TODO("Not yet implemented")
+        sim.setAngle(angle.inRadians())
     }
 
     override fun setVoltage(voltage: Voltage) {
-        TODO("Not yet implemented")
+        sim.inputVoltage = voltage.inVolts()
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        TODO("Not yet implemented")
+        inputs.angle = sim.angularPosition
+        inputs.brakeMode = brakeMode
+        inputs.motorCurrent = motor.getCurrent(sim.torqueNewtonMeters).amps
     }
 
     override fun setBrakeMode(enabled: Boolean) {
-        TODO("Not yet implemented")
+        brakeMode = enabled
     }
 
 }

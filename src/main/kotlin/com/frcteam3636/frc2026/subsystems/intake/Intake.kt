@@ -18,9 +18,11 @@ object Intake : Subsystem {
         Deployed(0.degrees),
     }
 
-    private val io: IntakeIO = when (Robot.model) {
+    private val io: IntakeIO =
+        when (Robot.model) {
         Robot.Model.SIMULATION -> IntakeIOSim()
         Robot.Model.COMPETITION -> IntakeIOReal()
+
     }
 
     private val inputs = LoggedIntakeInputs()
@@ -53,6 +55,11 @@ object Intake : Subsystem {
         { io.setPivotAngle(Position.Deployed.angle) },
         { io.setPivotAngle(Position.Stowed.angle) }
     ).onlyWhile { intakeDown }
+
+    val IntakeSimulation
+        get() = if (io is IntakeIOSim) { io.intakeSimulation }
+        else throw Throwable("Cannot access intake simulation out of sim")
+
 
     override fun periodic() {
         io.updateInputs(inputs)

@@ -31,8 +31,7 @@ interface FlywheelIO {
 }
 
 class FlywheelIOReal : FlywheelIO {
-
-    private val flyWheelMotor = TalonFX(CTREDeviceId.FlywheelMotor).apply {
+    private val motor = TalonFX(CTREDeviceId.FlywheelMotor).apply {
         configurator.apply(TalonFXConfiguration().apply{
             MotorOutput.apply {
                 Inverted = InvertedValue.Clockwise_Positive
@@ -69,23 +68,23 @@ class FlywheelIOReal : FlywheelIO {
 //        configurator.apply(config)
 //    }
 
-
     override fun updateInputs(inputs: FlywheelInputs) {
-        inputs.motorVolts = flyWheelMotor.motorVoltage.value
-        inputs.angularVelocity = flyWheelMotor.velocity.value
+        inputs.motorVolts = motor.motorVoltage.value
+        inputs.angularVelocity = motor.velocity.value
+        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
     }
 
     override fun setVoltage(volts: Voltage) {
-        flyWheelMotor.set(volts.inVolts())
+        motor.set(volts.inVolts())
     }
 
     override fun setSpeed(percentage : Double) {
-        flyWheelMotor.set(percentage)
+        motor.set(percentage)
     }
 
     override fun setVelocity(velocity: AngularVelocity){
         assert(velocity in 0.rpm..6000.rpm)
-        flyWheelMotor.setControl(MotionMagicVelocityVoltage(velocity.inRPM()))
+        motor.setControl(MotionMagicVelocityVoltage(velocity.inRPM()))
     }
 
     companion object Constants{
@@ -94,36 +93,38 @@ class FlywheelIOReal : FlywheelIO {
         val PROFILE_VELOCITY = 2.0.rotationsPerSecond
         val PROFILE_JERK = 1.0
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
-  }
+        val FLYWHEEL_RADIUS = 0.0505.meters
+
+    }
 }
 
 class FlywheelIOSim: FlywheelIO {
-
-    private val flywheelMotor = DCMotor.getKrakenX60(1)
-
-    private val flywheelSim: FlywheelSim = FlywheelSim(
+    private val motor = DCMotor.getKrakenX60(1)
+    private val sim: FlywheelSim = FlywheelSim(
         LinearSystemId.createFlywheelSystem(
-            flywheelMotor,
+            motor,
             1.0,
-            5.0),
-        flywheelMotor,
-
+            5.0
+        ),
+        motor,
     )
 
     override fun updateInputs(inputs: FlywheelInputs) {
-        TODO("Not yet implemented")
+        inputs.motorVolts = sim.inputVoltage.volts
+        inputs.angularVelocity = sim.angularVelocity
+        inputs.linearVelocity = sim.angularVelocity.toLinear(FlywheelIOReal.Constants.FLYWHEEL_RADIUS)
     }
 
     override fun setVoltage(volts: Voltage) {
-        TODO("Not yet implemented")
+        sim.inputVoltage = volts.inVolts()
     }
 
     override fun setSpeed(percentage: Double) {
-        TODO("Not yet implemented")
+        TODO("How would you do this on a simulated motor")
     }
 
     override fun setVelocity(velocity: AngularVelocity) {
-        TODO("Not yet implemented")
+        sim.setAngularVelocity(velocity.inRPM())
     }
 
 }

@@ -39,7 +39,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-
 /**
  * The VM is configured to automatically run this object (which basically functions as a singleton
  * class), and to call the functions corresponding to each mode, as described in the TimedRobot
@@ -52,9 +51,9 @@ import kotlin.io.path.exists
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-    private val controller = CommandXboxController(2)
-    private val joystickLeft = CommandJoystick(0)
-    private val joystickRight = CommandJoystick(1)
+    private val controller = CommandXboxController(0)
+    private val joystickLeft = CommandJoystick(1)
+    private val joystickRight = CommandJoystick(2)
 
     @Suppress("unused")
     private val joystickDev = CommandJoystick(3)
@@ -169,7 +168,10 @@ object Robot : LoggedRobot() {
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
+        Intake.register()
+        Shooter.registerSubsystems()
     }
+
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
     private fun configureAutos() {
@@ -201,12 +203,7 @@ object Robot : LoggedRobot() {
         controller.rightBumper().onTrue(
             Commands.sequence(
                 Commands.runOnce({
-                    if (Intake.intakeDown) {
-                        Intake.intakeDown = false
-                    }
-                    else {
-                        Intake.intakeDown = true
-                    }
+                    Intake.intakeDown = !Intake.intakeDown
                 }),
                 Intake.setPivotPosition(Position.Deployed),
             )
@@ -214,7 +211,8 @@ object Robot : LoggedRobot() {
 
         controller.rightTrigger().whileTrue(
             Shooter.simSequence()
-        )
+
+        ).debounce(0.01)
 
         controller.leftTrigger().whileTrue(
             Intake.intake()
@@ -296,5 +294,6 @@ object Robot : LoggedRobot() {
             .getGamePiecesArrayByType("Fuel")
         Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
         Shooter.simSequence()
+        Intake.periodic()
     }
 }
