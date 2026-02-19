@@ -16,6 +16,7 @@ import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
@@ -29,6 +30,7 @@ open class TurretInputs{
     var turretMotorTemperature = Celsius.zero()!!
     var seeTags = false
     var brakeMode = false
+    var turretVoltage = Volts.zero()!!
 }
 
 interface TurretIO{
@@ -97,9 +99,7 @@ class TurretIOReal : TurretIO {
         }
     }
 
-    private val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
-        UpdateFreqHz = 0.0
-    }
+    private val positionControl = MotionMagicVoltage(0.0)
 
     override fun turnToAngle(angle: Angle) {
         turretTurningMotor.setControl(positionControl.withPosition(angle))
@@ -116,6 +116,7 @@ class TurretIOReal : TurretIO {
         inputs.turretVelocity = velocitySignal.value
         inputs.turretMotorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
+        inputs.turretVoltage = turretTurningMotor.motorVoltage.value
     }
 
     override fun setBrakeMode(enabled: Boolean) {
@@ -136,7 +137,7 @@ class TurretIOReal : TurretIO {
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 37.25
         private const val MAGNET_OFFSET = -0.191650390625
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
-        private val PROFILE_JERK = 0.0
+        private val PROFILE_JERK = 0.1
         private val PROFILE_VELOCITY = 12.0.rotationsPerSecond
     }
 }

@@ -50,6 +50,8 @@ object Shooter {
                 field = value
             }
 
+        var turretAngle: Angle = 0.degrees
+
         override fun periodic() {
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
@@ -87,9 +89,22 @@ object Shooter {
             }
 
         fun turnToTargetTurretAngle(): Command =
-            run {
+            runOnce {
                 io.turnToAngle(Hood.target.turretAngle)
             }
+
+        fun turnToAngle(): Command =
+            runOnce {
+                io.turnToAngle(turretAngle)
+            }.until {
+                turretAngle - inputs.turretAngle < 5.degrees
+            }
+
+        fun runVoltage(voltage: Voltage): Command = runEnd({
+            io.setVoltage(voltage)
+        }, {
+            io.setVoltage(0.volts)
+        })
 
         fun turretBrakeMode(): Command =
             run {
@@ -120,7 +135,7 @@ object Shooter {
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
-        val test = FeedPose.RightSideNeutralZone as Translation2d
+        val test = FeedPose.RightSideNeutralZone.target
     }
 
     object Hood: Subsystem {
@@ -175,7 +190,7 @@ object Shooter {
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        fun getHoodAngle(distance: Distance): Angle = (asin(angleInterpolationTable.get(distance.inMeters())) / 2).radians
+        fun getHoodAngle(distance: Distance): Angle = (0).radians
 
         fun setTarget(target: ShooterProfile): Command =
             runOnce {

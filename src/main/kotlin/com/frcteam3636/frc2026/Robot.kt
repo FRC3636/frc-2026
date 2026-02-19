@@ -7,6 +7,9 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
+import com.frcteam3636.frc2026.utils.math.degrees
+import com.frcteam3636.frc2026.utils.math.degreesPerSecond
+import com.frcteam3636.frc2026.utils.math.volts
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -16,6 +19,7 @@ import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
 import edu.wpi.first.math.geometry.Pose3d
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -169,6 +173,9 @@ object Robot : LoggedRobot() {
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
+        Shooter.Hood.register()
+        Shooter.Flywheel.register()
+        Shooter.Turret.register()
     }
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
@@ -185,10 +192,13 @@ object Robot : LoggedRobot() {
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
         if (model == Model.SIMULATION) {
-            Drivetrain.defaultCommand = Drivetrain.simDrive(CommandXboxController(0))
+            Drivetrain.defaultCommand = Drivetrain.simDrive(joystickLeft.hid, joystickRight.hid)
         } else {
             Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         }
+
+        Shooter.Turret.defaultCommand = Shooter.Turret.turnToAngle()
+
 //        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
@@ -203,8 +213,7 @@ object Robot : LoggedRobot() {
                 Commands.runOnce({
                     if (Intake.intakeDown) {
                         Intake.intakeDown = false
-                    }
-                    else {
+                    } else {
                         Intake.intakeDown = true
                     }
                 }),
@@ -212,18 +221,21 @@ object Robot : LoggedRobot() {
             )
         )
 
-        controller.rightTrigger().whileTrue(
-            Shooter.simSequence()
+        controller.b().whileTrue(
+            Commands.parallel(
+                Commands.runOnce({
+                    Shooter.Turret.turretAngle += 90.degrees
+                }),
+                Shooter.Turret.turnToAngle()
+            )
         )
-
-        controller.leftTrigger().whileTrue(
-            Intake.intake()
-        )
+        controller.a().whileTrue(Shooter.Turret.runVoltage(1.volts))
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(
                 Commands.runOnce(SignalLogger::start)
-                    .andThen(StatusLogger::start))
+                    .andThen(StatusLogger::start)
+            )
             controllerDev.rightBumper().onTrue(
                 Commands.runOnce(SignalLogger::stop)
                     .andThen(StatusLogger::stop)
