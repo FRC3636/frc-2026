@@ -35,7 +35,10 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import java.awt.DefaultKeyboardFocusManager
+import java.awt.KeyboardFocusManager
 import java.util.concurrent.locks.ReentrantLock
+import javax.swing.plaf.basic.BasicSplitPaneUI
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -293,7 +296,7 @@ object Robot : LoggedRobot() {
         val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
             .getGamePiecesArrayByType("Fuel")
         Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
-        Shooter.simSequence()
+//        Shooter.simSequence()
         Intake.periodic()
     }
 }
