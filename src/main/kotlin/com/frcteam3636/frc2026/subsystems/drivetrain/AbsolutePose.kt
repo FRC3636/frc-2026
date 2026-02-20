@@ -22,7 +22,6 @@ import edu.wpi.first.util.struct.Struct
 import edu.wpi.first.util.struct.Struct.kSizeBool
 import edu.wpi.first.util.struct.Struct.kSizeDouble
 import edu.wpi.first.util.struct.StructSerializable
-import edu.wpi.first.wpilibj.RobotController
 import org.photonvision.PhotonCamera
 import org.photonvision.simulation.PhotonCameraSim
 import org.photonvision.simulation.SimCameraProperties
@@ -74,7 +73,7 @@ class LimelightPoseProvider(
     private var measurements = mutableListOf<AbsolutePoseMeasurement>()
     private var lock = ReentrantLock()
 
-    private var lastSeenHb: Double = 0.0
+    private var lastSeenHeartBeat: Double = 0.0
     private val table = NetworkTableInstance.getDefault().getTable(name)
     private val hbSubscriber = table.getDoubleTopic("hb").subscribe(0.0)
     private val txSubscriber = table.getDoubleTopic("tx").subscribe(0.0)
@@ -141,15 +140,24 @@ class LimelightPoseProvider(
 
         if (!isLL4) {
             gyroState[0] = gyroAngle.degrees
+            gyroState[1] = gyroVelocity.inDegreesPerSecond()
             gyroPublisher.accept(gyroState)
             NetworkTableInstance.getDefault().flush()
         } else {
+            // Idk why this was set to before first enable, we need to update the gyro pose every frame right?
+            gyroState[0] = gyroAngle.degrees
+            // Also we weren't setting yaw per second which I think is important for MT2
+            gyroState[1] = gyroVelocity.inDegreesPerSecond()
+            gyroPublisher.accept(gyroState)
+            NetworkTableInstance.getDefault().flush()
+
             if (RobotState.beforeFirstEnable) {
-                gyroState[0] = gyroAngle.degrees
                 imuModePublisher.accept(1.toLong())
-                gyroPublisher.accept(gyroState)
-                NetworkTableInstance.getDefault().flush()
+
+                // This was never set to false earlier for some reason
+                wasIMUChanged = false
             }
+
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
                 throttlePublisher.accept(100.toLong())
                 isThrottled = true
@@ -185,7 +193,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
                 APRIL_TAG_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
@@ -222,10 +230,13 @@ class LimelightPoseProvider(
             rawArray[0],
             rawArray[1],
             Rotation2d(
-                rawArray[3].degrees.inRadians(),
+                // Previously was index 3 (roll), but should be 5 (yaw)?
+                rawArray[5].degrees.inRadians(),
             )
         )
     }
+
+    var loopsSinceLastSeen = 0
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
 //        try {
@@ -257,15 +268,20 @@ class LimelightPoseProvider(
             tvSubscriber.get() == 0.toLong()
         )
 
-        inputs.connected = (RobotController.getFPGATime() - hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+//        inputs.connected = (RobotController.getFPGATime() - hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+//        inputs.connected = (hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
+
+        // We assume the camera has disconnected if there are no new updates for several ticks.
+        val heartBeat = hbSubscriber.get()
+        inputs.connected = heartBeat > lastSeenHeartBeat || loopsSinceLastSeen < CONNECTED_TIMEOUT
+        if (heartBeat == lastSeenHeartBeat)
+            loopsSinceLastSeen++
+        else
+            loopsSinceLastSeen = 0
+        lastSeenHeartBeat = heartBeat
     }
 
     companion object {
-        /**
-         * The acceptable distance for a single-April-Tag reading.
-         * Only used when computing pose through MegaTagV1.
-         */
-        private val MAX_SINGLE_TAG_DISTANCE = 3.meters
 
         /**
          * The acceptable ambiguity for a single-tag reading on MegaTag v1.

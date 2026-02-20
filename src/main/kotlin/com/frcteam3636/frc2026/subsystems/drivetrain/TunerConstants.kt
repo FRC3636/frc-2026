@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.generated
+package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs
@@ -23,9 +23,9 @@ object TunerConstants {
     // The steer motor uses any SwerveModule.SteerRequestType control request with the
     // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     val steerGains: Slot0Configs? = Slot0Configs()
-        .withKP(100.0).withKI(0.0).withKD(0.5)
-        .withKS(0.1).withKV(2.49).withKA(0.0)
-        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
+        .withKP(125.0).withKI(0.0).withKD(0.0)
+//        .withKS(0.1).withKV(2.49).withKA(0.0)
+//        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign)
 
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
@@ -68,6 +68,9 @@ object TunerConstants {
                 .withStatorCurrentLimitEnable(true)
         )
     private val encoderInitialConfigs = CANcoderConfiguration()
+
+    // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
+    private val pigeonConfigs: Pigeon2Configuration? = null
 
     // Theoretical free speed (m/s) at 12 V applied output;
     // This needs to be tuned to your individual robot
@@ -120,7 +123,7 @@ object TunerConstants {
     private const val kFrontLeftDriveMotorId = 1
     private const val kFrontLeftSteerMotorId = 5
     private const val kFrontLeftEncoderId = 9
-    private val kFrontLeftEncoderOffset: Angle = Units.Rotations.of(-0.25146484375)
+    private val kFrontLeftEncoderOffset: Angle = Units.Rotations.of(-0.3330078125)
     private const val kFrontLeftSteerMotorInverted = false
     private const val kFrontLeftEncoderInverted = false
 
@@ -131,7 +134,7 @@ object TunerConstants {
     private const val kFrontRightDriveMotorId = 4
     private const val kFrontRightSteerMotorId = 8
     private const val kFrontRightEncoderId = 12
-    private val kFrontRightEncoderOffset: Angle = Units.Rotations.of(0.044677734375)
+    private val kFrontRightEncoderOffset: Angle = Units.Rotations.of(0.134765625)
     private const val kFrontRightSteerMotorInverted = false
     private const val kFrontRightEncoderInverted = false
 
@@ -142,7 +145,7 @@ object TunerConstants {
     private const val kBackLeftDriveMotorId = 2
     private const val kBackLeftSteerMotorId = 6
     private const val kBackLeftEncoderId = 10
-    private val kBackLeftEncoderOffset: Angle = Units.Rotations.of(-0.083740234375)
+    private val kBackLeftEncoderOffset: Angle = Units.Rotations.of(-0.00927734375)
     private const val kBackLeftSteerMotorInverted = false
     private const val kBackLeftEncoderInverted = false
 
@@ -153,7 +156,7 @@ object TunerConstants {
     private const val kBackRightDriveMotorId = 3
     private const val kBackRightSteerMotorId = 7
     private const val kBackRightEncoderId = 11
-    private val kBackRightEncoderOffset: Angle = Units.Rotations.of(-0.118408203125)
+    private val kBackRightEncoderOffset: Angle = Units.Rotations.of(-0.210693359375)
     private const val kBackRightSteerMotorInverted = false
     private const val kBackRightEncoderInverted = false
 
