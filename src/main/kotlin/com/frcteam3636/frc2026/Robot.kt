@@ -4,6 +4,10 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
+import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
+import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
@@ -65,6 +69,7 @@ object Robot : LoggedRobot() {
     private val controllerDev = CommandXboxController(4)
 
     private var autoCommand: Command? = null
+    private var lastSelectedAuto = AutoModes.None
 
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
@@ -104,8 +109,9 @@ object Robot : LoggedRobot() {
         configureAutos()
         configureBindings()
         configureDashboard()
+        Dashboard.initialize()
 
-        statusSignals.addSignals(*Drivetrain.signals)
+//        statusSignals.addSignals(*Drivetrain.signals)
 
         // BIG WARNING BIG WARNING BIG WARNING
         // hi there. if you're a team looking at copying some code (which we are flattered)
@@ -143,7 +149,7 @@ object Robot : LoggedRobot() {
             // Enables power distribution logging
             PowerDistribution(
                 1, PowerDistribution.ModuleType.kRev
-            )
+            ).apply { switchableChannel = true }
         } else {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
@@ -167,24 +173,28 @@ object Robot : LoggedRobot() {
         Logger.start() // Start logging! No more data receivers, replay sources, or metadata values may be added.
     }
 
-
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
-        Intake.register()
+        Feeder.register()
+        Indexer.register()
         Shooter.registerSubsystems()
     }
 
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
-    private fun configureAutos() {
-//        NamedCommands.registerCommand(
-//            "revAim",
-//            Commands.parallel(
-//                Shooter.Pivot.followMotionProfile(Shooter.Pivot.Target.AIM),
-//                Shooter.Flywheels.rev(580.0, 0.0)
-//            )
-//        )
+    private fun configureAutos() {}
+
+    override fun disabledPeriodic() {
+        val selectedAuto = Dashboard.autoChooser.selected
+        if (lastSelectedAuto != selectedAuto) {
+            lastSelectedAuto = selectedAuto
+            autoCommand = when (selectedAuto) {
+                AutoModes.None -> Commands.none()
+                AutoModes.TestAuto -> TestAuto.getPath(false, false)
+                AutoModes.TwoScore -> TwoScore.getPath(false, false)
+            }
+        }
     }
 
     /** Configure which commands each joystick button triggers. */
@@ -201,7 +211,29 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
 
-        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot())
+        controller.b().onTrue(Commands.runOnce( {
+            Drivetrain.zeroGyro()
+        }))
+
+        controller.a().whileTrue(
+            Commands.parallel(
+                Indexer.index(),
+                Feeder.feed()
+            )
+        )
+
+        controller.x().whileTrue(
+            Commands.parallel(
+                Indexer.outdex(),
+                Feeder.outtake()
+            )
+        )
+
+        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
+
+        // Angles robot for shooting, just in case the
+        // turret stops working.
+//        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
 
         controller.rightBumper().onTrue(
             Commands.sequence(
@@ -266,6 +298,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
+//        val selectedAuto = Dashboard.autoChooser.selected
         if (!RobotState.beforeFirstEnable)
             RobotState.beforeFirstEnable = false
         CommandScheduler.getInstance().schedule(autoCommand)
