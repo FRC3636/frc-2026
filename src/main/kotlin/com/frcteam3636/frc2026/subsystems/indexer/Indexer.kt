@@ -1,6 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.indexer
 
-import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.robot.Robot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem

@@ -3,8 +3,8 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.CTREDeviceId
-import com.frcteam3636.frc2026.Robot
-import com.frcteam3636.frc2026.Robot.odometryLock
+import com.frcteam3636.frc2026.robot.Robot
+import com.frcteam3636.frc2026.robot.Robot.odometryLock
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED

@@ -1,8 +1,11 @@
-package com.frcteam3636.frc2026
+package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
+import com.frcteam3636.frc2026.AutoModes
+import com.frcteam3636.frc2026.Dashboard
+import com.frcteam3636.frc2026.Diagnostics
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
@@ -13,21 +16,13 @@ import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
 import com.frcteam3636.version.GIT_SHA
 import com.revrobotics.util.StatusLogger
-import edu.wpi.first.hal.FRCNetComm.tInstances
-import edu.wpi.first.hal.FRCNetComm.tResourceType
+import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.Alert
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.PowerDistribution
-import edu.wpi.first.wpilibj.Preferences
-import edu.wpi.first.wpilibj.Threads
+import edu.wpi.first.wpilibj.*
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.CommandJoystick
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -37,7 +32,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.Path
 import kotlin.io.path.exists
-
 
 /**
  * The VM is configured to automatically run this object (which basically functions as a singleton
@@ -51,15 +45,6 @@ import kotlin.io.path.exists
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-    private val controller = CommandXboxController(2)
-    private val joystickLeft = CommandJoystick(0)
-    private val joystickRight = CommandJoystick(1)
-
-    @Suppress("unused")
-    private val joystickDev = CommandJoystick(3)
-
-    @Suppress("unused")
-    private val controllerDev = CommandXboxController(4)
 
     private var autoCommand: Command? = null
     private var lastSelectedAuto = AutoModes.None
@@ -88,7 +73,7 @@ object Robot : LoggedRobot() {
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
         HAL.report(
-            tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version
+            FRCNetComm.tResourceType.kResourceType_Language, FRCNetComm.tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version
         )
 
         SignalLogger.enableAutoLogging(false)
@@ -147,7 +132,7 @@ object Robot : LoggedRobot() {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
                 LogFileUtil.findReplayLog()
-            } catch (_: java.util.NoSuchElementException) {
+            } catch (_: NoSuchElementException) {
                 null
             }
 
@@ -168,7 +153,7 @@ object Robot : LoggedRobot() {
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
-//        Drivetrain.register()
+        Drivetrain.register()
         Feeder.register()
         Indexer.register()
     }
@@ -182,66 +167,9 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
-                AutoModes.TestAuto -> TestAuto.getPath(false, false)
-                AutoModes.TwoScore -> TwoScore.getPath(false, false)
+                AutoModes.TestAuto -> TestAuto.getPath(flipH = false, flipV = false)
+                AutoModes.TwoScore -> TwoScore.getPath(flipH = false, flipV = false)
             }
-        }
-    }
-
-    /** Configure which commands each joystick button triggers. */
-    private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
-        // (The button with the yellow tape on it)
-        joystickLeft.button(8).onTrue(Commands.runOnce({
-            println("Zeroing gyro.")
-            Drivetrain.zeroGyro()
-        }).ignoringDisable(true))
-
-        controller.b().onTrue(Commands.runOnce( {
-            Drivetrain.zeroGyro()
-        }))
-
-        controller.a().whileTrue(
-            Commands.parallel(
-                Indexer.index(),
-                Feeder.feed()
-            )
-        )
-
-        controller.x().whileTrue(
-            Commands.parallel(
-                Indexer.outdex(),
-                Feeder.outtake()
-            )
-        )
-
-        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
-
-        // Angles robot for shooting, just in case the
-        // turret stops working.
-//        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
-
-
-        if (Preferences.getBoolean("DeveloperMode", false)) {
-            controllerDev.leftBumper().onTrue(
-                Commands.runOnce(SignalLogger::start)
-                    .andThen(StatusLogger::start))
-            controllerDev.rightBumper().onTrue(
-                Commands.runOnce(SignalLogger::stop)
-                    .andThen(StatusLogger::stop)
-            )
-
-            controllerDev.y().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kForward))
-            controllerDev.a().whileTrue(Drivetrain.sysIdQuasistaticSpin(SysIdRoutine.Direction.kReverse))
-            controllerDev.b().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kForward))
-            controllerDev.x().whileTrue(Drivetrain.sysIdDynamicSpin(SysIdRoutine.Direction.kReverse))
-
-            controllerDev.povUp().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kForward))
-            controllerDev.povDown().whileTrue(Drivetrain.sysIdQuasistatic(SysIdRoutine.Direction.kReverse))
-            controllerDev.povRight().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kForward))
-            controllerDev.povLeft().whileTrue(Drivetrain.sysIdDynamic(SysIdRoutine.Direction.kReverse))
-
-            joystickDev.button(1).whileTrue(Drivetrain.calculateWheelRadius())
         }
     }
 
