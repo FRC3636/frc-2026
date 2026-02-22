@@ -8,6 +8,11 @@ import com.ctre.phoenix6.hardware.TalonFX
 private val canivoreBus = CANBus("*")
 
 enum class CTREDeviceId(val num: Int, val bus: CANBus) {
+
+    // Note to electrical:
+    // shooter is front, intake is back,
+    // left and right are from a bird's eye view
+
     FrontLeftDrivingMotor(1, canivoreBus),
     BackLeftDrivingMotor(2, canivoreBus),
     BackRightDrivingMotor(3, canivoreBus),
