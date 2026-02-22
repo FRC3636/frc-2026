@@ -346,11 +346,10 @@ object Shooter {
 
     private val translationToHub: Translation2d
         get() {
-            if (Robot.model == Model.COMPETITION) {
-                return hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
-            }
-            else {
-                return hubTranslation.toTranslation2d() - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation
+            return if (Robot.model == Model.COMPETITION) {
+                hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
+            } else {
+                hubTranslation.toTranslation2d() - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation
             }
         }
 

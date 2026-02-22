@@ -5,6 +5,7 @@ import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.Robot.odometryLock
+import com.frcteam3636.frc2026.RobotState
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
@@ -154,19 +155,19 @@ object Drivetrain : Subsystem {
                 },
                 true,
             ),
-//            "Limelight Right" to LimelightPoseProvider(
-//                "limelight-right",
-//                {
-//                    poseEstimator.estimatedPosition.rotation
-//                },
-//                {
-//                    inputs.gyroVelocity
-//                },
-//                {
-//                    inputs.gyroConnected
-//                },
-//                true,
-//            ),
+            "Limelight Right" to LimelightPoseProvider(
+                "limelight-right",
+                {
+                    poseEstimator.estimatedPosition.rotation
+                },
+                {
+                    inputs.gyroVelocity
+                },
+                {
+                    inputs.gyroConnected
+                },
+                true,
+            ),
         )
     }.mapValues { Pair(it.value, LoggedAbsolutePoseProviderInputs()) }
 
@@ -183,26 +184,26 @@ object Drivetrain : Subsystem {
     private val rejectedPoses: MutableList<Pose2d> = mutableListOf()
 
     /** Helper for estimating the location of the drivetrain on the field */
-    @Suppress("UNNECESSARY_LATEINIT")
-    lateinit var poseEstimator: SwerveDrivePoseEstimator
+    val poseEstimator =
+        SwerveDrivePoseEstimator(
+            kinematics, // swerve drive kinematics
+            inputs.gyroRotation, // initial gyro rotation
+            inputs.measuredPositions.toTypedArray(), // initial module positions
+            Pose2d.kZero, // initial pose
+            VecBuilder.fill(0.02, 0.02, 0.005),
+            // Overwrite each measurement
+            VecBuilder.fill(0.0, 0.0, 0.0)
+        )
 
     /** Whether every sensor used for pose estimation is connected. */
     val allPoseProvidersConnected
         get() = absolutePoseIOs.values.all { it.second.connected }
 
     init {
-        io.updateInputs(inputs)
-
-        poseEstimator =
-            SwerveDrivePoseEstimator(
-                kinematics, // swerve drive kinematics
-                inputs.gyroRotation, // initial gyro rotation
-                inputs.measuredPositions.toTypedArray(), // initial module positions
-                Pose2d.kZero, // initial pose
-                VecBuilder.fill(0.02, 0.02, 0.005),
-                // Overwrite each measurement
-                VecBuilder.fill(0.0, 0.0, 0.0)
-            )
+//        if (io is DrivetrainIOSim) {
+//            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
+//        }
+        PhoenixOdometryThread.start()
     }
 
     val modulePositions = Array(4) { SwerveModulePosition() }
@@ -216,7 +217,7 @@ object Drivetrain : Subsystem {
                 Logger.processInputs("Drivetrain", inputs)
                 val odometryTimestamps = io.odometryTimestamps
                 val odometryPositions = io.odometryPositions
-                val odometryYawPositions = io.odometryYawPositions
+                val odometryYawPositons = io.odometryYawPositions
                 val validTimestamps = io.validTimestamps
                 Logger.recordOutput("Drivetrain/Valid Timestamps", io.validTimestamps)
                 for (i in 0..<validTimestamps) {
@@ -235,14 +236,11 @@ object Drivetrain : Subsystem {
                         moduleDeltas[index].angle = deltaAngle
 
                         // Update last positions
-                        lastModulePositions[index] = SwerveModulePosition(
-                            modulePositions[index].distanceMeters,
-                            modulePositions[index].angle
-                        )
+                        lastModulePositions[index] = modulePositions[index]
                     }
 
                     rawGyroRotation = if (inputs.gyroConnected) {
-                        Rotation2d(odometryYawPositions[i].degrees)
+                        Rotation2d(odometryYawPositons[i].degrees)
                     } else {
                         rawGyroRotation.plus(Rotation2d(kinematics.toTwist2d(*moduleDeltas).dtheta.radians))
                     }
@@ -277,16 +275,16 @@ object Drivetrain : Subsystem {
 
             for (measurement in inputs.measurements) {
                 if (!measurement.isLowQuality) {
-//                    if (measurement.pose.x < 0.0 || measurement.pose.y < 0.0) {
-//                        rejectedPoses.add(measurement.pose)
-//                        continue
-//                    } else if (measurement.pose.x > FIELD_LAYOUT.fieldLength || measurement.pose.y > FIELD_LAYOUT.fieldWidth) {
-//                        rejectedPoses.add(measurement.pose)
-//                        continue
-//                    } else if (abs(measurement.pose.rotation.degrees - estimatedPose.rotation.degrees) > 5 && !RobotState.beforeFirstEnable) {
-//                        rejectedPoses.add(measurement.pose)
-//                        continue
-//                    }
+                    if (measurement.pose.x < 0.0 || measurement.pose.y < 0.0) {
+                        rejectedPoses.add(measurement.pose)
+                        continue
+                    } else if (measurement.pose.x > FIELD_LAYOUT.fieldLength || measurement.pose.y > FIELD_LAYOUT.fieldWidth) {
+                        rejectedPoses.add(measurement.pose)
+                        continue
+                    } else if (abs(measurement.pose.rotation.degrees - estimatedPose.rotation.degrees) > 5 && !RobotState.beforeFirstEnable) {
+                        rejectedPoses.add(measurement.pose)
+                        continue
+                    }
                     acceptedPoses.add(measurement.pose)
                     poseEstimator.addAbsolutePoseMeasurement(measurement)
                 } else {

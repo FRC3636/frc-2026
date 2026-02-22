@@ -7,7 +7,7 @@ import org.littletonrobotics.junction.Logger
 
 object Feeder : Subsystem {
     private val io: FeederIO = when (Robot.model) {
-        Robot.Model.SIMULATION -> TODO("Add sim")
+        Robot.Model.SIMULATION -> FeederIOSim()
         Robot.Model.COMPETITION -> FeederIOReal()
     }
     val inputs = LoggedFeederInputs()
