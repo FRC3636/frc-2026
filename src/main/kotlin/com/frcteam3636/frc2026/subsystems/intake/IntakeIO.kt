@@ -131,7 +131,7 @@ class IntakeIOSim: IntakeIO {
         Drivetrain.getSwerveDriveSimulation(),
         Drivetrain.Constants.BUMPER_WIDTH,
         0.182.meters,
-        IntakeSimulation.IntakeSide.BACK,
+        IntakeSimulation.IntakeSide.FRONT,
         40
     )!!
 

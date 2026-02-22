@@ -27,10 +27,6 @@ fun Angle.toRotation2d(): Rotation2d {
     return Rotation2d(this)
 }
 
-fun AngularVelocity.toLinearVelocity(radius: Double): LinearVelocity {
-    return (this.inRadiansPerSecond() / radius).metersPerSecond
-}
-
 fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {
     return this * sin(angle.inRadians())
 }

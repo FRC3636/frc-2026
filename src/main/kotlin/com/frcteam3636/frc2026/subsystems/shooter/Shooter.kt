@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
+import org.littletonrobotics.junction.AutoLog
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -74,8 +75,9 @@ object Shooter {
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
             Logger.processInputs("Shooter/Turret", inputs)
-            Logger.recordOutput("Shooter/Turret/DistanceToHub", translationToHub.norm)
-            Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", turretTranslationToHub.norm)
+            Logger.recordOutput("Shooter/Turret/DistanceToHub", translationToHub)
+            Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", shooterTranslationToHub)
+            Logger.recordOutput("Shooter/Turret/Field Position", shooterTranslation)
         }
 
         fun alignToHub(offset: Angle = 0.0.radians): Command =
@@ -287,7 +289,7 @@ object Shooter {
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        fun getFlywheelVelocity(distance: Distance): AngularVelocity = velocityInterpolationTable.get(distance.inMeters()).rpm
+        fun getFlywheelVelocity(distance: Distance): AngularVelocity = sqrt(velocityInterpolationTable.get(distance.inMeters())).rpm
         fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(velocityInterpolationTable.get(distance.inMeters())) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
 
         // TODO: Command waits until the measured speed is at that amount (startEnd).
@@ -353,15 +355,25 @@ object Shooter {
             }
         }
 
-    private val turretTranslationToHub: Translation2d
+    private val shooterTranslationToHub: Translation2d
         get() {
-            if (Robot.model == Model.COMPETITION) {
+            return if (Robot.model == Model.COMPETITION) {
+                hubTranslation.toTranslation2d() - shooterTranslation
+            }
+            else {
+                hubTranslation.toTranslation2d() - shooterTranslation
+            }
+        }
+
+    private val shooterTranslation: Translation2d
+        get() {
+            return if (Robot.model == Model.COMPETITION) {
                 val pose = Drivetrain.estimatedPose
-                return hubTranslation.toTranslation2d() - (pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation))
+                pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation)
             }
             else {
                 val pose = Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose
-                return hubTranslation.toTranslation2d() - (pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation))
+                pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation)
             }
         }
 
@@ -401,10 +413,11 @@ object Shooter {
 //            if (Intake.IntakeSimulation.gamePiecesAmount == 0) {
 //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
 //            }
-            val adjustedVector = simAdjustedVector
-            val turretAngle = (atan(adjustedVector[1, 0] / adjustedVector[2, 0]) - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
+            // maplesim doesn't account for robot's velocity
+            val adjustedVector = targetVelocityVector // simAdjustedVector
+            // turret and drivetrain would normally have different angles
+            val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
             val velocity = adjustedVector.norm().metersPerSecond
-            Logger.recordOutput("Shooter/Flywheel/velocity", velocity)
             if (Intake.IntakeSimulation.obtainGamePieceFromIntake()) {
                 SimulatedArena.getInstance().addGamePieceProjectile(
                     RebuiltFuelOnFly(
@@ -412,9 +425,9 @@ object Shooter {
                         Constants.SHOOTER_OFFSET,
                         DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
                         Rotation2d(turretAngle.radians),
-                            0.3835.meters,
-                            velocity,
-                            Hood.getHoodAngle(turretTranslationToHub.norm.meters)
+                        0.3835.meters,
+                        velocity,
+                        Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
                     ).withTargetPosition {
                         hubTranslation
                     }.withTargetTolerance(
@@ -423,11 +436,11 @@ object Shooter {
                             (41.7 / 2).inches,
                             0.inches
                         )
-                    )// TODO: Fix logging the correct trajectory
-                    //.withProjectileTrajectoryDisplayCallBack {
-//                        (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses.toArra
-//                            (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses.toArray(Pose3d[]::new))
-//                    }.
+                    ).enableBecomesGamePieceOnFieldAfterTouchGround()
+                    // TODO: Fix logging the correct trajectory
+//                    .withProjectileTrajectoryDisplayCallBack {
+//                        (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses.toArray(Pose3d[]::new))
+//                    }
                 )
             }
         }
@@ -446,7 +459,7 @@ object Shooter {
             -parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * hubTranslation.y))
         )
         val adjustedDistance = max(parabolicSolutions.first, parabolicSolutions.second).meters
-        val targetLinearVelocity = Flywheel.getFlywheelVelocity(adjustedDistance).toLinear(Constants.FLYWHEEL_RADIUS)
+        val targetLinearVelocity = Flywheel.getFlywheelVelocity(adjustedDistance).toLinear(Constants.FLYWHEEL_RADIUS) * Constants.FLYWHEEL_TO_FUEL_RATIO
         val targetHoodAngle = Hood.getHoodAngle(adjustedDistance)
         val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
         val targetVelocityVector = VecBuilder.fill(
@@ -464,21 +477,21 @@ object Shooter {
     val targetVelocityVector: Vector<N3>
         get() {
             if (Robot.model == Model.COMPETITION) {
-                val targetHoodAngle = Hood.getHoodAngle(turretTranslationToHub.norm.meters)
-                val targetLinearVelocity = Flywheel.getFlywheelVelocity(turretTranslationToHub.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS)
+                val targetHoodAngle = Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
+                val targetLinearVelocity = Flywheel.getFlywheelVelocity(shooterTranslationToHub.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS) * Constants.FLYWHEEL_TO_FUEL_RATIO
                 val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
                 return VecBuilder.fill(
-                    horizontalVelocity.getHorizontalComponent(turretTranslationToHub.angle.measure).inMetersPerSecond(),
-                    horizontalVelocity.getVerticalComponent(turretTranslationToHub.angle.measure).inMetersPerSecond(),
+                    horizontalVelocity.getHorizontalComponent(shooterTranslationToHub.angle.measure).inMetersPerSecond(),
+                    horizontalVelocity.getVerticalComponent(shooterTranslationToHub.angle.measure).inMetersPerSecond(),
                     targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
                 )
             } else {
-                val targetHoodAngle = Hood.getHoodAngle(turretTranslationToHub.norm.meters)
-                val targetLinearVelocity = Flywheel.getSimFuelVelocity(turretTranslationToHub.norm.meters)
+                val targetHoodAngle = Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
+                val targetLinearVelocity = Flywheel.getSimFuelVelocity(shooterTranslationToHub.norm.meters)
                 val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
                 return VecBuilder.fill(
-                    horizontalVelocity.getHorizontalComponent(turretTranslationToHub.angle.measure).inMetersPerSecond(),
-                    horizontalVelocity.getVerticalComponent(turretTranslationToHub.angle.measure).inMetersPerSecond(),
+                    horizontalVelocity.getHorizontalComponent(shooterTranslationToHub.angle.measure).inMetersPerSecond(),
+                    horizontalVelocity.getVerticalComponent(shooterTranslationToHub.angle.measure).inMetersPerSecond(),
                     targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
                 )
             }
@@ -504,7 +517,7 @@ object Shooter {
         }
 
     fun getProfile(vector: Vector<N3>, error: Angle): ShooterProfile {
-        val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
+        val turretAngle = (atan2(vector[1,0], vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
         val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
@@ -558,8 +571,9 @@ object Shooter {
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
         val FIXED_HOOD_ANGLE = 40.radians
-        val SHOOTER_OFFSET = Translation2d(.184, -.184)
+        val SHOOTER_OFFSET = Translation2d(-.184, .184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
+        val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
     }
 
     enum class FeedPose(val target : Translation2d) {

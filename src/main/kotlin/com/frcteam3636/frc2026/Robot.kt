@@ -329,7 +329,6 @@ object Robot : LoggedRobot() {
         val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
             .getGamePiecesArrayByType("Fuel")
         Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
-//        Shooter.simSequence()
         Intake.periodic()
     }
 }
