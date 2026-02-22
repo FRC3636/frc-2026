@@ -8,6 +8,9 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
+import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
+import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -16,6 +19,7 @@ import com.revrobotics.util.StatusLogger
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
@@ -28,6 +32,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -37,7 +42,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.Path
 import kotlin.io.path.exists
-
 
 /**
  * The VM is configured to automatically run this object (which basically functions as a singleton
@@ -51,9 +55,9 @@ import kotlin.io.path.exists
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-    private val controller = CommandXboxController(2)
-    private val joystickLeft = CommandJoystick(0)
-    private val joystickRight = CommandJoystick(1)
+    private val controller = CommandXboxController(0)
+    private val joystickLeft = CommandJoystick(1)
+    private val joystickRight = CommandJoystick(2)
 
     @Suppress("unused")
     private val joystickDev = CommandJoystick(3)
@@ -104,7 +108,7 @@ object Robot : LoggedRobot() {
         configureDashboard()
         Dashboard.initialize()
 
-        statusSignals.addSignals(*Drivetrain.signals)
+//        statusSignals.addSignals(*Drivetrain.signals)
 
         // BIG WARNING BIG WARNING BIG WARNING
         // hi there. if you're a team looking at copying some code (which we are flattered)
@@ -168,10 +172,12 @@ object Robot : LoggedRobot() {
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
-//        Drivetrain.register()
+        Drivetrain.register()
         Feeder.register()
         Indexer.register()
+        Shooter.registerSubsystems()
     }
+
 
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
     private fun configureAutos() {}
@@ -190,7 +196,12 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
+        if (model == Model.SIMULATION) {
+            Drivetrain.defaultCommand = Drivetrain.simDrive(CommandXboxController(0))
+        } else {
+            Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
+        }
+//        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
@@ -221,6 +232,23 @@ object Robot : LoggedRobot() {
         // turret stops working.
 //        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
 
+        controller.rightBumper().onTrue(
+            Commands.sequence(
+                Commands.runOnce({
+                    Intake.intakeDown = !Intake.intakeDown
+                }),
+                Intake.setPivotPosition(Position.Deployed),
+            )
+        )
+
+        controller.rightTrigger().whileTrue(
+            Shooter.simSequence()
+
+        ).debounce(0.01)
+
+        controller.leftTrigger().whileTrue(
+            Intake.intake()
+        )
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(
@@ -287,5 +315,18 @@ object Robot : LoggedRobot() {
     }
 
     override fun testExit() {
+    }
+
+    override fun simulationInit() {
+        SimulatedArena.getInstance().resetFieldForAuto()
+    }
+
+    override fun simulationPeriodic() {
+        SimulatedArena.getInstance().simulationPeriodic()
+        val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
+            .getGamePiecesArrayByType("Fuel")
+        Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
+        Shooter.simSequence()
+        Intake.periodic()
     }
 }

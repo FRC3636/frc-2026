@@ -12,16 +12,28 @@ import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import com.frcteam3636.frc2026.utils.swerve.SwerveModuleTemperature
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.drivesims.COTS
+import org.ironmaple.simulation.drivesims.SelfControlledSwerveDriveSimulation
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig
+import org.littletonrobotics.junction.Logger
 import org.photonvision.simulation.VisionSystemSim
 import org.team9432.annotation.Logged
 import kotlin.math.atan2
 
 @Logged
 open class DrivetrainInputs {
+    var measuredStatesRelativeToField = PerCorner.generate { SwerveModuleState() }
     var gyroRotation = Rotation2d.kZero!!
     var gyroVelocity = 0.degreesPerSecond
     var gyroConnected = true
@@ -43,6 +55,8 @@ abstract class DrivetrainIO {
             module.periodic()
             inputs.measuredStates[i] = module.state     // no allocation
             inputs.measuredPositions[i] = module.position   // no allocation
+            inputs.measuredStatesRelativeToField[i] = SwerveModuleState( module.state.speedMetersPerSecond,
+                module.position.angle + gyro.rotation)
         }
 
         inputs.gyroRotation = gyro.rotation.unaryMinus()
@@ -135,14 +149,48 @@ class DrivetrainIOSim : DrivetrainIO() {
         addAprilTags(FIELD_LAYOUT)
     }
 
+    val driveTrainSimulationConfig: DriveTrainSimulationConfig = DriveTrainSimulationConfig.Default()
+        .withGyro(COTS.ofPigeon2())
+        .withSwerveModule(COTS.ofMark4n(
+            DCMotor.getKrakenX60(1),
+            DCMotor.getKrakenX44(1),
+            COTS.WHEELS.SLS_PRINTED_WHEELS.cof,
+            3
+        ))
+        .withTrackLengthTrackWidth(
+            Drivetrain.Constants.ROBOT_LENGTH,
+            Drivetrain.Constants.ROBOT_WIDTH
+        )
+        .withBumperSize(
+            Drivetrain.Constants.BUMPER_LENGTH,
+            Drivetrain.Constants.BUMPER_WIDTH
+        )
+
+    val swerveDriveSimulation: SwerveDriveSimulation = SwerveDriveSimulation(
+        driveTrainSimulationConfig,
+        Pose2d(3.0, 3.0, Rotation2d()
+        )
+    )
+
+    val simulatedDrive: SelfControlledSwerveDriveSimulation = SelfControlledSwerveDriveSimulation(swerveDriveSimulation)
+
+    fun updateChassisSpeeds(chassisSpeeds: ChassisSpeeds) {
+        simulatedDrive.runChassisSpeeds(chassisSpeeds, Translation2d(), true, false)
+    }
+
+
+
     override val modules = PerCorner.generate { SimSwerveModule() }
-    override val gyro = GyroSim(modules.map { it })
+    override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
     override fun updateInputs(inputs: DrivetrainInputs) {
         super.updateInputs(inputs)
         vision.update(Drivetrain.poseEstimator.estimatedPosition)
-
-
+        Logger.recordOutput("FieldSimulation/RobotPosition", swerveDriveSimulation.simulatedDriveTrainPose)
         Diagnostics.report(gyro)
+    }
+
+    init {
+        SimulatedArena.getInstance().addDriveTrainSimulation(simulatedDrive.driveTrainSimulation)
     }
 
     fun registerPoseProviders(providers: Iterable<AbsolutePoseProvider>) {
@@ -153,5 +201,6 @@ class DrivetrainIOSim : DrivetrainIO() {
         }
     }
 }
+
 
 val FIELD_LAYOUT: AprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField)

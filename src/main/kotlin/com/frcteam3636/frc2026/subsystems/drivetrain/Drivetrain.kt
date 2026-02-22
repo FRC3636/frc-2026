@@ -37,11 +37,14 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj.XboxController
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.ironmaple.simulation.SimulatedArena
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
@@ -200,18 +203,13 @@ object Drivetrain : Subsystem {
                 // Overwrite each measurement
                 VecBuilder.fill(0.0, 0.0, 0.0)
             )
-
-        if (io is DrivetrainIOSim) {
-            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
-        }
-        PhoenixOdometryThread.start()
     }
 
     val modulePositions = Array(4) { SwerveModulePosition() }
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     override fun periodic() {
-        if (Robot.model != Robot.Model.SIMULATION) {
+        if (io is DrivetrainIOReal) {
             try {
                 odometryLock.lock()
                 io.updateInputs(inputs)
@@ -253,14 +251,18 @@ object Drivetrain : Subsystem {
             } finally {
                 odometryLock.unlock()
             }
-        } else {
+        } else if (io is DrivetrainIOSim) {
             io.updateInputs(inputs)
             Logger.processInputs("Drivetrain", inputs)
-            rawGyroRotation = inputs.gyroRotation
-            poseEstimator.update(
-                rawGyroRotation,
-                inputs.measuredPositions.toTypedArray()
-            )
+            io.updateChassisSpeeds(desiredChassisSpeeds)
+
+//            rawGyroRotation = inputs.gyroRotation
+//            poseEstimator.update(
+//                rawGyroRotation,
+//                inputs.measuredPositions.toTypedArray()
+//            )
+            io.registerPoseProviders(absolutePoseIOs.values.map { it.first })
+            poseEstimator.resetPose(io.swerveDriveSimulation.simulatedDriveTrainPose)
         }
 
         Logger.recordOutput("Drivetrain/Raw Gyro Rotation", rawGyroRotation)
@@ -300,6 +302,7 @@ object Drivetrain : Subsystem {
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
+        Logger.recordOutput("Drivetrain/Chassis Speed Relative To the Field", measuredChassisSpeedsRelativeToField)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         Logger.recordOutput(
             "Drivetrain/Measured Velocity",
@@ -367,6 +370,8 @@ object Drivetrain : Subsystem {
      *
      * Note that the speeds are relative to the chassis, not the field.
      */
+    val measuredChassisSpeedsRelativeToField get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
+
     private var desiredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(desiredModuleStates)
         set(value) {
@@ -406,6 +411,24 @@ object Drivetrain : Subsystem {
             )
         }
     }
+
+    fun simDrive(xboxController: CommandXboxController): Command =
+        run {
+            if(!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(xboxController.rightX,0.0))))
+                desiredChassisSpeeds = ChassisSpeeds(
+                    xboxController.leftX * 5.0,
+                    (xboxController.leftY * 5.0).unaryMinus(),
+                    calculateInputCurve(xboxController.rightX),
+                )
+        }
+
+    fun resetSimPose() : Command = run{
+        estimatedPose = Pose2d(Translation2d(3.0, 3.0), Rotation2d(0.0.radians))
+    }
+
+    fun getSwerveDriveSimulation(): SwerveDriveSimulation =
+        if (io is DrivetrainIOSim) { io.swerveDriveSimulation }
+        else throw(Throwable("Cannot access swerve simulation out of sim"))
 
     @Suppress("SameParameterValue")
     private fun driveWithoutDeadband(translationInput: Translation2d, rotationInput: Translation2d) {
