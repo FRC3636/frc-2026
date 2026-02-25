@@ -192,7 +192,8 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
+//        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
+        Drivetrain.defaultCommand = Drivetrain.driveWithController(controller)
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
@@ -200,6 +201,7 @@ object Robot : LoggedRobot() {
         }).ignoringDisable(true))
 
         controller.b().onTrue(Commands.runOnce( {
+            println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }))
 
