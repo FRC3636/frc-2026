@@ -100,8 +100,8 @@ object Shooter {
 
             val target =  when (Drivetrain.estimatedPose.x) {
                 in ourAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> hubTranslation.toTranslation2d()
-                in opposingAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> FeedPose.RightSideNeutralZone.target
-                else -> FeedPose.RightSideAllianceZone.target
+                in opposingAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> FeedTranslation.RightSideNeutralZone.target
+                else -> FeedTranslation.RightSideAllianceZone.target
             }
 
             if (Drivetrain.estimatedPose.translation.y < 4.035.meters.inMeters()) {
@@ -301,7 +301,7 @@ object Shooter {
         get() = when (Robot.model) {
             // simulation defaults to red alliance
             Model.SIMULATION -> Translation3d(
-                (16.54 - 4.62534).meters,
+                4.62534.meters,
                 (8.07 / 2).meters,
                 1.83.meters,
             )
@@ -402,7 +402,7 @@ object Shooter {
 //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
 //            }
             // maplesim doesn't account for robot's velocity
-            val adjustedVector = targetVelocityVector // simAdjustedVector
+            val adjustedVector = targetVelocityVector
             // turret and drivetrain would normally have different angles
             val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
             val velocity = adjustedVector.norm().metersPerSecond
@@ -426,9 +426,10 @@ object Shooter {
                         )
                     ).enableBecomesGamePieceOnFieldAfterTouchGround()
                     // TODO: Fix logging the correct trajectory
-//                    .withProjectileTrajectoryDisplayCallBack {
-//                        (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses.toArray(Pose3d[]::new))
-//                    }
+                    .withProjectileTrajectoryDisplayCallBack { pose3ds ->
+                        Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
+
+                    }
                 )
             }
         }
@@ -548,7 +549,7 @@ object Shooter {
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
     }
 
-    enum class FeedPose(val target : Translation2d) {
+    enum class FeedTranslation(val target : Translation2d) {
         LeftSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         RightSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         LeftSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),

@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.Robot.Model
 import com.frcteam3636.frc2026.Robot.odometryLock
 import com.frcteam3636.frc2026.RobotState
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
@@ -24,9 +25,11 @@ import com.therekrab.autopilot.APProfile
 import com.therekrab.autopilot.APTarget
 import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
+import edu.wpi.first.math.Vector
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation2d
@@ -35,6 +38,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.math.numbers.N2
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
@@ -44,6 +48,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import org.dyn4j.geometry.Interval.clamp
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation
 import org.littletonrobotics.junction.Logger
@@ -380,6 +385,9 @@ object Drivetrain : Subsystem {
             desiredModuleStates = kinematics.toCornerSwerveModuleStates(discretized)
         }
 
+    var fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
+        .getGamePiecesArrayByType("Fuel")
+
     /** The estimated pose of the robot on the field, using the yaw value measured by the gyro. */
     var estimatedPose: Pose2d
         get() {
@@ -419,13 +427,9 @@ object Drivetrain : Subsystem {
                 desiredChassisSpeeds = ChassisSpeeds(
                     xboxController.leftX * 5.0,
                     (xboxController.leftY * 5.0).unaryMinus(),
-                    calculateInputCurve(xboxController.rightX),
+                    calculateInputCurve(xboxController.rightX * 2.0),
                 )
         }
-
-    fun resetSimPose() : Command = run{
-        estimatedPose = Pose2d(Translation2d(3.0, 3.0), Rotation2d(0.0.radians))
-    }
 
     fun getSwerveDriveSimulation(): SwerveDriveSimulation =
         if (io is DrivetrainIOSim) { io.swerveDriveSimulation }
@@ -487,9 +491,16 @@ object Drivetrain : Subsystem {
 
     val autoPilot = Autopilot(autoPilotProfile)
 
-    val autoPilotRotationPID = PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
-        enableContinuousInput(0.0, TAU)
-    }
+    val autoPilotRotationPID =
+        if (Robot.model == Model.COMPETITION) {
+            PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
+                    enableContinuousInput(0.0, TAU)
+                }
+        } else {
+            PIDController(PIDGains(4.0, 0.0, 0.15)).apply {
+                enableContinuousInput(0.0, TAU)
+            }
+        }
 
     private var rawGyroRotation = Rotation2d.kZero
 
@@ -497,7 +508,11 @@ object Drivetrain : Subsystem {
         var transformedTarget = target
         if (flipH) transformedTarget = flipTargetHorizontal(transformedTarget)
         if (flipV) transformedTarget = flipTargetVertical(transformedTarget)
-        return alignWithAutopilot(transformedTarget)
+        return if (Robot.model == Model.COMPETITION) {
+            alignWithAutopilot(transformedTarget)
+        } else {
+            alignWithAutopilotSim(transformedTarget)
+        }
     }
 
     // TODO: Compensate for the error probably caused by the turret being stuck at the wrong angle.
@@ -517,10 +532,8 @@ object Drivetrain : Subsystem {
             estimatedPose.rotation
         )
     }
-
     fun alignWithAutopilot(target: APTarget): Command {
         return run {
-
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
             val vectorToTarget = (estimatedPose.translation - target.reference.translation).toVector()
             // If we are moving away from the target, stop the robot immediately
@@ -559,6 +572,55 @@ object Drivetrain : Subsystem {
 
         }.until {
             autoPilot.atTarget(estimatedPose, target)
+        }.finallyDo { ->
+            desiredModuleStates = BRAKE_POSITION
+        }
+
+    }
+    fun alignWithAutopilotSim(target: APTarget): Command {
+        return run {
+            val driveSim = getSwerveDriveSimulation()
+            val simDrivePose = driveSim.simulatedDriveTrainPose
+            val simDriveVelocity = driveSim.linearVelocity
+            val velocityVector = VecBuilder.fill(simDriveVelocity.x, simDriveVelocity.y)
+            val vectorToTarget = (simDrivePose.translation - target.reference.translation).toVector()
+            // If we are moving away from the target, stop the robot immediately
+            val adjustedChassisSpeeds = measuredChassisSpeeds.apply {
+                if (vectorToTarget.dot(velocityVector) <= 0) {
+                    vxMetersPerSecond = 0.0
+                    vyMetersPerSecond = 0.0
+                }
+            }
+
+            val output = autoPilot.calculate(
+                simDrivePose,
+                measuredChassisSpeeds,
+                target
+            )
+
+            val rotationOutput = autoPilotRotationPID.calculate(
+                simDrivePose.rotation.radians,
+                output.targetAngle.radians
+            )
+
+            desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                output.vx,
+                output.vy,
+                rotationOutput.radiansPerSecond,
+                simDrivePose.rotation
+
+            )
+
+
+//            Logger.recordOutput("FieldSimulation/APMeasuredChassisSpeeds", simDriveVelocity)
+            Logger.recordOutput("FieldSimulation/APOutput", output)
+            Logger.recordOutput("FieldSimulation/APOutputX", output.vx)
+            Logger.recordOutput("FieldSimulation/APOutputY", output.vy)
+            Logger.recordOutput("Drivetrain/APRotationOutput", rotationOutput)
+            Logger.recordOutput("Drivetrain/APTarget", target.reference)
+
+        }.until {
+            autoPilot.atTarget(getSwerveDriveSimulation().simulatedDriveTrainPose, target)
         }.finallyDo { ->
             desiredModuleStates = BRAKE_POSITION
         }

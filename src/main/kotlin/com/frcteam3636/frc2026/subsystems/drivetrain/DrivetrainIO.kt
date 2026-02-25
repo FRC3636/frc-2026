@@ -172,13 +172,12 @@ class DrivetrainIOSim : DrivetrainIO() {
         )
     )
 
+
     val simulatedDrive: SelfControlledSwerveDriveSimulation = SelfControlledSwerveDriveSimulation(swerveDriveSimulation)
 
     fun updateChassisSpeeds(chassisSpeeds: ChassisSpeeds) {
         simulatedDrive.runChassisSpeeds(chassisSpeeds, Translation2d(), true, false)
     }
-
-
 
     override val modules = PerCorner.generate { SimSwerveModule() }
     override val gyro = GyroMapleSim(swerveDriveSimulation.gyroSimulation)
