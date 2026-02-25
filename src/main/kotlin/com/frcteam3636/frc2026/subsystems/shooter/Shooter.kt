@@ -132,7 +132,6 @@ object Shooter {
     }
 
     object Hood: Subsystem {
-        var fixedHood = false
         val atDesiredHoodAngle = Trigger {
             val error = abs((inputs.hoodAngle - shooterTarget.hoodAngle).inDegrees())
             Logger.recordOutput("Shooter/Hood/Angle Error", error)
@@ -211,16 +210,6 @@ object Shooter {
         fun hoodCoastMode(): Command =
             run {
                 io.setBrakeMode(false)
-            }
-
-        fun fixedHoodMode(): Command =
-            run {
-                fixedHood = true
-            }
-
-        fun adjustableHoodMode(): Command =
-            run {
-                fixedHood = false
             }
     }
 
@@ -527,18 +516,6 @@ object Shooter {
         )
     }
 
-    fun fixedHoodProfile(vector: Vector<N3>, error: Angle): ShooterProfile {
-        val turretAngle = (atan(vector[1,0] / vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
-        val velocity = (sqrt(vector[0, 0].pow(2) + vector[1, 0].pow(2) + vector[2, 0].pow(2)) /
-                Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
-        return ShooterProfile(
-            error,
-            turretAngle,
-            Constants.FIXED_HOOD_ANGLE,
-            velocity
-        )
-    }
-
     fun registerSubsystems() {
         Hood.register()
         Flywheel.register()
@@ -548,9 +525,6 @@ object Shooter {
     enum class Target(val profile: ShooterProfile) {
         //AIM_AT_POSE(getTurretProfileFromTranslation2d(Turret.getClosetTarget())),
         AIM_AT_HUB(getProfile(targetVelocityVector, angleError)),
-//        AIM_WITHOUT_HOOD(
-//            vectorToFixedHoodShooterProfile(adjustedVelocityVectorAndError)
-//        ),
         STOWED(ShooterProfile(
             0.0.radians,
             0.0.radians,
@@ -569,8 +543,7 @@ object Shooter {
         val FLYWHEEL_RADIUS = 0.0505.meters
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
-        val FIXED_HOOD_ANGLE = 40.radians
-        val SHOOTER_OFFSET = Translation2d(.184, -.184)
+        val SHOOTER_OFFSET = Translation2d(-.184, .184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
     }
