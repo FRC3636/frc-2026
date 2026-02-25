@@ -55,7 +55,6 @@ object Drivetrain : Subsystem {
     }
     val inputs = LoggedDrivetrainInputs()
 
-    private val limiter = SlewRateLimiter(0.05)
     private var wheelRadiusModuleStates = DoubleArray(4)
     private var wheelRadiusLastAngle = Rotation2d.kZero
     private var wheelRadiusGyroDelta = 0.0
@@ -451,8 +450,8 @@ object Drivetrain : Subsystem {
 
     @Suppress("unused")
     fun driveWithController(controller: CommandXboxController): Command = run {
-        val translationInput = Translation2d(controller.leftX, controller.leftY)
-        val rotationInput = Translation2d(controller.rightY, controller.rightX)
+        val translationInput = Translation2d(-controller.leftY, -controller.leftX)
+        val rotationInput = Translation2d(-controller.rightY, -controller.rightX)
 
         drive(translationInput, rotationInput)
     }
