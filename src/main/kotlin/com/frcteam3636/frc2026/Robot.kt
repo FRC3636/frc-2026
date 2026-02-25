@@ -4,6 +4,7 @@ import com.ctre.phoenix6.CANBus
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.fuelPoses
 import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
@@ -25,6 +26,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.Threads
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
@@ -230,7 +232,7 @@ object Robot : LoggedRobot() {
         )
 
         joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
-
+        SmartDashboard.putData { Drivetrain.alignWithAutopilotSim(Drivetrain.Constants.ALIGN_TARGET) }
         // Angles robot for shooting, just in case the
         // turret stops working.
 //        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
@@ -252,6 +254,8 @@ object Robot : LoggedRobot() {
         controller.leftTrigger().whileTrue(
             Intake.intake()
         )
+
+
 
         if (Preferences.getBoolean("DeveloperMode", false)) {
             controllerDev.leftBumper().onTrue(
@@ -326,7 +330,7 @@ object Robot : LoggedRobot() {
 
     override fun simulationPeriodic() {
         SimulatedArena.getInstance().simulationPeriodic()
-        val fuelPoses: Array<Pose3d> = SimulatedArena.getInstance()
+        Drivetrain.fuelPoses = SimulatedArena.getInstance()
             .getGamePiecesArrayByType("Fuel")
         Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
         Intake.periodic()

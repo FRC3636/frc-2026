@@ -1,5 +1,8 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
+import com.frcteam3636.frc2026.subsystems.indexer.Indexer
+import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
 import com.therekrab.autopilot.APTarget
@@ -12,16 +15,23 @@ interface Auto {
     fun getPath(flipH: Boolean, flipV: Boolean): Command
 }
 
+
 object TwoScore: Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command {
         return Commands.sequence(
             Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
-            Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
+            Commands.race(
+                Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
+                Intake.intake()
+            ),
             Drivetrain.alignAndFlip(Targets.Target5.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
-            Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+            Commands.race(
+                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+                Shooter.simSequence()
+            ),
         )
     }
 
@@ -29,7 +39,8 @@ object TwoScore: Auto {
         Target1(APTarget(Pose2d(2.7136747875808314.meters, 6.008694768709806.meters, Rotation2d((-0.7500147072732971).radians)))),
         Target2(APTarget(Pose2d(3.8616252017874615.meters, 7.413649006992547.meters, Rotation2d((-0.75).radians)))),
         Target3(APTarget(Pose2d(6.722934443168167.meters, 7.208045947731659.meters, Rotation2d(1.98448554007376.radians)))),
-        Target4(APTarget(Pose2d(7.545346680211723.meters, 4.792210001416213.meters, Rotation2d(1.6926387638148142.radians)))),
+//        Target4(APTarget(Pose2d(7.545346680211723.meters, 4.792210001416213.meters, Rotation2d(1.6926387638148142.radians)))),
+Target4(APTarget(Pose2d(7.545346680211723.meters, 3.5.meters, Rotation2d(1.6926387638148142.radians)))),
         Target5(APTarget(Pose2d(6.7229344431681675.meters, 7.208045947731659.meters, Rotation2d((-0.6043055068662304).radians))))
     }
 }

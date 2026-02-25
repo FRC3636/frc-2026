@@ -301,7 +301,7 @@ object Shooter {
         get() = when (Robot.model) {
             // simulation defaults to red alliance
             Model.SIMULATION -> Translation3d(
-                (16.54 - 4.62534).meters,
+                4.62534.meters,
                 (8.07 / 2).meters,
                 1.83.meters,
             )
@@ -402,7 +402,7 @@ object Shooter {
 //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
 //            }
             // maplesim doesn't account for robot's velocity
-            val adjustedVector = targetVelocityVector // simAdjustedVector
+            val adjustedVector = targetVelocityVector
             // turret and drivetrain would normally have different angles
             val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
             val velocity = adjustedVector.norm().metersPerSecond
@@ -426,9 +426,10 @@ object Shooter {
                         )
                     ).enableBecomesGamePieceOnFieldAfterTouchGround()
                     // TODO: Fix logging the correct trajectory
-//                    .withProjectileTrajectoryDisplayCallBack {
-//                        (poses) -> Logger.recordOutput("successfulShotsTrajectory", poses.toArray(Pose3d[]::new))
-//                    }
+                    .withProjectileTrajectoryDisplayCallBack { pose3ds ->
+                        Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
+
+                    }
                 )
             }
         }
