@@ -34,7 +34,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
-import org.littletonrobotics.junction.AutoLog
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
@@ -101,8 +100,8 @@ object Shooter {
 
             val target =  when (Drivetrain.estimatedPose.x) {
                 in ourAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> hubTranslation.toTranslation2d()
-                in opposingAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> FeedPose.RightSideNeutralZone.target
-                else -> FeedPose.RightSideAllianceZone.target
+                in opposingAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> FeedTranslation.RightSideNeutralZone.target
+                else -> FeedTranslation.RightSideAllianceZone.target
             }
 
             if (Drivetrain.estimatedPose.translation.y < 4.035.meters.inMeters()) {
@@ -571,12 +570,12 @@ object Shooter {
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
         val FIXED_HOOD_ANGLE = 40.radians
-        val SHOOTER_OFFSET = Translation2d(-.184, .184)
+        val SHOOTER_OFFSET = Translation2d(.184, -.184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
     }
 
-    enum class FeedPose(val target : Translation2d) {
+    enum class FeedTranslation(val target : Translation2d) {
         LeftSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         RightSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
         LeftSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
