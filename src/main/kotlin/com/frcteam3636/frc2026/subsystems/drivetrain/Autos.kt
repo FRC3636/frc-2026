@@ -69,11 +69,11 @@ object LebronJames: Auto {
 
 
     enum class Targets(val target: APTarget) {
-        Target1(APTarget(Pose2d(14.55.meters, 3.95.meters, Rotation2d(-3.10.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.04.radians))),
-        Target2(APTarget(Pose2d(13.24.meters, 7.44.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-3.05.radians))),
-        Target3(APTarget(Pose2d(8.75.meters, 6.74.meters, Rotation2d(1.56.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.64.radians))),
-        Target4(APTarget(Pose2d(8.79.meters, 1.05.meters, Rotation2d(1.55.radians))).withVelocity(6.00)),
-        Target5(APTarget(Pose2d(12.94.meters, .69.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(0.65.radians)))
+        Target1(APTargetWithTolerance(Pose2d(14.55.meters, 3.95.meters, Rotation2d(-3.10.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.04.radians))),
+        Target2(APTargetWithTolerance(Pose2d(13.24.meters, 7.44.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-3.05.radians))),
+        Target3(APTargetWithTolerance(Pose2d(8.75.meters, 6.74.meters, Rotation2d(1.56.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.64.radians))),
+        Target4(APTargetWithTolerance(Pose2d(8.79.meters, 1.05.meters, Rotation2d(1.55.radians))).withVelocity(6.00)),
+        Target5(APTargetWithTolerance(Pose2d(12.94.meters, .69.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(0.65.radians)))
     }
 
 }
