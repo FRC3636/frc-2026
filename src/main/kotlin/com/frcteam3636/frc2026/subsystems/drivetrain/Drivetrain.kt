@@ -309,7 +309,6 @@ object Drivetrain : Subsystem {
 
         Logger.recordOutput("Drivetrain/Pose Estimator/Estimated Pose", poseEstimator.estimatedPosition)
         Logger.recordOutput("Drivetrain/Chassis Speeds", measuredChassisSpeeds)
-        Logger.recordOutput("Drivetrain/Chassis Speed Relative To the Field", measuredChassisSpeedsRelativeToField)
         Logger.recordOutput("Drivetrain/Desired Chassis Speeds", desiredChassisSpeeds)
         Logger.recordOutput(
             "Drivetrain/Measured Velocity",
@@ -543,6 +542,7 @@ object Drivetrain : Subsystem {
 
     fun alignWithAutopilot(target: APTargetWithTolerance): Command {
         return run {
+
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
             val vectorToTarget = (estimatedPose.translation - target.reference.translation).toVector()
             // If we are moving away from the target, stop the robot immediately

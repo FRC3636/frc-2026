@@ -4,8 +4,8 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 
 //import org.photonvision.PhotonCamera
 //import org.photonvision.PhotonPoseEstimator
-import com.frcteam3636.frc2026.Robot
-import com.frcteam3636.frc2026.RobotState
+import com.frcteam3636.frc2026.robot.Robot
+import com.frcteam3636.frc2026.robot.RobotState
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
