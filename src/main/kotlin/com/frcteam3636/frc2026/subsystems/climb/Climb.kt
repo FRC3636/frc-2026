@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.climb
 
+import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.inMetersPerSecond
@@ -25,7 +26,10 @@ class Climb : Subsystem {
         // ... Might be more complicated than just set heights, we'll see.
     }
 
-    private val io: ClimbIO = ClimbIOReal()
+    private val io: ClimbIO = when (Robot.model) {
+        Robot.Model.COMPETITION -> ClimbIOReal()
+        Robot.Model.SIMULATION -> ClimbIOSim()
+    }
 
     val inputs = LoggedClimbInputs()
 

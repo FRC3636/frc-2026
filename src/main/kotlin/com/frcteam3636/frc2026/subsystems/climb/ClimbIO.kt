@@ -6,8 +6,10 @@ import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
+import com.frcteam3636.frc2026.utils.math.PIDController
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
+import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.inches
@@ -17,8 +19,11 @@ import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.toAngular
 import com.frcteam3636.frc2026.utils.math.toLinear
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
+import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
@@ -107,3 +112,33 @@ class ClimbIOReal : ClimbIO {
     }
 }
 
+class ClimbIOSim : ClimbIO {
+    internal companion object Constants {
+        private val SPOOL_RADIUS = 1.0.inches // Not measured, approximation
+        private val PID_GAINS = PIDGains(30.0, 0.0, 0.0) // Not measured, approximation
+    }
+
+    private val motor = DCMotor.getKrakenX60(1)
+    private val system = LinearSystemId.createDCMotorSystem(motor, 1.0,1.0)
+    private val sim = DCMotorSim(system, motor)
+
+    private val pid = PIDController(PID_GAINS)
+
+    override fun setVoltage(volts: Voltage) {
+        sim.inputVoltage = volts.inVolts()
+    }
+
+    override fun goToHeight(height: Distance, slow: Boolean) {
+        sim.inputVoltage = pid.calculate(sim.angularPosition.toLinear(SPOOL_RADIUS).inMeters())
+    }
+
+    override fun setEncoderPosition(position: Distance) {
+        TODO("Not yet implemented")
+    }
+
+    override fun updateInputs(inputs: ClimbInputs) {
+        inputs.height = sim.angularPosition.toLinear(SPOOL_RADIUS)
+        inputs.velocity = sim.angularVelocity.toLinear(SPOOL_RADIUS)
+        inputs.current = sim.currentDrawAmps.amps
+    }
+}
