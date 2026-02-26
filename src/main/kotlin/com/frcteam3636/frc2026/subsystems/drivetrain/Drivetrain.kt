@@ -14,6 +14,7 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
+import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
 import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
@@ -423,7 +424,13 @@ object Drivetrain : Subsystem {
 
     fun simDrive(xboxController: CommandXboxController): Command =
         run {
-            if(!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(Translation2d(xboxController.rightX,0.0))))
+            if (!(isInDeadband(Translation2d(xboxController.leftX, xboxController.leftY)) && isInDeadband(
+                    Translation2d(
+                        xboxController.rightX,
+                        0.0
+                    )
+                ))
+            )
                 desiredChassisSpeeds = ChassisSpeeds(
                     xboxController.leftX * 5.0,
                     (xboxController.leftY * 5.0).unaryMinus(),
@@ -432,8 +439,9 @@ object Drivetrain : Subsystem {
         }
 
     fun getSwerveDriveSimulation(): SwerveDriveSimulation =
-        if (io is DrivetrainIOSim) { io.swerveDriveSimulation }
-        else throw(Throwable("Cannot access swerve simulation out of sim"))
+        if (io is DrivetrainIOSim) {
+            io.swerveDriveSimulation
+        } else throw (Throwable("Cannot access swerve simulation out of sim"))
 
     @Suppress("SameParameterValue")
     private fun driveWithoutDeadband(translationInput: Translation2d, rotationInput: Translation2d) {
@@ -489,13 +497,13 @@ object Drivetrain : Subsystem {
         .withErrorTheta(2.degrees)
         .withBeelineRadius(80.centimeters)
 
-    val autoPilot = Autopilot(autoPilotProfile)
+    var autoPilot = Autopilot(autoPilotProfile)
 
     val autoPilotRotationPID =
         if (Robot.model == Model.COMPETITION) {
             PIDController(PIDGains(1.3, 0.0, 0.05)).apply {
-                    enableContinuousInput(0.0, TAU)
-                }
+                enableContinuousInput(0.0, TAU)
+            }
         } else {
             PIDController(PIDGains(4.0, 0.0, 0.15)).apply {
                 enableContinuousInput(0.0, TAU)
@@ -504,7 +512,7 @@ object Drivetrain : Subsystem {
 
     private var rawGyroRotation = Rotation2d.kZero
 
-    fun alignAndFlip(target: APTarget, flipH: Boolean, flipV: Boolean): Command {
+    fun alignAndFlip(target: APTargetWithTolerance, flipH: Boolean, flipV: Boolean): Command {
         var transformedTarget = target
         if (flipH) transformedTarget = flipTargetHorizontal(transformedTarget)
         if (flipV) transformedTarget = flipTargetVertical(transformedTarget)
@@ -532,7 +540,8 @@ object Drivetrain : Subsystem {
             estimatedPose.rotation
         )
     }
-    fun alignWithAutopilot(target: APTarget): Command {
+
+    fun alignWithAutopilot(target: APTargetWithTolerance): Command {
         return run {
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
             val vectorToTarget = (estimatedPose.translation - target.reference.translation).toVector()
@@ -543,6 +552,8 @@ object Drivetrain : Subsystem {
                     vyMetersPerSecond = 0.0
                 }
             }
+
+            autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
 
             val output = autoPilot.calculate(
                 estimatedPose,
@@ -577,6 +588,7 @@ object Drivetrain : Subsystem {
         }
 
     }
+
     fun alignWithAutopilotSim(target: APTarget): Command {
         return run {
             val driveSim = getSwerveDriveSimulation()
@@ -762,7 +774,7 @@ object Drivetrain : Subsystem {
         val BRAKE_POSITION =
             MODULE_POSITIONS.map { module -> SwerveModuleState(0.0, module.position.translation.angle) }
 
-        val ALIGN_TARGET = APTarget(
+        val ALIGN_TARGET = APTargetWithTolerance(
             Pose2d(Translation2d((546.87 + 48.0).inches, 158.3.inches), Rotation2d.k180deg)
 //            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
 //                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
