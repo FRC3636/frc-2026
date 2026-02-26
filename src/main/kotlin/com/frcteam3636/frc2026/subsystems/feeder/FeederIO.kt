@@ -8,6 +8,11 @@ import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
+import edu.wpi.first.math.system.LinearSystem
+import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.math.system.plant.LinearSystemId
+import edu.wpi.first.wpilibj.simulation.DCMotorSim
+import edu.wpi.first.wpilibj.simulation.LinearSystemSim
 import org.team9432.annotation.Logged
 
 @Logged
@@ -55,16 +60,16 @@ class FeederIOReal : FeederIO {
     }
 }
 
-//class FeederIOSim : FeederIO {
-//    private val feederMotorSystem = LinearSystemId.createDCMotorSystem()
-//    private val feederMotor = DCMotorSim(feederMotorSystem, )
-//
-//    override fun setSpeed(percent: Double) {
-//        feederMotor.inputVoltage = percent * 12.0
-//    }
-//
-//    override fun updateInputs(inputs: FeederInputs) {
+class FeederIOSim : FeederIO {
+//    private val motor = DCMotor.getKrakenX60(1)
+
+    override fun setSpeed(percent: Double) {
+//        motor = percent * 12.0
+        TODO("Not yet implemented")
+    }
+
+    override fun updateInputs(inputs: FeederInputs) {
 //        inputs.feederVelocity = feederMotor.angularVelocity
 //        inputs.feederCurrent = feederMotor.currentDrawAmps.amps
-//    }
-//}
+    }
+}
