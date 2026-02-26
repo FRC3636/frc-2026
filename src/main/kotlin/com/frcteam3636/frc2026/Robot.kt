@@ -5,6 +5,7 @@ import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.StatusSignalCollection
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.fuelPoses
+import com.frcteam3636.frc2026.subsystems.drivetrain.LebronJames
 import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
@@ -189,13 +190,11 @@ object Robot : LoggedRobot() {
 
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
-        if (lastSelectedAuto != selectedAuto) {
-            lastSelectedAuto = selectedAuto
-            autoCommand = when (selectedAuto) {
-                AutoModes.None -> Commands.none()
-                AutoModes.TestAuto -> TestAuto.getPath(false, false)
-                AutoModes.TwoScore -> TwoScore.getPath(false, false)
-            }
+        autoCommand = when (selectedAuto) {
+            AutoModes.None -> Commands.none()
+            AutoModes.TestAuto -> TestAuto.getPath(false, false)
+            AutoModes.TwoScore -> TwoScore.getPath(false, false)
+            AutoModes.LebronJames -> LebronJames.getPath(true, false)
         }
     }
 

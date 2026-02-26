@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Commands.sequence
 
 interface Auto {
     fun getPath(flipH: Boolean, flipV: Boolean): Command
@@ -18,7 +19,7 @@ interface Auto {
 
 object TwoScore: Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command {
-        return Commands.sequence(
+        return sequence(
             Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
@@ -39,14 +40,43 @@ object TwoScore: Auto {
         Target1(APTarget(Pose2d(2.7136747875808314.meters, 6.008694768709806.meters, Rotation2d((-0.7500147072732971).radians)))),
         Target2(APTarget(Pose2d(3.8616252017874615.meters, 7.413649006992547.meters, Rotation2d((-0.75).radians)))),
         Target3(APTarget(Pose2d(7.0.meters, 7.208045947731659.meters, Rotation2d(1.98448554007376.radians)))),
-//        Target4(APTarget(Pose2d(7.545346680211723.meters, 4.792210001416213.meters, Rotation2d(1.6926387638148142.radians)))),
         Target4(APTarget(Pose2d(7.545346680211723.meters, 3.5.meters, Rotation2d(1.6926387638148142.radians)))),
         Target5(APTarget(Pose2d(6.7229344431681675.meters, 7.208045947731659.meters, Rotation2d((-0.6043055068662304).radians))))
     }
 }
 
+object LebronJames: Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command {
+        return sequence(
+            Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+            Commands.race(
+                Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
+                Intake.intake()
+            ),
+            Drivetrain.alignAndFlip(Targets.Target5.target, flipH, flipV),
+            Commands.parallel(
+                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+                Shooter.simSequence().repeatedly()
+            ),
+        )
+    }
+
+
+
+    enum class Targets(val target: APTarget) {
+        Target1(APTarget(Pose2d(14.55.meters, 3.95.meters, Rotation2d(-3.10.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.04.radians))),
+        Target2(APTarget(Pose2d(13.24.meters, 7.44.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-3.05.radians))),
+        Target3(APTarget(Pose2d(8.75.meters, 6.74.meters, Rotation2d(1.56.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(-2.64.radians))),
+        Target4(APTarget(Pose2d(8.79.meters, 1.05.meters, Rotation2d(1.55.radians))).withVelocity(6.00)),
+        Target5(APTarget(Pose2d(12.94.meters, .69.meters, Rotation2d(0.00.radians))).withVelocity(6.00).withEntryAngle(Rotation2d(0.65.radians)))
+    }
+
+}
+
 object TestAuto: Auto {
-    override fun getPath(flipH: Boolean, flipV: Boolean): Command = Commands.sequence(
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command = sequence(
         Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
         Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV)
     )
