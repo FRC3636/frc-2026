@@ -23,6 +23,8 @@ import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.AngleUnit
+import edu.wpi.first.units.Measure
 import edu.wpi.first.units.measure.*
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
@@ -36,6 +38,7 @@ import org.ironmaple.simulation.SimulatedArena
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
+import javax.security.auth.login.LoginException
 import kotlin.math.*
 
 object Shooter {
@@ -396,45 +399,50 @@ object Shooter {
         )
     )
 
-    fun simSequence(): Command = Commands.run(
-        {
-//            if (Intake.IntakeSimulation.gamePiecesAmount == 0) {
-//                Intake.IntakeSimulation.addGamePiecesToIntake(40)
-//            }
-            // maplesim doesn't account for robot's velocity
-            val adjustedVector = targetVelocityVector
-            // turret and drivetrain would normally have different angles
-            val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
-            val velocity = adjustedVector.norm().metersPerSecond
-            if (Intake.IntakeSimulation.obtainGamePieceFromIntake()) {
-                SimulatedArena.getInstance().addGamePieceProjectile(
-                    RebuiltFuelOnFly(
-                        Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation,
-                        Constants.SHOOTER_OFFSET,
-                        DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
-                        Rotation2d(turretAngle.radians),
-                        0.3835.meters,
-                        velocity,
-                        Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
-                    ).withTargetPosition {
-                        hubTranslation
-                    }.withTargetTolerance(
-                        Translation3d(
-                            (41.7 / 2).inches,
-                            (41.7 / 2).inches,
-                            0.inches
-                        )
-                    ).enableBecomesGamePieceOnFieldAfterTouchGround()
-                    // TODO: Fix logging the correct trajectory
-                    .withProjectileTrajectoryDisplayCallBack { pose3ds ->
-                        Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
+    fun simSequence(): Command =
+        Commands.sequence (
+            Commands.runOnce (
+            {
+    //            if (Intake.IntakeSimulation.gamePiecesAmount == 0) {
+    //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
+    //            }
 
-                    }
-                )
+                // maplesim doesn't account for robot's velocity
+                val adjustedVector = targetVelocityVector
+                // turret and drivetrain would normally have different angles
+                val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
+                val velocity = adjustedVector.norm().metersPerSecond
+                if (Intake.IntakeSimulation.obtainGamePieceFromIntake()) {
+                    SimulatedArena.getInstance().addGamePieceProjectile(
+                        RebuiltFuelOnFly(
+                            Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation,
+                            Constants.SHOOTER_OFFSET,
+                            DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
+                            Rotation2d(turretAngle.radians),
+                            0.3835.meters,
+                            velocity,
+                            Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
+                        ).withTargetPosition {
+                            hubTranslation
+                        }.withTargetTolerance(
+                            Translation3d(
+                                (41.7 / 2).inches,
+                                (41.7 / 2).inches,
+                                0.inches
+                            )
+                        ).enableBecomesGamePieceOnFieldAfterTouchGround()
+                        // TODO: Fix logging the correct trajectory
+                        .withProjectileTrajectoryDisplayCallBack { pose3ds ->
+                            Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
+
+                        }
+                    )
+                }
             }
-        }
+        ),
+        //six balls a second
+        Commands.waitTime(0.166666667.seconds),
     )
-
     fun getTurretProfileFromTranslation2d(targetTranslation: Translation2d) : ShooterProfile{
         val toTarget = Drivetrain.estimatedPose.translation - targetTranslation
         var hubDistance = nearestHubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)

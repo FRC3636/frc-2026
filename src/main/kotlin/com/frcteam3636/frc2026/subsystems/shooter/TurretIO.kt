@@ -22,6 +22,7 @@ import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
+import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 
 @Logged
@@ -164,6 +165,7 @@ class TurretIOSim: TurretIO {
         inputs.angle = sim.angularPosition
         inputs.brakeMode = brakeMode
         inputs.motorCurrent = motor.getCurrent(sim.torqueNewtonMeters).amps
+        Logger.recordOutput("Shooter/Turret/SimAngle", sim.angularPosition)
     }
 
     override fun setBrakeMode(enabled: Boolean) {
