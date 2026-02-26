@@ -238,10 +238,13 @@ object Drivetrain : Subsystem {
                             modulePositions[index].distanceMeters - lastModulePositions[index].distanceMeters
                         val deltaAngle = modulePositions[index].angle - lastModulePositions[index].angle
                         moduleDeltas[index].distanceMeters = deltaDistance
-                        moduleDeltas[index].angle = deltaAngle
+                        moduleDeltas[index].angle = modulePositions[index].angle
 
                         // Update last positions
-                        lastModulePositions[index] = modulePositions[index]
+                        lastModulePositions[index] = SwerveModulePosition(
+                            modulePositions[index].distanceMeters,
+                            modulePositions[index].angle
+                        )
                     }
 
                     rawGyroRotation = if (inputs.gyroConnected) {

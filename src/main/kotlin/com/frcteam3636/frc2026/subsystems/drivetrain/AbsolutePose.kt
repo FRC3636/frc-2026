@@ -152,10 +152,7 @@ class LimelightPoseProvider(
             NetworkTableInstance.getDefault().flush()
 
             if (RobotState.beforeFirstEnable) {
-                imuModePublisher.accept(1.toLong())
-
-                // This was never set to false earlier for some reason
-                wasIMUChanged = false
+                imuModePublisher.accept(1.toLong()) // seed IMU
             }
 
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
@@ -168,7 +165,7 @@ class LimelightPoseProvider(
         }
 
         if ((!RobotState.beforeFirstEnable) && (isLL4 && !wasIMUChanged)) {
-            imuModePublisher.accept(3.toLong())
+            imuModePublisher.accept(4.toLong()) // use robot gyro to seed IMU
             wasIMUChanged = true
         }
 
