@@ -355,3 +355,7 @@ compile_commands.json
 
 
 # End entries from WPI Lib team
+
+# Direnv
+
+/.direnv
