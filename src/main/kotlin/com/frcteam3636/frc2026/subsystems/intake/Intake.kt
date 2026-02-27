@@ -1,6 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
-import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.subsystems.shooter.LoggedTurretInputs
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.volts
@@ -20,7 +20,7 @@ object Intake : Subsystem {
 
     private val io: IntakeIO =
         when (Robot.model) {
-        Robot.Model.SIMULATION -> IntakeIOSim()
+        Robot.Model.SIMULATION -> IntakeIOReal()
         Robot.Model.COMPETITION -> IntakeIOReal()
 
     }
@@ -34,17 +34,10 @@ object Intake : Subsystem {
         }
 
     fun intake(): Command =
-        if (io is IntakeIOSim) {
-            runEnd(
-                {io.setRunning(true)},
-                {io.setRunning(false)}
-            )
-        } else {
             runEnd(
                 { io.setRunMotorVoltage(1.0.volts) },
                 { io.setRunMotorVoltage(0.volts) }
             )
-        }
 
     fun outtake(): Command = runEnd(
         { io.setRunMotorVoltage(-1.0.volts) },
@@ -56,9 +49,9 @@ object Intake : Subsystem {
         { io.setPivotAngle(Position.Stowed.angle) }
     ).onlyWhile { intakeDown }
 
-    val IntakeSimulation
-        get() = if (io is IntakeIOSim) { io.intakeSimulation }
-        else throw Throwable("Cannot access intake simulation out of sim")
+//    val IntakeSimulation
+//        get() = if (io is IntakeIOSim) { io.intakeSimulation }
+//        else throw Throwable("Cannot access intake simulation out of sim")
 
 
     override fun periodic() {

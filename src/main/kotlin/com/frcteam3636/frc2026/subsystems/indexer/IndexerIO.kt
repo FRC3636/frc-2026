@@ -31,7 +31,7 @@ class IndexerIOReal : IndexerIO {
             TalonFXConfiguration().apply {
                 MotorOutput.apply {
                     NeutralMode = NeutralModeValue.Coast
-                    Inverted = InvertedValue.Clockwise_Positive
+                    Inverted = InvertedValue.CounterClockwise_Positive
                 }
 
                 CurrentLimits.apply {

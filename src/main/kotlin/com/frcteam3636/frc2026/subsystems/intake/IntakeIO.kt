@@ -124,43 +124,43 @@ class IntakeIOReal : IntakeIO {
     }
 }
 
-class IntakeIOSim: IntakeIO {
-
-    val intakeSimulation = IntakeSimulation.OverTheBumperIntake(
-        "Fuel",
-        Drivetrain.getSwerveDriveSimulation(),
-        Drivetrain.Constants.BUMPER_WIDTH,
-        0.182.meters,
-        IntakeSimulation.IntakeSide.BACK,
-        40
-    )!!
-
-    fun setRunning(runIntake: Boolean) {
-        if (runIntake) {
-            intakeSimulation.startIntake()
-        } else {
-            intakeSimulation.stopIntake()
-        }
-    }
-
-    val isFuelInsideIntake: Boolean
-        get() {
-            return intakeSimulation.gamePiecesAmount != 0
-        }
-
-    override fun setSpeed(percent: Double) {
-        TODO("Not yet implemented")
-    }
-
-    override fun setRunMotorVoltage(voltage: Voltage) {
-        TODO("Not yet implemented")
-    }
-
-    override fun setPivotAngle(angle: Angle) {
-        TODO("Not yet implemented")
-    }
-
-    override fun updateInputs(inputs: IntakeInputs) {
-        Logger.recordOutput("FieldSimulation/NumberOfFuel", intakeSimulation.gamePiecesAmount)
-    }
-}
+//class IntakeIOSim: IntakeIO {
+//
+//    val intakeSimulation = IntakeSimulation.OverTheBumperIntake(
+//        "Fuel",
+//        Drivetrain.getSwerveDriveSimulation(),
+//        Drivetrain.Constants.BUMPER_WIDTH,
+//        0.182.meters,
+//        IntakeSimulation.IntakeSide.BACK,
+//        40
+//    )!!
+//
+//    fun setRunning(runIntake: Boolean) {
+//        if (runIntake) {
+//            intakeSimulation.startIntake()
+//        } else {
+//            intakeSimulation.stopIntake()
+//        }
+//    }
+//
+//    val isFuelInsideIntake: Boolean
+//        get() {
+//            return intakeSimulation.gamePiecesAmount != 0
+//        }
+//
+//    override fun setSpeed(percent: Double) {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun setRunMotorVoltage(voltage: Voltage) {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun setPivotAngle(angle: Angle) {
+//        TODO("Not yet implemented")
+//    }
+//
+//    override fun updateInputs(inputs: IntakeInputs) {
+//        Logger.recordOutput("FieldSimulation/NumberOfFuel", intakeSimulation.gamePiecesAmount)
+//    }
+//}

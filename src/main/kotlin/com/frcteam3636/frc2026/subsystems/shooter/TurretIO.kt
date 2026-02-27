@@ -8,7 +8,6 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.ctre.phoenix6.signals.SensorDirectionValue
-import com.ctre.phoenix6.sim.TalonFXSimState
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
@@ -19,6 +18,7 @@ import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
@@ -27,9 +27,9 @@ import org.team9432.annotation.Logged
 
 @Logged
 open class TurretInputs {
-    var angle = Radians.zero()!!
+    var angle = Rotations.zero()!!
     var motorCurrent = Amps.zero()!!
-    var setPoint = Radians.zero()!!
+    var setPoint = Rotations.zero()!!
     var motorVelocity = RadiansPerSecond.zero()!!
     var motorTemperature = Celsius.zero()!!
     var seeTags = false
@@ -54,7 +54,7 @@ class TurretIOReal : TurretIO {
 
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Coast
-                Inverted = InvertedValue.Clockwise_Positive
+                Inverted = InvertedValue.CounterClockwise_Positive
             }
             Slot0.apply {
                 pidGains = PID_GAINS
@@ -66,9 +66,8 @@ class TurretIOReal : TurretIO {
             }
             Feedback.apply {
                 FeedbackRemoteSensorID = CTREDeviceId.TurretTurningEncoder.num
-                FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
+                FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
                 SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO
-                RotorToSensorRatio = ROTOR_TO_SENSOR_GEAR_RATIO
             }
             CurrentLimits.apply {
                 SupplyCurrentLowerLimit = 30.0
@@ -79,7 +78,7 @@ class TurretIOReal : TurretIO {
         })
     }
 
-    private var setPoint = 0.0.radians
+    var setPoint = 0.0.radians
 
     private val positionSignal = motor.position
     private val velocitySignal = motor.velocity
@@ -101,14 +100,17 @@ class TurretIOReal : TurretIO {
 
         CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
             configurator.apply(CANcoderConfiguration().apply {
-                MagnetSensor.MagnetOffset = MAGNET_OFFSET
-                MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive
+//                MagnetSensor.MagnetOffset = MAGNET_OFFSET
+                MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
             })
+            setPosition(0.degrees)
         }
+
     }
 
     override fun turnToAngle(angle: Angle) {
         setPoint = angle
+        Logger.recordOutput("Shooter/Turret/Setpoint", angle)
         motor.setControl(positionControl.withPosition(angle))
     }
 
@@ -118,7 +120,7 @@ class TurretIOReal : TurretIO {
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        inputs.angle = positionSignal.value
+        inputs.angle = motor.position.value
         inputs.motorCurrent = currentSignal.value
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value
@@ -137,10 +139,10 @@ class TurretIOReal : TurretIO {
     }
 
     companion object Constants{
-        private val PID_GAINS = PIDGains(62.0, 0.0, 0.0)
-        private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 1.0
-        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 37.25
-        private const val MAGNET_OFFSET = -0.191650390625
+        private val PID_GAINS = PIDGains(64.0, 0.0, 0.0)
+        private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
+        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
+        private const val MAGNET_OFFSET = -0.19140625
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
         private val PROFILE_VELOCITY = 12.0.rotationsPerSecond
@@ -173,8 +175,3 @@ class TurretIOSim: TurretIO {
     }
 
 }
-
-    //kraken x44
-    // WCP ThroughBore Encoder
-
-

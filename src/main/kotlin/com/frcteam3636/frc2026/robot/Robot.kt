@@ -144,7 +144,7 @@ object Robot : LoggedRobot() {
             // Enables power distribution logging
             PowerDistribution(
                 1, PowerDistribution.ModuleType.kRev
-            ).apply { switchableChannel = true }
+            )
         } else {
             val logPath = try {
                 // Pull the replay log from AdvantageScope (or prompt the user)
@@ -171,7 +171,7 @@ object Robot : LoggedRobot() {
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
 //        Drivetrain.register()
-        Feeder.register()
+//        Feeder.register()
         Indexer.register()
         Shooter.registerSubsystems()
     }
@@ -241,10 +241,10 @@ object Robot : LoggedRobot() {
     }
 
     override fun simulationPeriodic() {
-        SimulatedArena.getInstance().simulationPeriodic()
-        Drivetrain.fuelPoses = SimulatedArena.getInstance()
-            .getGamePiecesArrayByType("Fuel")
-        Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
-        Intake.periodic()
+//        SimulatedArena.getInstance().simulationPeriodic()
+//        Drivetrain.fuelPoses = SimulatedArena.getInstance()
+//            .getGamePiecesArrayByType("Fuel")
+//        Logger.recordOutput("FieldSimulation/FuelPositions", *fuelPoses)
+//        Intake.periodic()
     }
 }

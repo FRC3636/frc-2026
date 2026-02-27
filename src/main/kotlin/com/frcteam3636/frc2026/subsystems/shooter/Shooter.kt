@@ -2,11 +2,11 @@
 
 package com.frcteam3636.frc2026.subsystems.shooter
 
-import com.frcteam3636.frc2026.Robot
-import com.frcteam3636.frc2026.Robot.Model
+//import org.ironmaple.simulation.SimulatedArena
+//import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
+import com.frcteam3636.frc2026.robot.Robot
+import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
-import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.utils.FIELD_HEIGHT_METERS
 import com.frcteam3636.frc2026.utils.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.flipHorizontally
@@ -15,7 +15,6 @@ import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.filter.Debouncer
-import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
@@ -23,9 +22,10 @@ import edu.wpi.first.math.interpolation.Interpolator
 import edu.wpi.first.math.interpolation.InverseInterpolator
 import edu.wpi.first.math.numbers.N3
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.units.AngleUnit
-import edu.wpi.first.units.Measure
-import edu.wpi.first.units.measure.*
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj2.command.Command
@@ -34,11 +34,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
-import org.ironmaple.simulation.SimulatedArena
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
-import javax.security.auth.login.LoginException
 import kotlin.math.*
 
 object Shooter {
@@ -74,9 +71,10 @@ object Shooter {
 
         override fun periodic() {
             inputs.setPoint = shooterTarget.turretAngle
+            Logger.processInputs("Shooter/Turret", inputs)
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
-            Logger.processInputs("Shooter/Turret", inputs)
+
             Logger.recordOutput("Shooter/Turret/DistanceToHub", translationToHub)
             Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", shooterTranslationToHub)
             Logger.recordOutput("Shooter/Turret/Field Position", shooterTranslation)
@@ -113,6 +111,11 @@ object Shooter {
 
             return target
         }
+
+        fun setTargetAngle(angle: Angle): Command =
+            run {
+                io.turnToAngle(angle)
+            }
 
         fun turnToTargetTurretAngle(): Command =
             run {
@@ -342,31 +345,18 @@ object Shooter {
             return if (Robot.model == Model.COMPETITION) {
                 hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
             } else {
-                hubTranslation.toTranslation2d() - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation
+                hubTranslation.toTranslation2d() - Drivetrain.estimatedPose.translation
+//                hubTranslation.toTranslation2d() - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation
             }
         }
 
     private val shooterTranslationToHub: Translation2d
         get() {
-            return if (Robot.model == Model.COMPETITION) {
-                hubTranslation.toTranslation2d() - shooterTranslation
-            }
-            else {
-                hubTranslation.toTranslation2d() - shooterTranslation
-            }
+            return hubTranslation.toTranslation2d() - shooterTranslation
         }
 
     private val shooterTranslation: Translation2d
-        get() {
-            return if (Robot.model == Model.COMPETITION) {
-                val pose = Drivetrain.estimatedPose
-                pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation)
-            }
-            else {
-                val pose = Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose
-                pose.translation + Constants.SHOOTER_OFFSET.rotateBy(pose.rotation)
-            }
-        }
+        get() = Drivetrain.estimatedPose.translation + Constants.SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation)
 
 
     fun setTarget(target: ShooterProfile): Command = Commands.run({
@@ -399,50 +389,50 @@ object Shooter {
         )
     )
 
-    fun simSequence(): Command =
-        Commands.sequence (
-            Commands.runOnce (
-            {
-    //            if (Intake.IntakeSimulation.gamePiecesAmount == 0) {
-    //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
-    //            }
-
-                // maplesim doesn't account for robot's velocity
-                val adjustedVector = targetVelocityVector
-                // turret and drivetrain would normally have different angles
-                val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
-                val velocity = adjustedVector.norm().metersPerSecond
-                if (Intake.IntakeSimulation.obtainGamePieceFromIntake()) {
-                    SimulatedArena.getInstance().addGamePieceProjectile(
-                        RebuiltFuelOnFly(
-                            Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation,
-                            Constants.SHOOTER_OFFSET,
-                            DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
-                            Rotation2d(turretAngle.radians),
-                            0.3835.meters,
-                            velocity,
-                            Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
-                        ).withTargetPosition {
-                            hubTranslation
-                        }.withTargetTolerance(
-                            Translation3d(
-                                (41.7 / 2).inches,
-                                (41.7 / 2).inches,
-                                0.inches
-                            )
-                        ).enableBecomesGamePieceOnFieldAfterTouchGround()
-                        // TODO: Fix logging the correct trajectory
-                        .withProjectileTrajectoryDisplayCallBack { pose3ds ->
-                            Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
-
-                        }
-                    )
-                }
-            }
-        ),
-        //six balls a second
-        Commands.waitTime(0.166666667.seconds),
-    )
+//    fun simSequence(): Command =
+//        Commands.sequence (
+//            Commands.runOnce (
+//            {
+//    //            if (Intake.IntakeSimulation.gamePiecesAmount == 0) {
+//    //                Intake.IntakeSimulation.addGamePiecesToIntake(40)
+//    //            }
+//
+//                // maplesim doesn't account for robot's velocity
+//                val adjustedVector = targetVelocityVector
+//                // turret and drivetrain would normally have different angles
+//                val turretAngle = atan2(adjustedVector[1, 0], adjustedVector[0, 0])// - Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.rotation.radians)
+//                val velocity = adjustedVector.norm().metersPerSecond
+//                if (Intake.IntakeSimulation.obtainGamePieceFromIntake()) {
+//                    SimulatedArena.getInstance().addGamePieceProjectile(
+//                        RebuiltFuelOnFly(
+//                            Drivetrain.getSwerveDriveSimulation().simulatedDriveTrainPose.translation,
+//                            Constants.SHOOTER_OFFSET,
+//                            DrivetrainIOSim().swerveDriveSimulation.driveTrainSimulatedChassisSpeedsFieldRelative,
+//                            Rotation2d(turretAngle.radians),
+//                            0.3835.meters,
+//                            velocity,
+//                            Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
+//                        ).withTargetPosition {
+//                            hubTranslation
+//                        }.withTargetTolerance(
+//                            Translation3d(
+//                                (41.7 / 2).inches,
+//                                (41.7 / 2).inches,
+//                                0.inches
+//                            )
+//                        ).enableBecomesGamePieceOnFieldAfterTouchGround()
+//                        // TODO: Fix logging the correct trajectory
+//                        .withProjectileTrajectoryDisplayCallBack { pose3ds ->
+//                            Logger.recordOutput("successfulShotsTrajectory", *pose3ds.toTypedArray())
+//
+//                        }
+//                    )
+//                }
+//            }
+//        ),
+//        //six balls a second
+//        Commands.waitTime(0.166666667.seconds),
+//    )
     fun getTurretProfileFromTranslation2d(targetTranslation: Translation2d) : ShooterProfile{
         val toTarget = Drivetrain.estimatedPose.translation - targetTranslation
         var hubDistance = nearestHubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)
@@ -473,7 +463,7 @@ object Shooter {
 
     val targetVelocityVector: Vector<N3>
         get() {
-            if (Robot.model == Model.COMPETITION) {
+            if (Robot.model == Robot.Model.COMPETITION) {
                 val targetHoodAngle = Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
                 val targetLinearVelocity = Flywheel.getFlywheelVelocity(shooterTranslationToHub.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS) * Constants.FLYWHEEL_TO_FUEL_RATIO
                 val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
@@ -501,12 +491,12 @@ object Shooter {
             return targetVelocityVector - robotVelocityVector
         }
 
-    val simAdjustedVector: Vector<N3>
-        get() {
-            val robotVelocity = Drivetrain.getSwerveDriveSimulation().linearVelocity
-            val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
-            return targetVelocityVector - robotVelocityVector
-        }
+//    val simAdjustedVector: Vector<N3>
+//        get() {
+//            val robotVelocity = Drivetrain.getSwerveDriveSimulation().linearVelocity
+//            val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
+//            return targetVelocityVector - robotVelocityVector
+//        }
 
     val angleError: Angle
         get() {

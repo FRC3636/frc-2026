@@ -31,8 +31,7 @@ object TwoScore: Auto {
             Drivetrain.alignAndFlip(Targets.Target5.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
             Commands.parallel(
-                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
-                Shooter.simSequence().repeatedly()
+                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV)
             ),
         )
     }

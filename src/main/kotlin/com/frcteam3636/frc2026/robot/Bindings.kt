@@ -4,6 +4,8 @@ import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
+import com.frcteam3636.frc2026.subsystems.shooter.Shooter
+import com.frcteam3636.frc2026.utils.math.rotations
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -32,23 +34,52 @@ fun configureBindings() {
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
-    controller.b().onTrue(Commands.runOnce( {
-        Drivetrain.zeroGyro()
-    }))
+//    controller.b().onTrue(Commands.runOnce( {
+//        Drivetrain.zeroGyro()
+//    }))
 
-    controller.a().whileTrue(
-        Commands.parallel(
-            Indexer.index(),
-            Feeder.feed()
+    controller.leftBumper().onTrue (
+        Commands.runOnce (
+            SignalLogger::start
         )
+        .andThen (
+            StatusLogger::start
+        )
+    )
+    controllerDev.rightBumper().onTrue(
+        Commands.runOnce(SignalLogger::stop)
+            .andThen(StatusLogger::stop)
     )
 
     controller.x().whileTrue(
-        Commands.parallel(
-            Indexer.outdex(),
-            Feeder.outtake()
-        )
+        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
     )
+
+    controller.y().whileTrue(
+        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
+    )
+
+    controller.a().whileTrue(
+        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kForward)
+    )
+    controller.b().whileTrue(
+        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+    )
+
+
+//    controller.a().whileTrue(
+//        Commands.parallel(
+//            Indexer.index(),
+//            Feeder.feed()
+//        )
+//    )
+
+//    controller.x().whileTrue(
+//        Commands.parallel(
+//            Indexer.outdex(),
+//            Feeder.outtake()
+//        )
+//    )
 
     joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
