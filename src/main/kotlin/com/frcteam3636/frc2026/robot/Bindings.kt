@@ -5,6 +5,7 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
+import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.utils.math.rotations
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
@@ -51,19 +52,29 @@ fun configureBindings() {
             .andThen(StatusLogger::stop)
     )
 
-    controller.x().whileTrue(
+    controllerDev.x().whileTrue(
         Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
     )
 
-    controller.y().whileTrue(
+    controllerDev.y().whileTrue(
         Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
     )
 
-    controller.a().whileTrue(
+    controllerDev.a().whileTrue(
         Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kForward)
     )
-    controller.b().whileTrue(
+    controllerDev.b().whileTrue(
         Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+    )
+
+    // controller.a().whileTrue(Intake.intake())
+    controller.b().whileTrue(Indexer.index())
+
+    controller.povUp().onTrue(
+        Intake.setPivotPosition(Intake.Position.Stowed)
+    )
+    controller.povDown().onTrue(
+        Intake.setPivotPosition(Intake.Position.Deployed)
     )
 
 

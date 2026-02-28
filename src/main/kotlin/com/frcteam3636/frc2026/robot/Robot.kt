@@ -174,6 +174,7 @@ object Robot : LoggedRobot() {
 //        Feeder.register()
         Indexer.register()
         Shooter.registerSubsystems()
+        Intake.register()
     }
 
 
