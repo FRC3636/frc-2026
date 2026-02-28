@@ -34,7 +34,7 @@ class FeederIOReal : FeederIO {
         feederMotorConfig.apply {
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.Clockwise_Positive
+                Inverted = InvertedValue.CounterClockwise_Positive
             }
         }
         feederMotor.configurator.apply(feederMotorConfig)

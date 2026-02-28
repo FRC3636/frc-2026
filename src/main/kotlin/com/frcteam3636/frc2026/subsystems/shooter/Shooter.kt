@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.LinearVelocity
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj2.command.Command
@@ -290,6 +291,15 @@ object Shooter {
         fun toTargetSpeed(): Command = run {
             io.setVelocity(shooterTarget.angularVelocity)
         }
+
+        fun runAtVoltage(voltage: Voltage): Command = runEnd(
+            {
+                io.setVoltage(voltage)
+            },
+            {
+                io.setVoltage(0.0.volts)
+            }
+        )
     }
 
     data class ShooterProfile(
@@ -459,7 +469,7 @@ object Shooter {
         val adjustedVector = targetVelocityVector - robotVelocityVector
         val angleError = acos(adjustedVector.dot(targetVelocityVector) / (adjustedVector.norm() * targetVelocityVector.norm())).radians
         return getProfile(adjustedVector, angleError)
-    } 
+    }
 
     val targetVelocityVector: Vector<N3>
         get() {
@@ -561,7 +571,3 @@ object Shooter {
     }
 
 }
-
-
-
-

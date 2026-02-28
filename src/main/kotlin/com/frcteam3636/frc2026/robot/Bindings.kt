@@ -7,6 +7,7 @@ import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.utils.math.rotations
+import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -69,6 +70,8 @@ fun configureBindings() {
 
     // controller.a().whileTrue(Intake.intake())
     controller.b().whileTrue(Indexer.index())
+    controller.a().whileTrue(Feeder.feed())
+    controller.x().whileTrue(Shooter.Flywheel.runAtVoltage(12.0.volts))
 
     controller.povUp().onTrue(
         Intake.setPivotPosition(Intake.Position.Stowed)
