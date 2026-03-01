@@ -70,9 +70,9 @@ class IntakeIOReal : IntakeIO {
     private val leftPivotMotor = TalonFX(CTREDeviceId.LeftPivotMotor).apply {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
     }
-    private val rightPivotMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
-    }
+//    private val rightPivotMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
+//        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
+//    }
 
 
     init {
@@ -96,7 +96,7 @@ class IntakeIOReal : IntakeIO {
             }
         }
         leftPivotMotor.configurator.apply(pivotMotorConfig)
-        rightPivotMotor.configurator.apply(pivotMotorConfig)
+//        rightPivotMotor.configurator.apply(pivotMotorConfig)
     }
 
     override fun setSpeed(percent: Double) {
@@ -110,7 +110,7 @@ class IntakeIOReal : IntakeIO {
     override fun setPivotAngle(angle: Angle) {
         Logger.recordOutput("Intake/Pivot Setpoint", angle)
         val controlRequest = MotionMagicVoltage(angle)
-        rightPivotMotor.setControl(controlRequest.withPosition(angle))
+        leftPivotMotor.setControl(controlRequest.withPosition(angle))
     }
 
     override fun updateInputs(inputs: IntakeInputs) {
@@ -118,7 +118,7 @@ class IntakeIOReal : IntakeIO {
         inputs.intakeMotorCurrent = intakePivotMotor.supplyCurrent.value
 
         inputs.leftPivotMotorCurrent = leftPivotMotor.supplyCurrent.value
-        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
+//        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
         inputs.pivotAngle = leftPivotMotor.position.value
 
     }

@@ -209,10 +209,16 @@ object Shooter {
                 io.turnToAngle(shooterTarget.hoodAngle)
             }
 
-        fun turnToTestAngle(angle: Angle): Command =
+        fun turnToAngle(angle: Angle): Command =
             run {
-                io.turn
+                io.turnToAngle(angle)
             }
+
+        fun setVoltage(voltage: Voltage): Command =
+            runEnd(
+                {io.setVoltage(voltage)},
+                {io.setVoltage(0.volts)}
+            )
 
         fun hoodBrakeMode(): Command =
             run {

@@ -6,6 +6,7 @@ import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
@@ -40,7 +41,7 @@ fun configureBindings() {
 //        Drivetrain.zeroGyro()
 //    }))
 
-    controller.leftBumper().onTrue (
+    controllerDev.leftBumper().onTrue (
         Commands.runOnce (
             SignalLogger::start
         )
@@ -68,17 +69,17 @@ fun configureBindings() {
         Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
     )
 
-    // controller.a().whileTrue(Intake.intake())
-//    controller.b().whileTrue(Indexer.index())
-//    controller.a().whileTrue(Feeder.feed())
-//    controller.x().whileTrue(Shooter.Flywheel.runAtVoltage(12.0.volts))
-    controller.a().whileTrue(Shooter.Hood.turnToTargetHoodAngle(Shooter.Hood.))
+//    controller.a().whileTrue(
+//        Shooter.Hood.setVoltage(1.volts)
+//    )
 
-    controller.povUp().onTrue(
-        Intake.setPivotPosition(Intake.Position.Stowed)
+
+    controller.a().whileTrue(
+        Shooter.Hood.turnToAngle(0.degrees)
     )
-    controller.povDown().onTrue(
-        Intake.setPivotPosition(Intake.Position.Deployed)
+
+    controller.x().whileTrue(
+        Shooter.Hood.turnToAngle(15.degrees)
     )
 
 
