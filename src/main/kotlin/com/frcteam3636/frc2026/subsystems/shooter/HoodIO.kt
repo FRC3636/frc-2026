@@ -83,6 +83,7 @@ class HoodIOReal: HoodIO {
     private val currentSignal = motor.supplyCurrent
     private val temperatureSignal = motor.deviceTemp
     private val cancoderPositionSignal = cancoder.absolutePosition
+    private var setPoint = 0.0.rotations
 
     init {
         BaseStatusSignal.setUpdateFrequencyForAll(100.0, *signals)
@@ -95,6 +96,7 @@ class HoodIOReal: HoodIO {
     }
 
     override fun turnToAngle(angle: Angle) {
+        setPoint = angle
         motor.setControl(positionControl.withPosition(angle))
     }
 
@@ -109,6 +111,7 @@ class HoodIOReal: HoodIO {
         inputs.hoodCurrent = currentSignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
+        inputs.setPoint = setPoint
         inputs.cancoderAbsolutePosition = cancoderPositionSignal.value
     }
 

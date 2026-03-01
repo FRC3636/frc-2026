@@ -75,7 +75,7 @@ fun configureBindings() {
 
 
     controller.a().whileTrue(
-        Shooter.Hood.turnToAngle(0.degrees)
+        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
     )
 
     controller.x().whileTrue(

@@ -229,6 +229,11 @@ object Shooter {
             run {
                 io.setBrakeMode(false)
             }
+
+        val angle: Angle
+            get() {
+                return inputs.hoodAngle
+            }
     }
 
     object Flywheel: Subsystem {
