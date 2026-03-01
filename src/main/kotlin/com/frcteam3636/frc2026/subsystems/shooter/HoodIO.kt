@@ -55,6 +55,7 @@ class HoodIOReal: HoodIO {
                 pidGains = PID_GAINS
             }
             MotionMagic.apply {
+                MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
                 MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
                 MotionMagicJerk = PROFILE_JERK
             }
@@ -129,6 +130,7 @@ class HoodIOReal: HoodIO {
         private val PID_GAINS = PIDGains(5.0, 0.0, 0.0)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 10.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 10.0
+        private val PROFILE_VELOCITY = 1.0.rotationsPerSecond
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
         private val MAX_HOOD_ANGLE = 50.degrees.inRadians()

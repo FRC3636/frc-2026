@@ -69,9 +69,10 @@ fun configureBindings() {
     )
 
     // controller.a().whileTrue(Intake.intake())
-    controller.b().whileTrue(Indexer.index())
-    controller.a().whileTrue(Feeder.feed())
-    controller.x().whileTrue(Shooter.Flywheel.runAtVoltage(12.0.volts))
+//    controller.b().whileTrue(Indexer.index())
+//    controller.a().whileTrue(Feeder.feed())
+//    controller.x().whileTrue(Shooter.Flywheel.runAtVoltage(12.0.volts))
+    controller.a().whileTrue(Shooter.Hood.turnToTargetHoodAngle(Shooter.Hood.))
 
     controller.povUp().onTrue(
         Intake.setPivotPosition(Intake.Position.Stowed)

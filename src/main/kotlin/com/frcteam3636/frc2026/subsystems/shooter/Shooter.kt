@@ -209,6 +209,11 @@ object Shooter {
                 io.turnToAngle(shooterTarget.hoodAngle)
             }
 
+        fun turnToTestAngle(angle: Angle): Command =
+            run {
+                io.turn
+            }
+
         fun hoodBrakeMode(): Command =
             run {
                 io.setBrakeMode(true)
