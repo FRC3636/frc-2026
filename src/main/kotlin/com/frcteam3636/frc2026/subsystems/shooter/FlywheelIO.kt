@@ -75,7 +75,7 @@ class FlywheelIOReal : FlywheelIO {
     }
 
     override fun setVoltage(volts: Voltage) {
-        motor.set(volts.inVolts())
+        motor.setVoltage(volts.inVolts())
     }
 
     override fun setSpeed(percentage : Double) {

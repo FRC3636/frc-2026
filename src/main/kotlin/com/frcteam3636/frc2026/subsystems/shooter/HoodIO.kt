@@ -29,6 +29,7 @@ open class HoodInputs {
     var setPoint = Radians.zero()!!
     var motorTemperature = Celsius.zero()!!
     var brakeMode = false
+    var cancoderAbsolutePosition = Radians.zero()
 }
 
 interface HoodIO {
@@ -44,12 +45,20 @@ class HoodIOReal: HoodIO {
     private var brakeMode = false
     private var fixedHood = false
 
+    private val cancoder = CANcoder(CTREDeviceId.HoodEncoder).apply {
+        configurator.apply(CANcoderConfiguration().apply {
+            MagnetSensor.AbsoluteSensorDiscontinuityPoint = ENCODER_DISCONTINUITY_POINT
+            MagnetSensor.MagnetOffset = MAGNET_OFFSET
+            MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive
+        })
+    }
+
     private val motor = TalonFX(CTREDeviceId.HoodMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
 
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Coast
-                Inverted = InvertedValue.Clockwise_Positive
+                Inverted = InvertedValue.CounterClockwise_Positive
             }
             Slot0.apply {
                 pidGains = PID_GAINS
@@ -59,7 +68,7 @@ class HoodIOReal: HoodIO {
                 MotionMagicJerk = PROFILE_JERK
             }
             Feedback.apply {
-                FeedbackRemoteSensorID = CTREDeviceId.HoodMotor.num
+                FeedbackRemoteSensorID = CTREDeviceId.HoodEncoder.num
                 FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
                 SensorToMechanismRatio = SENSOR_TO_MECHANISM_GEAR_RATIO
                 RotorToSensorRatio = ROTOR_TO_SENSOR_GEAR_RATIO
@@ -72,23 +81,12 @@ class HoodIOReal: HoodIO {
     private val velocitySignal = motor.velocity
     private val currentSignal = motor.supplyCurrent
     private val temperatureSignal = motor.deviceTemp
+    private val cancoderPositionSignal = cancoder.absolutePosition
 
     init {
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            100.0,
-            positionSignal,
-            velocitySignal,
-            currentSignal,
-            temperatureSignal
-        )
+        BaseStatusSignal.setUpdateFrequencyForAll(100.0, *signals)
         motor.optimizeBusUtilization()
-
-        CANcoder(CTREDeviceId.HoodEncoder).apply {
-            CANcoderConfiguration().apply {
-                MagnetSensor.MagnetOffset = MAGNET_OFFSET
-                MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive
-            }
-        }
+        cancoder.optimizeBusUtilization()
     }
 
     val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
@@ -96,7 +94,6 @@ class HoodIOReal: HoodIO {
     }
 
     override fun turnToAngle(angle: Angle) {
-        assert(angle.inRadians() in MIN_HOOD_ANGLE..MAX_HOOD_ANGLE)
         motor.setControl(positionControl.withPosition(angle))
     }
 
@@ -106,11 +103,12 @@ class HoodIOReal: HoodIO {
     }
 
     override fun updateInputs(inputs: HoodInputs) {
-        inputs.hoodAngle = positionSignal.value
+        inputs.hoodAngle = motor.position.value
         inputs.hoodVelocity = velocitySignal.value
         inputs.hoodCurrent = currentSignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
+        inputs.cancoderAbsolutePosition = cancoderPositionSignal.value
     }
 
     override fun setBrakeMode(enabled: Boolean) {
@@ -125,14 +123,15 @@ class HoodIOReal: HoodIO {
     }
 
     companion object Constants {
-        private val MAGNET_OFFSET = 0.0
-        private val PID_GAINS = PIDGains(5.0, 0.0, 0.0)
+        private val ENCODER_DISCONTINUITY_POINT = 0.8
+        private val MAGNET_OFFSET = 0.8349
+        private val PID_GAINS = PIDGains(20.0, 0.0, 0.0)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 10.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 10.0
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
         private val MAX_HOOD_ANGLE = 50.degrees.inRadians()
-        private val MIN_HOOD_ANGLE = 30.degrees.inRadians()
+        private val MIN_HOOD_ANGLE = 0.degrees.inRadians()
     }
 }
 
