@@ -170,7 +170,7 @@ object Robot : LoggedRobot() {
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
-//        Drivetrain.register()
+        Drivetrain.register()
 //        Feeder.register()
         Indexer.register()
         Shooter.registerSubsystems()

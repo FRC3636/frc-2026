@@ -9,18 +9,25 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import com.revrobotics.spark.config.FeedForwardConfig
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.Units.RPM
+import edu.wpi.first.units.Units.Radians
+import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
+import edu.wpi.first.wpilibj2.command.button.Trigger
+import org.dyn4j.geometry.Rotation
 
 @Logged
 open class FlywheelInputs {
     var motorVolts = 0.volts
     var angularVelocity = RPM.zero()!!
-    var linearVelocity = MetersPerSecond.zero()!!
+//    var linearVelocity = MetersPerSecond.zero()!!
+    var targetAngularVelocity = RPM.zero()!!
+    var angle = Rotations.zero()!!
 }
 
 interface FlywheelIO {
@@ -54,24 +61,17 @@ class FlywheelIOReal : FlywheelIO {
 
         })
     }
-//    private val flyWheelMotor = TalonFX(CTREDeviceId.FlywheelMotor).apply {
-//         val config = TalonFXConfiguration().apply {
-//            withCurrentLimits(CurrentLimitsConfigs().apply {
-//                withSupplyCurrentLimit(30.amps)
-//            }).withSlot0(
-//                Slot0.apply {
-//                    pidGains = PID_GAINS
-//                }).withMotionMagic(
-//                MotionMagicVelocityVoltage
-//                )
-//         }
-//        configurator.apply(config)
-//    }
+
+    private var ffController = SimpleMotorFeedforward(FEED_FORWARD_GAINS)
+
+    private var targetVelocity: AngularVelocity = 0.0.rpm
 
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = motor.motorVoltage.value
         inputs.angularVelocity = motor.velocity.value
-        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
+//        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
+        inputs.angle = motor.position.value
+        inputs.targetAngularVelocity = targetVelocity
     }
 
     override fun setVoltage(volts: Voltage) {
@@ -84,11 +84,14 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         assert(velocity in 0.rpm..6000.rpm)
-        motor.setControl(MotionMagicVelocityVoltage(velocity.inRPM()))
+        targetVelocity = velocity
+//        motor.setControl(MotionMagicVelocityVoltage(velocity.inRPM()))
+        motor.setVoltage(ffController.calculate(velocity.inRPM()))
     }
 
     companion object Constants{
-        val PID_GAINS = PIDGains(5.0,0.0,0.0)
+        val PID_GAINS = PIDGains(0.03,0.0,0.001)
+        val FEED_FORWARD_GAINS = MotorFFGains(0.26064, 0.0021653097345132742, 0.006068)
         val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         val PROFILE_VELOCITY = 2.0.rotationsPerSecond
         val PROFILE_JERK = 1.0
@@ -112,7 +115,7 @@ class FlywheelIOSim: FlywheelIO {
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = sim.inputVoltage.volts
         inputs.angularVelocity = sim.angularVelocity
-        inputs.linearVelocity = sim.angularVelocity.toLinear(FlywheelIOReal.Constants.FLYWHEEL_RADIUS)
+//        inputs.linearVelocity = sim.angularVelocity.toLinear(FlywheelIOReal.Constants.FLYWHEEL_RADIUS)
     }
 
     override fun setVoltage(volts: Voltage) {

@@ -6,8 +6,10 @@ import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.Shooter.Hood
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.rotations
+import com.frcteam3636.frc2026.utils.math.rpm
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
@@ -15,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import java.util.logging.Logger
 
 val controller = CommandXboxController(2)
 val joystickLeft = CommandJoystick(0)
@@ -74,21 +77,35 @@ fun configureBindings() {
 //    )
 
 
-    controller.a().whileTrue(
-        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
-    )
+//    controller.a().whileTrue(
+////        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
+////        Shooter.Hood.turnToAngle(0.degrees)
+//        Shooter.Flywheel.spinAtTargetSpeed(3000.rpm)
+//    )
 
     controller.x().whileTrue(
-        Shooter.Hood.turnToAngle(15.degrees)
+//        Shooter.Hood.turnToAngle(15.degrees)
+        Commands.parallel(
+            Indexer.index(),
+            Feeder.feed()
+        )
     )
 
 
-//    controller.a().whileTrue(
-//        Commands.parallel(
-//            Indexer.index(),
-//            Feeder.feed()
-//        )
-//    )
+    controller.a().whileTrue(
+        Commands.sequence(
+            Shooter.setTarget(Shooter.Target.TUNING.profile),
+            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+//            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
+            Commands.parallel(
+                Commands.parallel(
+                    Indexer.index(),
+                    Feeder.feed(),
+                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
+                Shooter.Flywheel.runAtTarget()
+            ),
+        )
+    )
 
 //    controller.x().whileTrue(
 //        Commands.parallel(

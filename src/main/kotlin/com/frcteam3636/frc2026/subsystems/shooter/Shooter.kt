@@ -172,10 +172,10 @@ object Shooter {
                     InverseInterpolator.forDouble(),
                     Interpolator.forDouble()
                 ).apply {
-                    put(3.5, 0.866025403784)
-                    put(4.0, 0.939692620786)
-                    put(4.5, 0.984807753012)
-                    put(5.0, 1.0)
+                    put(2.286, 21.19)
+                    put(2.895, 21.19)
+                    put(3.9624, 21.19)
+                    put(4.471416, 23.1)
                 }
             } else {
                 // https://www.desmos.com/calculator/vv0icacepe
@@ -206,11 +206,13 @@ object Shooter {
 
         fun turnToTargetHoodAngle(): Command =
             run {
-                io.turnToAngle(shooterTarget.hoodAngle)
+//                io.turnToAngle(shooterTarget.hoodAngle)
+                io.turnToAngle(hoodTunable.get().degrees)
             }
 
         fun turnToAngle(angle: Angle): Command =
             run {
+                Logger.recordOutput("Shooter/Hood/setpoint", angle)
                 io.turnToAngle(angle)
             }
 
@@ -238,9 +240,15 @@ object Shooter {
 
     object Flywheel: Subsystem {
         val atDesiredFlywheelVelocity = Trigger {
-            val error = abs((inputs.angularVelocity - shooterTarget.angularVelocity).inRPM())
+            val error = abs((inputs.angularVelocity - flywheelTunable.get().rpm).inRPM())
             Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
             error < Constants.FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
+        }
+
+        val atDesiredStandingFlywheelVelocity = Trigger {
+            val error = abs((inputs.angularVelocity - flywheelTunable.get().rpm).inRPM())
+            Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
+            error < Constants.STANDING_FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
         }
 
         private var inputs = LoggedFlywheelInputs()
@@ -272,21 +280,22 @@ object Shooter {
                     InverseInterpolator.forDouble(),
                     Interpolator.forDouble()
                 ).apply {
-                    put(3.5, (300.0.pow(2)))
-                    put(4.0, 350.0.pow(2))
-                    put(4.5, 400.0.pow(2))
-                    put(5.0, 450.0.pow(2))
+                    put(2.286, 2250.0)
+                    put(2.895, 2350.0)
+                    put(3.9624, 2471.0) // nice reference :)
+                    put(4.471416, 2600.0)
+                    put(5.690616, 2800.0)
                 }
             } else {
                 InterpolatingTreeMap(
                     InverseInterpolator.forDouble(),
                     Interpolator.forDouble()
                 ).apply {
-                    put(2.12, (6.51 * Constants.ANGULAR_TO_LINEAR_RATIO).pow(2))
-                    put(2.9, (7.05 * Constants.ANGULAR_TO_LINEAR_RATIO).pow(2))
-                    put(3.7, (7.72 * Constants.ANGULAR_TO_LINEAR_RATIO).pow(2))
-                    put(4.5, (8.52416 * Constants.ANGULAR_TO_LINEAR_RATIO).pow(2))
-                    put(5.3, (9.52215 * Constants.ANGULAR_TO_LINEAR_RATIO).pow(2))
+                    put(2.12, (6.51 * Constants.ANGULAR_TO_LINEAR_RATIO))
+                    put(2.9, (7.05 * Constants.ANGULAR_TO_LINEAR_RATIO))
+                    put(3.7, (7.72 * Constants.ANGULAR_TO_LINEAR_RATIO))
+                    put(4.5, (8.52416 * Constants.ANGULAR_TO_LINEAR_RATIO))
+                    put(5.3, (9.52215 * Constants.ANGULAR_TO_LINEAR_RATIO))
                 }
             }
 
@@ -300,12 +309,20 @@ object Shooter {
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        fun getFlywheelVelocity(distance: Distance): AngularVelocity = sqrt(velocityInterpolationTable.get(distance.inMeters())).rpm
+        fun getFlywheelVelocity(distance: Distance): AngularVelocity = velocityInterpolationTable.get(distance.inMeters()).rpm
         fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(velocityInterpolationTable.get(distance.inMeters())) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
 
-        // TODO: Command waits until the measured speed is at that amount (startEnd).
-        fun toTargetSpeed(): Command = run {
-            io.setVelocity(shooterTarget.angularVelocity)
+        fun runAtTarget(): Command = runEnd(
+            {
+                io.setVelocity(flywheelTunable.get().rpm)
+            },
+            {
+                io.setVelocity(0.0.rpm)
+            })
+
+        fun spinAtTargetSpeed(velocity: AngularVelocity): Command = run {
+            Logger.recordOutput("Shooter/Flywheel/target velocity", velocity)
+            io.setVelocity(velocity)
         }
 
         fun runAtVoltage(voltage: Voltage): Command = runEnd(
@@ -385,7 +402,7 @@ object Shooter {
         get() = Drivetrain.estimatedPose.translation + Constants.SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation)
 
 
-    fun setTarget(target: ShooterProfile): Command = Commands.run({
+    fun setTarget(target: ShooterProfile): Command = Commands.runOnce({
         shooterTarget = target
     })
 
@@ -400,7 +417,7 @@ object Shooter {
             Commands.parallel(
                 Turret.turnToTargetTurretAngle(),
                 Hood.turnToTargetHoodAngle(),
-                Flywheel.toTargetSpeed()
+                Flywheel.runAtTarget()
             )
         )
     }
@@ -411,7 +428,7 @@ object Shooter {
             Turret.alignToHub(target.profile.turretError),
             Turret.turnToTargetTurretAngle(),
             Hood.turnToTargetHoodAngle(),
-            Flywheel.toTargetSpeed(),
+            Flywheel.runAtTarget(),
         )
     )
 
@@ -554,7 +571,7 @@ object Shooter {
             0.0.radians,
             0.0.radians,
             40.degrees.inRadians().radians,
-            0.rpm
+            2000.rpm
         )),
         TUNING(ShooterProfile(
             0.0.radians,
@@ -567,7 +584,8 @@ object Shooter {
     object Constants {
         val FLYWHEEL_RADIUS = 0.0505.meters
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
-        val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
+        val FLYWHEEL_VELOCITY_TOLERANCE = 50.rpm
+        val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 400.rpm
         val SHOOTER_OFFSET = Translation2d(-.184, .184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
