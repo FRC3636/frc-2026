@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.math.*
+import kotlin.jvm.optionals.getOrNull
 
 object Shooter {
     object Turret : Subsystem {
@@ -95,7 +96,7 @@ object Shooter {
             var ourAllianceZone = Zones.BlueAllianceZone
             var opposingAllianceZone = Zones.RedAllianceZone
 
-            if (DriverStation.getAlliance().get() == Alliance.Red){
+            if (DriverStation.getAlliance().getOrNull() == Alliance.Red){
                 ourAllianceZone = Zones.BlueAllianceZone
                 opposingAllianceZone = Zones.RedAllianceZone
             }
@@ -354,7 +355,7 @@ object Shooter {
                 (8.07 / 2).meters,
                 1.83.meters,
             )
-            Model.COMPETITION -> when (DriverStation.getAlliance().get()) {
+            Model.COMPETITION -> when (DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)) {
                 Alliance.Blue -> Translation3d(
                     4.62534.meters,
                     (8.07 / 2).meters,
