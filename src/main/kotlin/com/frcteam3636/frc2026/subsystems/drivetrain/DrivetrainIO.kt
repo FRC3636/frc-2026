@@ -132,15 +132,11 @@ abstract class DrivetrainIO {
 /** Drivetrain I/O layer that uses real swerve modules along with a NavX gyro. */
 class DrivetrainIOReal(override val modules: PerCorner<SwerveModule>) : DrivetrainIO() {
     val gyroConfig: MountPoseConfigs = MountPoseConfigs()
-        .withMountPosePitch(180.degrees)
+//        .withMountPosePitch(180.degrees)
 
     override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro)).apply {
         gyroConfig
     }
-//    override val gyro = GyroPigeon(Pigeon2(CTREDeviceId.PigeonGyro)).apply {
-//        MountPoseConfigs()
-//            .withMountPoseYaw(180.degrees)
-//    }
 }
 
 /** Drivetrain I/O layer that uses simulated swerve modules along with a simulated gyro with an angle based off their movement. */

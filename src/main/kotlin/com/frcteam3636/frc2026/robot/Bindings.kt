@@ -91,10 +91,14 @@ fun configureBindings() {
         )
     )
 
+    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
+    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
 
     controller.a().whileTrue(
         Commands.sequence(
-            Shooter.setTarget(Shooter.Target.TUNING.profile),
+            Commands.runOnce (
+                { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
+            ),
             Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
 //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
             Commands.parallel(

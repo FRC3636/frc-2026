@@ -165,12 +165,12 @@ class LimelightPoseProvider(
         }
 
         if ((!RobotState.beforeFirstEnable) && (isLL4 && !wasIMUChanged)) {
-            imuModePublisher.accept(4.toLong()) // use robot gyro to seed IMU
+            imuModePublisher.accept(0.toLong()) // use robot gyro to seed IMU
             wasIMUChanged = true
         }
 
         for (rawSample in megatag1Subscriber.readQueue()) {
-            if (rawSample.value.size == 0 || !RobotState.beforeFirstEnable) continue
+//            if (rawSample.value.size == 0 || !RobotState.beforeFirstEnable) continue
             val measurement = LimelightMeasurement()
 
             val tagCount = rawSample.value[7].toInt()

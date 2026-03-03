@@ -148,7 +148,11 @@ object Drivetrain : Subsystem {
             "Limelight Left" to LimelightPoseProvider(
                 "limelight-left",
                 {
-                    poseEstimator.estimatedPosition.rotation
+                    when (DriverStation.getAlliance().getOrNull()) {
+                        DriverStation.Alliance.Blue -> poseEstimator.estimatedPosition.rotation + Rotation2d(90.degrees)
+                        DriverStation.Alliance.Red  -> poseEstimator.estimatedPosition.rotation + Rotation2d.k180deg
+                        null -> rawGyroRotation
+                    }
                 },
                 {
                     inputs.gyroVelocity
@@ -410,8 +414,8 @@ object Drivetrain : Subsystem {
             desiredModuleStates = BRAKE_POSITION
         } else {
             desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-                calculateInputCurve(translationInput.x) * FREE_SPEED.inMetersPerSecond() * TRANSLATION_SENSITIVITY,
                 calculateInputCurve(translationInput.y) * FREE_SPEED.inMetersPerSecond() * TRANSLATION_SENSITIVITY,
+                calculateInputCurve(translationInput.x.unaryMinus()) * FREE_SPEED.inMetersPerSecond() * TRANSLATION_SENSITIVITY,
                 rotationInput.y * TAU * ROTATION_SENSITIVITY,
                 estimatedPose.rotation
             )
