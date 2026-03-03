@@ -71,7 +71,7 @@ object Shooter {
         )
 
         override fun periodic() {
-            inputs.setPoint = shooterTarget.turretAngle
+            inputs.setPoint = shooterTarget.turretAngle()
             Logger.processInputs("Shooter/Turret", inputs)
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
@@ -120,7 +120,7 @@ object Shooter {
 
         fun turnToTargetTurretAngle(): Command =
             run {
-                io.turnToAngle(shooterTarget.turretAngle)
+                io.turnToAngle(shooterTarget.turretAngle())
             }
 
         fun turretBrakeMode(): Command =
@@ -140,7 +140,7 @@ object Shooter {
 
     object Hood: Subsystem {
         val atDesiredHoodAngle = Trigger {
-            val error = abs((inputs.hoodAngle - shooterTarget.hoodAngle).inDegrees())
+            val error = abs((inputs.hoodAngle - shooterTarget.hoodAngle()).inDegrees())
             Logger.recordOutput("Shooter/Hood/Angle Error", error)
             error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
         }
@@ -195,7 +195,7 @@ object Shooter {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
             Logger.recordOutput("Shooter/Hood/Shooter Target", shooterTarget.toString())
-            Logger.recordOutput("Shooter/Hood/Reference", shooterTarget.hoodAngle)
+            Logger.recordOutput("Shooter/Hood/Reference", shooterTarget.hoodAngle())
         }
 
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
@@ -302,7 +302,7 @@ object Shooter {
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Flywheel", inputs)
-            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterTarget.angularVelocity)
+            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterTarget.angularVelocity())
         }
 
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
@@ -314,7 +314,7 @@ object Shooter {
 
         fun runAtTarget(): Command = runEnd(
             {
-                io.setVelocity(flywheelTunable.get().rpm)
+                io.setVelocity(shooterTarget.angularVelocity())
             },
             {
                 io.setVelocity(0.0.rpm)
@@ -336,15 +336,19 @@ object Shooter {
     }
 
     data class ShooterProfile(
-        val turretError: Angle,
-        val turretAngle: Angle,
-        val hoodAngle: Angle,
-        val angularVelocity: AngularVelocity,
+        val turretError: () -> Angle,
+        val turretAngle: () -> Angle,
+        val hoodAngle: () -> Angle,
+        val angularVelocity: () -> AngularVelocity,
     )
 
     val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
     val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
-    var shooterTarget = Target.STOWED.profile
+
+    var shooterTarget: ShooterProfile = Target.STOWED.profile
+        set(profile) {
+            field = profile
+        }
 
     val hubTranslation
         get() = when (Robot.model) {
@@ -402,10 +406,6 @@ object Shooter {
         get() = Drivetrain.estimatedPose.translation + Constants.SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation)
 
 
-    fun setTarget(target: ShooterProfile): Command = Commands.runOnce({
-        shooterTarget = target
-    })
-
     fun shootAtTranslation(target: Translation2d = Turret.getClosetTarget()): Command {
         var shooterProfile = getTurretProfileFromTranslation2d(target)
         if (target == hubTranslation.toTranslation2d()) {
@@ -413,7 +413,7 @@ object Shooter {
         }
 
         return Commands.sequence(
-            setTarget(shooterProfile),
+            Commands.runOnce({ shooterTarget = shooterProfile }),
             Commands.parallel(
                 Turret.turnToTargetTurretAngle(),
                 Hood.turnToTargetHoodAngle(),
@@ -423,9 +423,9 @@ object Shooter {
     }
 
     fun shootSequence(target: Target): Command = Commands.sequence(
-        setTarget(target.profile),
+        Commands.run({shooterTarget = target.profile}),
         Commands.parallel(
-            Turret.alignToHub(target.profile.turretError),
+            Turret.alignToHub(shooterTarget.turretError()),
             Turret.turnToTargetTurretAngle(),
             Hood.turnToTargetHoodAngle(),
             Flywheel.runAtTarget(),
@@ -506,7 +506,7 @@ object Shooter {
 
     val targetVelocityVector: Vector<N3>
         get() {
-            if (Robot.model == Robot.Model.COMPETITION) {
+            if (Robot.model == Model.COMPETITION) {
                 val targetHoodAngle = Hood.getHoodAngle(shooterTranslationToHub.norm.meters)
                 val targetLinearVelocity = Flywheel.getFlywheelVelocity(shooterTranslationToHub.norm.meters).toLinear(Constants.FLYWHEEL_RADIUS) * Constants.FLYWHEEL_TO_FUEL_RATIO
                 val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
@@ -551,10 +551,10 @@ object Shooter {
         val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
-            error,
-            turretAngle,
-            hoodAngle,
-            velocity,
+            { error },
+            { turretAngle },
+            { hoodAngle },
+            { velocity },
         )
     }
 
@@ -568,16 +568,16 @@ object Shooter {
         //AIM_AT_POSE(getTurretProfileFromTranslation2d(Turret.getClosetTarget())),
         AIM_AT_HUB(getProfile(targetVelocityVector, angleError)),
         STOWED(ShooterProfile(
-            0.0.radians,
-            0.0.radians,
-            40.degrees.inRadians().radians,
-            2000.rpm
+            { 0.0.radians },
+            { 0.0.radians },
+            { 20.degrees.inRadians().radians },
+            { 2000.rpm }
         )),
         TUNING(ShooterProfile(
-            0.0.radians,
-            0.0.radians,
-            hoodTunable.get().degrees,
-            flywheelTunable.get().rpm
+            { 0.0.radians },
+            { 0.0.radians },
+            { hoodTunable.get().degrees },
+            { flywheelTunable.get().rpm }
         ))
     }
 
