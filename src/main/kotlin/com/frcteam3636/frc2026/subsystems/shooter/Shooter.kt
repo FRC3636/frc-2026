@@ -72,7 +72,8 @@ object Shooter {
         )
 
         override fun periodic() {
-            inputs.setPoint = shooterTarget.turretAngle()
+            shooterProfile = shooterTarget.profile()
+            inputs.setPoint = shooterProfile.turretAngle
             Logger.processInputs("Shooter/Turret", inputs)
             io.updateInputs(inputs)
             seeTagsRaw = turretLimelight.getEntry("tv").equals(1)
@@ -121,7 +122,12 @@ object Shooter {
 
         fun turnToTargetTurretAngle(): Command =
             run {
-                io.turnToAngle(shooterTarget.turretAngle())
+                io.turnToAngle(shooterProfile.turretAngle)
+            }
+
+        fun turnToTargetHubAngle(): Command =
+            run {
+                setTargetAngle(shooterTranslationToHub.angle.measure - Drivetrain.estimatedPose.rotation.measure)
             }
 
         fun turretBrakeMode(): Command =
@@ -141,7 +147,7 @@ object Shooter {
 
     object Hood: Subsystem {
         val atDesiredHoodAngle = Trigger {
-            val error = abs((inputs.hoodAngle - shooterTarget.hoodAngle()).inDegrees())
+            val error = abs((inputs.hoodAngle - shooterProfile.hoodAngle).inDegrees())
             Logger.recordOutput("Shooter/Hood/Angle Error", error)
             error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
         }
@@ -196,7 +202,7 @@ object Shooter {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
             Logger.recordOutput("Shooter/Shooter Target", shooterTarget.toString())
-            Logger.recordOutput("Shooter/Hood/Reference", shooterTarget.hoodAngle())
+            Logger.recordOutput("Shooter/Hood/Reference", shooterProfile.hoodAngle)
         }
 
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
@@ -303,7 +309,7 @@ object Shooter {
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Flywheel", inputs)
-            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterTarget.angularVelocity())
+            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterProfile.hoodAngle)
         }
 
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
@@ -315,7 +321,7 @@ object Shooter {
 
         fun runAtTarget(): Command = runEnd(
             {
-                io.setVelocity(shooterTarget.angularVelocity())
+                io.setVelocity(shooterProfile.angularVelocity)
             },
             {
                 io.setVelocity(0.0.rpm)
@@ -337,19 +343,17 @@ object Shooter {
     }
 
     data class ShooterProfile(
-        val turretError: () -> Angle,
-        val turretAngle: () -> Angle,
-        val hoodAngle: () -> Angle,
-        val angularVelocity: () -> AngularVelocity,
+        val turretError: Angle,
+        val turretAngle: Angle,
+        val hoodAngle: Angle,
+        val angularVelocity: AngularVelocity,
     )
 
     val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
     val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
 
-    var shooterTarget: ShooterProfile = Target.STOWED.profile
-        set(profile) {
-            field = profile
-        }
+    var shooterTarget: Target = Target.STOWED
+    var shooterProfile: ShooterProfile = shooterTarget.profile()
 
     val hubTranslation
         get() = when (Robot.model) {
@@ -407,26 +411,25 @@ object Shooter {
         get() = Drivetrain.estimatedPose.translation + Constants.SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation)
 
 
-    fun shootAtTranslation(target: Translation2d = Turret.getClosetTarget()): Command {
-        var shooterProfile = getTurretProfileFromTranslation2d(target)
-        if (target == hubTranslation.toTranslation2d()) {
-            shooterProfile = Target.AIM_AT_HUB.profile
-        }
-
-        return Commands.sequence(
-            Commands.runOnce({ shooterTarget = shooterProfile }),
-            Commands.parallel(
-                Turret.turnToTargetTurretAngle(),
-                Hood.turnToTargetHoodAngle(),
-                Flywheel.runAtTarget()
-            )
-        )
-    }
+//    fun shootAtTranslation(target: Translation2d = Turret.getClosetTarget()): Command {
+//        var localShooterProfile = getTurretProfileFromTranslation2d(target)
+//        if (target == hubTranslation.toTranslation2d()) {
+//            localShooterProfile = Target.AIM_AT_HUB.profile()
+//        }
+//
+//        return Commands.sequence(
+//            Commands.runOnce({ shooterProfile = localShooterProfile }),
+//            Commands.parallel(
+//                Turret.turnToTargetTurretAngle(),
+//                Hood.turnToTargetHoodAngle(),
+//                Flywheel.runAtTarget()
+//            )
+//        )
+//    }
 
     fun shootSequence(target: Target): Command = Commands.sequence(
-        Commands.run({shooterTarget = target.profile}),
         Commands.parallel(
-            Turret.alignToHub(shooterTarget.turretError()),
+            Turret.alignToHub(shooterProfile.turretError),
             Turret.turnToTargetTurretAngle(),
             Hood.turnToTargetHoodAngle(),
             Flywheel.runAtTarget(),
@@ -552,10 +555,10 @@ object Shooter {
         val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
-            { error },
-            { turretAngle },
-            { hoodAngle },
-            { velocity },
+            error,
+            turretAngle,
+            hoodAngle,
+            velocity,
         )
     }
 
@@ -565,21 +568,26 @@ object Shooter {
         Turret.register()
     }
 
-    enum class Target(val profile: ShooterProfile) {
+    enum class Target(val profile: () -> ShooterProfile) {
         //AIM_AT_POSE(getTurretProfileFromTranslation2d(Turret.getClosetTarget())),
-        AIM_AT_HUB(getProfile(targetVelocityVector, angleError)),
-        STOWED(ShooterProfile(
-            { 0.0.radians },
-            { 0.0.radians },
-            { 20.degrees.inRadians().radians },
-            { 2000.rpm }
-        )),
-        TUNING(ShooterProfile(
-            { 0.0.radians },
-            { 0.0.radians },
-            { hoodTunable.get().degrees },
-            { flywheelTunable.get().rpm }
-        ))
+        AIM_AT_HUB({ getProfile(targetVelocityVector, angleError) }),
+        STOWED({ShooterProfile(
+            0.0.degrees.inRadians().radians,
+            40.0.degrees.inRadians().radians,
+            20.0.degrees.inRadians().radians,
+            2000.0.rpm
+        )}),
+
+        TUNING({ShooterProfile(
+            0.0.radians,
+            0.0.radians,
+            hoodTunable.get().degrees,
+            flywheelTunable.get().rpm
+        )});
+
+        override fun toString(): String {
+            return name
+        }
     }
 
     object Constants {

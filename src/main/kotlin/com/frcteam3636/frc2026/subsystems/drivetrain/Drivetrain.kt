@@ -149,7 +149,6 @@ object Drivetrain : Subsystem {
                 "limelight-left",
                 {
                     poseEstimator.estimatedPosition.rotation
-//                    inputs.gyroRotation
                 },
                 {
                     inputs.gyroVelocity
