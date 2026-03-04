@@ -7,21 +7,17 @@ import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
-import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.drivetrain.DrivetrainIOSim
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
-import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
-import org.ironmaple.simulation.IntakeSimulation
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import kotlin.apply
@@ -39,7 +35,7 @@ open class IntakeInputs {
 
 interface IntakeIO {
     fun setSpeed(percent: Double)
-    fun setRunMotorVoltage(voltage: Voltage)
+    fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
     fun updateInputs(inputs: IntakeInputs)
 }
@@ -63,7 +59,7 @@ class IntakeIOReal : IntakeIO {
         configurator.apply(TalonFXConfiguration().apply {
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.Clockwise_Positive
+                Inverted = InvertedValue.CounterClockwise_Positive
             }
         })
     }
@@ -103,7 +99,7 @@ class IntakeIOReal : IntakeIO {
         intakePivotMotor.set(percent)
     }
 
-    override fun setRunMotorVoltage(voltage: Voltage) {
+    override fun setWheelMotorVoltage(voltage: Voltage) {
         intakePivotMotor.setVoltage(voltage.inVolts())
     }
 

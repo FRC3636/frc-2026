@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.frcteam3636.frc2026.robot.Robot
-import com.frcteam3636.frc2026.subsystems.shooter.LoggedTurretInputs
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
@@ -35,13 +34,13 @@ object Intake : Subsystem {
 
     fun intake(): Command =
             runEnd(
-                { io.setRunMotorVoltage(1.0.volts) },
-                { io.setRunMotorVoltage(0.volts) }
+                { io.setWheelMotorVoltage(6.0.volts) },
+                { io.setWheelMotorVoltage(0.volts) }
             )
 
     fun outtake(): Command = runEnd(
-        { io.setRunMotorVoltage(-1.0.volts) },
-        { io.setRunMotorVoltage(0.volts) }
+        { io.setWheelMotorVoltage((-6.0).volts) },
+        { io.setWheelMotorVoltage(0.volts) },
     )
 
     fun pivot(): Command = startEnd(

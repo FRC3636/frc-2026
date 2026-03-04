@@ -40,61 +40,11 @@ fun configureBindings() {
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
-//    controller.b().onTrue(Commands.runOnce( {
-//        Drivetrain.zeroGyro()
-//    }))
-
-    controllerDev.leftBumper().onTrue (
-        Commands.runOnce (
-            SignalLogger::start
-        )
-        .andThen (
-            StatusLogger::start
-        )
-    )
-    controllerDev.rightBumper().onTrue(
-        Commands.runOnce(SignalLogger::stop)
-            .andThen(StatusLogger::stop)
+    joystickLeft.button(1).whileTrue(
+        Intake.intake()
     )
 
-    controllerDev.x().whileTrue(
-        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
-    )
-
-    controllerDev.y().whileTrue(
-        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
-    )
-
-    controllerDev.a().whileTrue(
-        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kForward)
-    )
-    controllerDev.b().whileTrue(
-        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
-    )
-
-//    controller.a().whileTrue(
-//        Shooter.Hood.setVoltage(1.volts)
-//    )
-
-
-//    controller.a().whileTrue(
-////        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
-////        Shooter.Hood.turnToAngle(0.degrees)
-//        Shooter.Flywheel.spinAtTargetSpeed(3000.rpm)
-//    )
-
-    controller.x().whileTrue(
-//        Shooter.Hood.turnToAngle(15.degrees)
-        Commands.parallel(
-            Indexer.index(),
-            Feeder.feed()
-        )
-    )
-
-    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
-    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
-
-    controller.a().whileTrue(
+    joystickRight.button(1).whileTrue(
         Commands.sequence(
             Commands.runOnce (
                 { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
@@ -111,6 +61,49 @@ fun configureBindings() {
         )
     )
 
+//    controller.b().onTrue(Commands.runOnce( {
+//        Drivetrain.zeroGyro()
+//    }))
+
+//    controller.a().whileTrue(
+//        Shooter.Hood.setVoltage(1.volts)
+//    )
+
+
+//    controller.a().whileTrue(
+////        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
+////        Shooter.Hood.turnToAngle(0.degrees)
+//        Shooter.Flywheel.spinAtTargetSpeed(3000.rpm)
+//    )
+
+//    controller.x().whileTrue(
+////        Shooter.Hood.turnToAngle(15.degrees)
+//        Commands.parallel(
+//            Indexer.index(),
+//            Feeder.feed()
+//        )
+//    )
+
+//    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
+//    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
+
+//    controller.a().whileTrue(
+//        Commands.sequence(
+//            Commands.runOnce (
+//                { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
+//            ),
+//            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+////            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
+//            Commands.parallel(
+//                Commands.parallel(
+//                    Indexer.index(),
+//                    Feeder.feed(),
+//                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
+//                Shooter.Flywheel.runAtTarget()
+//            ),
+//        )
+//    )
+
 //    controller.x().whileTrue(
 //        Commands.parallel(
 //            Indexer.outdex(),
@@ -118,7 +111,7 @@ fun configureBindings() {
 //        )
 //    )
 
-    joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
+//    joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
     // Angles robot for shooting, just in case the
     // turret stops working.
