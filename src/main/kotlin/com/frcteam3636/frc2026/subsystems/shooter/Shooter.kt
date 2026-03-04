@@ -593,10 +593,10 @@ object Shooter {
     }
 
     enum class FeedTranslation(val target : Translation2d) {
-        LeftSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
-        RightSideNeutralZone(Translation2d(3.0.meters,3.0.meters)),
-        LeftSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
-        RightSideAllianceZone(Translation2d(3.0.meters,3.0.meters)),
+        LeftSideNeutralZone(Translation2d(7.0.meters,7.5.meters)),
+        RightSideNeutralZone(Translation2d(7.0.meters,1.50.meters)),
+        LeftSideAllianceZone(Translation2d(15.0.meters,3.0.meters)),
+        RightSideAllianceZone(Translation2d(15.0.meters,7.5.meters)),
     }
 
     enum class Zones(val startY : Distance, val endY : Distance){
