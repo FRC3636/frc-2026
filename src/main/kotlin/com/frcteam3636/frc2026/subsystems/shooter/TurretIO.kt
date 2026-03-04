@@ -16,6 +16,7 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
+import edu.wpi.first.units.Units.Degrees
 import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.Units.Rotations
@@ -78,8 +79,6 @@ class TurretIOReal : TurretIO {
         })
     }
 
-    var setPoint = 0.0.radians
-
     private val positionSignal = motor.position
     private val velocitySignal = motor.velocity
     private val currentSignal = motor.supplyCurrent
@@ -87,6 +86,7 @@ class TurretIOReal : TurretIO {
     private val positionControl: MotionMagicVoltage = MotionMagicVoltage(0.0).apply {
         UpdateFreqHz = 0.0
     }
+    private var setPoint = 0.0.degrees
 
     init {
         BaseStatusSignal.setUpdateFrequencyForAll(
@@ -109,8 +109,16 @@ class TurretIOReal : TurretIO {
     }
 
     override fun turnToAngle(angle: Angle) {
+//        assert(angle in (-85).degrees..135.degrees)
+        setPoint = if (angle in (-85).degrees..135.degrees) {
+            angle
+        } else if (angle > 15.degrees) {
+            135.degrees
+        } else {
+            (-85).degrees
+        }
+//        Logger.recordOutput("Shooter/Turret/Setpoint", angle)
         setPoint = angle
-        Logger.recordOutput("Shooter/Turret/Setpoint", angle)
         motor.setControl(positionControl.withPosition(angle))
     }
 
@@ -125,6 +133,7 @@ class TurretIOReal : TurretIO {
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
+        inputs.setPoint = setPoint
     }
 
     override fun setBrakeMode(enabled: Boolean) {

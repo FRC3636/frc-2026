@@ -34,6 +34,7 @@ fun configureBindings() {
         joystickLeft.hid,
         joystickRight.hid
     )
+//    Shooter.Turret.defaultCommand = Shooter.Turret.turnToTargetTurretAngle()
     // (The button with the yellow tape on it)
     joystickLeft.button(8).onTrue(Commands.runOnce({
         println("Zeroing gyro.")
@@ -44,30 +45,31 @@ fun configureBindings() {
         Intake.intake()
     )
 
-    joystickRight.button(1).whileTrue(
-        Commands.sequence(
-            Commands.runOnce (
-                { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
-            ),
-            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
-//            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
-            Commands.parallel(
-                Commands.parallel(
-                    Indexer.index(),
-                    Feeder.feed(),
-                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-                Shooter.Flywheel.runAtTarget()
-            ),
-        )
-    )
-
-//    controller.b().onTrue(Commands.runOnce( {
-//        Drivetrain.zeroGyro()
-//    }))
-
-//    controller.a().whileTrue(
-//        Shooter.Hood.setVoltage(1.volts)
+//    joystickRight.button(1).whileTrue(
+//        Commands.sequence(
+//            Commands.runOnce (
+//                { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
+//            ),
+//            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+////            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
+//            Commands.parallel(
+//                Commands.parallel(
+//                    Indexer.index(),
+//                    Feeder.feed(),
+//                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
+//                Shooter.Flywheel.runAtTarget()
+//            ),
+//        )
 //    )
+
+    joystickRight.trigger().whileTrue(
+//        Commands.parallel(
+////            Commands.runOnce({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB.profile }),
+////            Shooter.Turret.turnToTargetTurretAngle()
+//            Shooter.Turret.setTargetAngle(Shooter.shooterTranslationToHub.angle.measure)
+//        )
+        Shooter.Turret.setTargetAngle(Shooter.shooterTranslationToHub.angle.measure - Drivetrain.estimatedPose.rotation.measure)
+    )
 
 
 //    controller.a().whileTrue(
@@ -87,22 +89,20 @@ fun configureBindings() {
 //    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
 //    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
 
-//    controller.a().whileTrue(
-//        Commands.sequence(
-//            Commands.runOnce (
-//                { Shooter.shooterTarget = Shooter.Target.TUNING.profile }
-//            ),
-//            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
-////            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
-//            Commands.parallel(
-//                Commands.parallel(
-//                    Indexer.index(),
-//                    Feeder.feed(),
-//                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-//                Shooter.Flywheel.runAtTarget()
-//            ),
-//        )
-//    )
+    controller.a().whileTrue(
+        Commands.sequence(
+            Commands.run({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB.profile }),
+            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+//            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
+            Commands.parallel(
+                Commands.parallel(
+                    Indexer.index(),
+                    Feeder.feed(),
+                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
+                Shooter.Flywheel.runAtTarget()
+            ),
+        )
+    )
 
 //    controller.x().whileTrue(
 //        Commands.parallel(

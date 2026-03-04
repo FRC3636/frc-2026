@@ -195,7 +195,7 @@ object Shooter {
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Shooter/Hood", inputs)
-            Logger.recordOutput("Shooter/Hood/Shooter Target", shooterTarget.toString())
+            Logger.recordOutput("Shooter/Shooter Target", shooterTarget.toString())
             Logger.recordOutput("Shooter/Hood/Reference", shooterTarget.hoodAngle())
         }
 
@@ -398,7 +398,7 @@ object Shooter {
             }
         }
 
-    private val shooterTranslationToHub: Translation2d
+    val shooterTranslationToHub: Translation2d
         get() {
             return hubTranslation.toTranslation2d() - shooterTranslation
         }
