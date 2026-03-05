@@ -16,8 +16,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.Celsius
-import edu.wpi.first.units.Units.Degrees
-import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.RadiansPerSecond
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.Angle
@@ -42,6 +40,7 @@ interface TurretIO {
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: TurretInputs)
     fun setBrakeMode(enabled: Boolean)
+    fun zeroEncoder()
 
     val signals: Array<BaseStatusSignal>
         get() = emptyArray()
@@ -79,6 +78,14 @@ class TurretIOReal : TurretIO {
         })
     }
 
+    private val Encoder =  CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
+        configurator.apply(CANcoderConfiguration().apply {
+//                MagnetSensor.MagnetOffset = MAGNET_OFFSET
+            MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
+        })
+        setPosition(0.degrees)
+    }
+
     private val positionSignal = motor.position
     private val velocitySignal = motor.velocity
     private val currentSignal = motor.supplyCurrent
@@ -89,6 +96,7 @@ class TurretIOReal : TurretIO {
     private var setPoint = 0.0.degrees
 
     init {
+
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
             positionSignal,
@@ -98,28 +106,31 @@ class TurretIOReal : TurretIO {
         )
         motor.optimizeBusUtilization()
 
-        CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
-            configurator.apply(CANcoderConfiguration().apply {
-//                MagnetSensor.MagnetOffset = MAGNET_OFFSET
-                MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
-            })
-            setPosition(0.degrees)
-        }
+//         CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
+//            configurator.apply(CANcoderConfiguration().apply {
+////                MagnetSensor.MagnetOffset = MAGNET_OFFSET
+//                MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
+//            })
+//            setPosition(0.degrees)
+//        }
 
     }
 
     override fun turnToAngle(angle: Angle) {
 //        assert(angle in (-85).degrees..135.degrees)
-        setPoint = if (angle in (-85).degrees..135.degrees) {
+
+        val upperBound = 90.degrees
+        val lowerBound = (-85).degrees
+
+        setPoint = if (angle in lowerBound..upperBound) {
             angle
-        } else if (angle > 15.degrees) {
-            135.degrees
+        } else if (angle > (upperBound + lowerBound / 2.0) + 180.degrees) {
+            lowerBound
         } else {
-            (-85).degrees
+            upperBound
         }
-//        Logger.recordOutput("Shooter/Turret/Setpoint", angle)
-        setPoint = angle
-        motor.setControl(positionControl.withPosition(angle))
+        Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
+        motor.setControl(positionControl.withPosition(setPoint))
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -133,7 +144,11 @@ class TurretIOReal : TurretIO {
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
-        inputs.setPoint = setPoint
+//        inputs.setPoint = setPoint
+    }
+
+    override fun zeroEncoder() {
+        Encoder.setPosition(0.0.degrees)
     }
 
     override fun setBrakeMode(enabled: Boolean) {
@@ -148,13 +163,13 @@ class TurretIOReal : TurretIO {
     }
 
     companion object Constants{
-        private val PID_GAINS = PIDGains(64.0, 0.0, 0.0)
+        private val PID_GAINS = PIDGains(50.0, 0.0, 1.0)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625
-        private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
+        private val PROFILE_ACCELERATION = 5.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = 12.0.rotationsPerSecond
+        private val PROFILE_VELOCITY = 7.0.rotationsPerSecond
     }
 }
 
@@ -181,6 +196,10 @@ class TurretIOSim: TurretIO {
 
     override fun setBrakeMode(enabled: Boolean) {
         brakeMode = enabled
+    }
+
+    override fun zeroEncoder() {
+        TODO()
     }
 
 }

@@ -15,6 +15,8 @@ import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.Vector
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap
@@ -29,7 +31,9 @@ import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.DriverStation.Alliance
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
@@ -81,7 +85,17 @@ object Shooter {
             Logger.recordOutput("Shooter/Turret/DistanceToHub", translationToHub)
             Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", shooterTranslationToHub)
             Logger.recordOutput("Shooter/Turret/Field Position", shooterTranslation)
+            Logger.recordOutput("Shooter/Shooter Pose",
+                Pose2d(
+                    Drivetrain.estimatedPose.translation + Constants.SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
+                    Rotation2d(inputs.angle) - Drivetrain.estimatedPose.rotation
+                )
+            )
         }
+
+        val atTargetTurretAngle: Trigger = Trigger(
+            { abs(inputs.angle.inDegrees() - shooterProfile.turretAngle.inDegrees()) < 5.0 },
+        )
 
         fun alignToHub(offset: Angle = 0.0.radians): Command =
             run {
@@ -128,6 +142,11 @@ object Shooter {
         fun turnToTargetHubAngle(): Command =
             run {
                 setTargetAngle(shooterTranslationToHub.angle.measure - Drivetrain.estimatedPose.rotation.measure)
+            }
+
+        fun zeroTurretEncoder() : Command =
+            run{
+                io.zeroEncoder()
             }
 
         fun turretBrakeMode(): Command =
@@ -247,13 +266,13 @@ object Shooter {
 
     object Flywheel: Subsystem {
         val atDesiredFlywheelVelocity = Trigger {
-            val error = abs((inputs.angularVelocity - flywheelTunable.get().rpm).inRPM())
+            val error = abs((inputs.angularVelocity - getFlywheelVelocity(shooterTranslationToHub.norm.meters)).inRPM())
             Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
             error < Constants.FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
         }
 
         val atDesiredStandingFlywheelVelocity = Trigger {
-            val error = abs((inputs.angularVelocity - flywheelTunable.get().rpm).inRPM())
+            val error = abs((inputs.angularVelocity - getFlywheelVelocity(shooterTranslationToHub.norm.meters)).inRPM())
             Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
             error < Constants.STANDING_FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
         }
@@ -552,7 +571,7 @@ object Shooter {
 
     fun getProfile(vector: Vector<N3>, error: Angle): ShooterProfile {
         val turretAngle = (atan2(vector[1,0], vector[0,0]) - Drivetrain.estimatedPose.rotation.radians).radians
-        val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rpm
+        val velocity = (vector.norm() / Constants.FLYWHEEL_RADIUS.inMeters() * TAU).rotationsPerSecond
         val hoodAngle = atan(vector[2,0]/(sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
             error,
@@ -566,14 +585,24 @@ object Shooter {
         Hood.register()
         Flywheel.register()
         Turret.register()
+        SmartDashboard.putData { Turret }
+        SmartDashboard.putData { Hood }
+        SmartDashboard.putData { Flywheel }
+        SmartDashboard.putData { CommandScheduler.getInstance() }
     }
 
     enum class Target(val profile: () -> ShooterProfile) {
         //AIM_AT_POSE(getTurretProfileFromTranslation2d(Turret.getClosetTarget())),
-        AIM_AT_HUB({ getProfile(targetVelocityVector, angleError) }),
+        VECTOR_AIM_AT_HUB({ getProfile(targetVelocityVector, angleError) }),
+        AIM_AT_HUB({ShooterProfile(
+            0.0.radians,
+            shooterTranslationToHub.angle.measure - Drivetrain.estimatedPose.rotation.measure,
+            Hood.getHoodAngle(shooterTranslationToHub.norm.meters),
+            Flywheel.getFlywheelVelocity(shooterTranslationToHub.norm.meters)
+        )}),
         STOWED({ShooterProfile(
             0.0.degrees.inRadians().radians,
-            40.0.degrees.inRadians().radians,
+            0.0.degrees.inRadians().radians,
             20.0.degrees.inRadians().radians,
             2000.0.rpm
         )}),
@@ -595,7 +624,7 @@ object Shooter {
         val HOOD_ANGLE_TOLERANCE = 3.0.degrees
         val FLYWHEEL_VELOCITY_TOLERANCE = 50.rpm
         val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 400.rpm
-        val SHOOTER_OFFSET = Translation2d(-.184, .184)
+        val SHOOTER_OFFSET = Translation2d(.184, -.184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
     }

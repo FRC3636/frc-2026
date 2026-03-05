@@ -42,28 +42,43 @@ fun configureBindings() {
     joystickRight.button(1).whileTrue(
         Commands.sequence(
             Commands.runOnce (
-                { Shooter.shooterTarget = Shooter.Target.TUNING }
+                { Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }
             ),
-            Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+            Commands.parallel(
+                Shooter.Turret.turnToTargetTurretAngle().until(Shooter.Turret.atTargetTurretAngle),
+                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+            ),
 //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
             Commands.parallel(
                 Commands.parallel(
-                    Indexer.index(),
+//                    Indexer.index(),
                     Feeder.feed(),
                 ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-                Shooter.Flywheel.runAtTarget()
+                Shooter.Flywheel.runAtTarget(),
+                Shooter.Turret.turnToTargetTurretAngle(),
             ),
         )
     )
+    joystickRight.button(8).onTrue(Commands.runOnce({
+        println("Zeroing Turret Encoder")
+        Shooter.Turret.zeroTurretEncoder()
+    }).ignoringDisable(true))
 
-    joystickRight.trigger().whileTrue(
+
+
+//    joystickRight.trigger().whileTrue(
+////        Commands.parallel(
+//////            Commands.runOnce({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB.profile }),
+//////            Shooter.Turret.turnToTargetTurretAngle()
+////            Shooter.Turret.setTargetAngle(Shooter.shooterTranslationToHub.angle.measure)
+////        )
 //        Commands.parallel(
-////            Commands.runOnce({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB.profile }),
-////            Shooter.Turret.turnToTargetTurretAngle()
-//            Shooter.Turret.setTargetAngle(Shooter.shooterTranslationToHub.angle.measure)
+//            Commands.run (
+//                { Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }
+//            ),
+//            Shooter.Turret.turnToTargetTurretAngle()
 //        )
-        Shooter.Turret.turnToTargetTurretAngle()
-    )
+//    )
 
 
 //    controller.a().whileTrue(
@@ -91,7 +106,7 @@ fun configureBindings() {
     //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
                 Commands.parallel(
                     Commands.parallel(
-                        Indexer.index(),
+//                        Indexer.index(),
                         Feeder.feed(),
                     ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
                     Shooter.Flywheel.runAtTarget()
