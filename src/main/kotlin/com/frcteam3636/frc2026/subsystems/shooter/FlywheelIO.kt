@@ -52,13 +52,6 @@ class FlywheelIOReal : FlywheelIO {
             Slot0.apply{
                 pidGains = PID_GAINS
             }
-
-            MotionMagic.apply {
-                MotionMagicCruiseVelocity = PROFILE_VELOCITY.inRotationsPerSecond()
-                MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
-                MotionMagicJerk = PROFILE_JERK
-            }
-
         })
     }
 
@@ -85,19 +78,12 @@ class FlywheelIOReal : FlywheelIO {
     override fun setVelocity(velocity: AngularVelocity){
         assert(velocity in 0.rpm..6000.rpm)
         targetVelocity = velocity
-//        motor.setControl(MotionMagicVelocityVoltage(velocity.inRPM()))
         motor.setVoltage(ffController.calculate(velocity.inRPM()))
     }
 
     companion object Constants{
         val PID_GAINS = PIDGains(0.03,0.0,0.001)
         val FEED_FORWARD_GAINS = MotorFFGains(0.26064, 0.0021653097345132742, 0.006068)
-        val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
-        val PROFILE_VELOCITY = 2.0.rotationsPerSecond
-        val PROFILE_JERK = 1.0
-        val FLYWHEEL_VELOCITY_TOLERANCE = 100.rpm
-        val FLYWHEEL_RADIUS = 0.0505.meters
-
     }
 }
 

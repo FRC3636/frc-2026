@@ -29,6 +29,7 @@ fun configureBindings() {
         joystickRight.hid
     )
     Shooter.Turret.defaultCommand = Shooter.Turret.turnToTargetTurretAngle()
+    // Shooter.Hood.defaultCommand = Shooter.Hood.turnToTargetHoodAngle()
     // (The button with the yellow tape on it)
     joystickLeft.button(8).onTrue(Commands.runOnce({
         println("Zeroing gyro.")
@@ -39,23 +40,48 @@ fun configureBindings() {
         Intake.intake()
     )
 
+    joystickRight.button(2).onTrue(
+        Commands.runOnce({
+            Shooter.shooterTarget = Shooter.Target.VECTOR_AIM_AT_HUB
+        })
+    )
+
+    joystickRight.button(3).onTrue(
+        Commands.runOnce({
+            Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB
+        })
+    )
+
+    joystickRight.button(4).onTrue(
+        Commands.runOnce({
+            Shooter.shooterTarget = Shooter.Target.TUNING
+        })
+    )
+
+    joystickRight.button(5).onTrue(
+        Commands.runOnce({
+            Shooter.shooterTarget = Shooter.Target.TUNING
+        })
+    )
+
+    joystickRight.button(6).onTrue(
+        Commands.runOnce({
+            Shooter.shooterTarget = Shooter.Target.STOWED
+        })
+    )
+
     joystickRight.button(1).whileTrue(
         Commands.sequence(
-            Commands.runOnce (
-                { Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }
-            ),
             Commands.parallel(
-                Shooter.Turret.turnToTargetTurretAngle().until(Shooter.Turret.atTargetTurretAngle),
-                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredStandingFlywheelVelocity),
+                Shooter.Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle)
             ),
-//            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
             Commands.parallel(
                 Commands.parallel(
-//                    Indexer.index(),
                     Feeder.feed(),
+                    Indexer.index()
                 ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
                 Shooter.Flywheel.runAtTarget(),
-                Shooter.Turret.turnToTargetTurretAngle(),
             ),
         )
     )
@@ -64,21 +90,6 @@ fun configureBindings() {
         Shooter.Turret.zeroTurretEncoder()
     }).ignoringDisable(true))
 
-
-
-//    joystickRight.trigger().whileTrue(
-////        Commands.parallel(
-//////            Commands.runOnce({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB.profile }),
-//////            Shooter.Turret.turnToTargetTurretAngle()
-////            Shooter.Turret.setTargetAngle(Shooter.shooterTranslationToHub.angle.measure)
-////        )
-//        Commands.parallel(
-//            Commands.run (
-//                { Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }
-//            ),
-//            Shooter.Turret.turnToTargetTurretAngle()
-//        )
-//    )
 
 
 //    controller.a().whileTrue(
