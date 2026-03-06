@@ -483,17 +483,19 @@ object Shooter {
 //        Commands.waitTime(0.166666667.seconds),
 //    )
 
+    //Desmos with the derivation of these equations
+    // https://www.desmos.com/calculator/z4owtcakzy
     fun getShooterProfileFromTranslation2d(targetTranslation: Translation2d) : ShooterProfile{
         val toTarget = Drivetrain.estimatedPose.translation - targetTranslation
         var hubDistance = nearestHubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)
-        if (Drivetrain.estimatedPose.y < FIELD_WIDTH_METERS / 2.0) {
+        if (toTarget < hubDistance) {
             hubDistance = toTarget.norm / 2.0
         }
-        val parabolicA = hubDistance / (toTarget.norm.pow(2.0) + (toTarget.norm * hubDistance))
-        val parabolicB = (-parabolicA * toTarget.norm)
+        val parabolicA = hubTranslation.z / (hubDistance.norm.pow(2.0) - (hubDistance.norm * toTarget))
+        val parabolicB = (hubTranslation.z/ hubDistance) - parabolicA*hubDistance
         val parabolicSolutions = Pair(
-            -parabolicB - sqrt(parabolicB.pow(2) - (4 * parabolicA * hubTranslation.y)),
-            -parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * hubTranslation.y))
+            -parabolicB - sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z)),
+            -parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z))
         )
         val adjustedDistance = max(parabolicSolutions.first, parabolicSolutions.second).meters
         val targetLinearVelocity = (Flywheel.getFlywheelVelocity(adjustedDistance).inRPM() * Constants.FLYWHEEL_RADIUS.inMeters() * TAU / 60.0 * Constants.FLYWHEEL_TO_FUEL_RATIO).metersPerSecond
