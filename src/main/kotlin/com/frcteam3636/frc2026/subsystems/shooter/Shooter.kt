@@ -148,7 +148,7 @@ object Shooter {
     object Hood: Subsystem {
         val atDesiredHoodAngle = Trigger {
             val error = abs((inputs.hoodAngle - shooterProfile.hoodAngle).inDegrees())
-            Logger.recordOutput("Shooter/Hood/Angle Error", error)
+            Logger.recordOutput("Shooter/Hood/Angle Error", error.degrees)
             error < Constants.HOOD_ANGLE_TOLERANCE.inDegrees()
         }
 
@@ -171,32 +171,19 @@ object Shooter {
             )
         )
 
+        private val hoodInterpolationTable = InterpolatingTreeMap(
+            InverseInterpolator.forDouble(),
+            Interpolator.forDouble()
+        ).apply {
+            put(1.6764, 31.0)
+            put(2.782, 31.0)
+            put(3.27, 35.0)
+            put(4.03, 40.0)
+            put(4.7, 48.0)
+        }
+
         // distance -> sin(2 * angle)
         // TODO: find values
-        private val angleInterpolationTable =
-            if (io is HoodIOReal) {
-                InterpolatingTreeMap(
-                    InverseInterpolator.forDouble(),
-                    Interpolator.forDouble()
-                ).apply {
-                    put(2.286, 21.19)
-                    put(2.895, 21.19)
-                    put(3.9624, 21.19)
-                    put(4.471416, 23.1)
-                }
-            } else {
-                // https://www.desmos.com/calculator/vv0icacepe
-                InterpolatingTreeMap(
-                    InverseInterpolator.forDouble(),
-                    Interpolator.forDouble()
-                ).apply {
-                    put(2.12, 55.0)
-                    put(2.9, 50.0)
-                    put(3.7, 45.0)
-                    put(4.5, 40.0)
-                    put(5.3, 35.0)
-                }
-            }
 
         override fun periodic() {
             io.updateInputs(inputs)
@@ -209,12 +196,12 @@ object Shooter {
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        fun getHoodAngle(distance: Distance): Angle = (angleInterpolationTable.get(distance.inMeters())).degrees
+        fun getHoodAngle(distance: Distance): Angle = (hoodInterpolationTable.get(distance.inMeters())).degrees
 
         fun turnToTargetHoodAngle(): Command =
             run {
 //                io.turnToAngle(shooterTarget.hoodAngle)
-                io.turnToAngle(hoodTunable.get().degrees)
+                io.turnToAngle(shooterProfile.hoodAngle)
             }
 
         fun turnToAngle(angle: Angle): Command =
@@ -253,8 +240,8 @@ object Shooter {
         }
 
         val atDesiredStandingFlywheelVelocity = Trigger {
-            val error = abs((inputs.angularVelocity - getFlywheelVelocity(shooterTranslationToHub.norm.meters)).inRPM())
-            Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
+            val error = abs((inputs.angularVelocity - shooterProfile.angularVelocity).inRPM())
+            Logger.recordOutput("Shooter/Flywheel/Velocity Error", error.rpm)
             error < Constants.STANDING_FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
         }
 
@@ -279,45 +266,29 @@ object Shooter {
             )
         )
 
-        // distance -> velocity^2
-        // TODO: find values
-        private val velocityInterpolationTable =
-            if (io is FlywheelIOReal) {
-                InterpolatingTreeMap(
-                    InverseInterpolator.forDouble(),
-                    Interpolator.forDouble()
-                ).apply {
-                    put(2.286, 2250.0)
-                    put(2.895, 2350.0)
-                    put(3.9624, 2471.0) // nice reference :)
-                    put(4.471416, 2600.0)
-                    put(5.690616, 2800.0)
-                }
-            } else {
-                InterpolatingTreeMap(
-                    InverseInterpolator.forDouble(),
-                    Interpolator.forDouble()
-                ).apply {
-                    put(2.12, (6.51 * Constants.ANGULAR_TO_LINEAR_RATIO))
-                    put(2.9, (7.05 * Constants.ANGULAR_TO_LINEAR_RATIO))
-                    put(3.7, (7.72 * Constants.ANGULAR_TO_LINEAR_RATIO))
-                    put(4.5, (8.52416 * Constants.ANGULAR_TO_LINEAR_RATIO))
-                    put(5.3, (9.52215 * Constants.ANGULAR_TO_LINEAR_RATIO))
-                }
-            }
-
         override fun periodic() {
             io.updateInputs(inputs)
             Logger.processInputs("Flywheel", inputs)
-            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterProfile.hoodAngle)
+            Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterProfile.angularVelocity)
         }
 
         fun sysIdQuasistatic(direction: Direction): Command = sysID.quasistatic(direction)
 
         fun sysIdDynamic(direction: Direction): Command = sysID.dynamic(direction)
 
-        fun getFlywheelVelocity(distance: Distance): AngularVelocity = velocityInterpolationTable.get(distance.inMeters()).rpm
-        fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(velocityInterpolationTable.get(distance.inMeters())) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
+        private val speedInterpolationTable = InterpolatingTreeMap(
+            InverseInterpolator.forDouble(),
+            Interpolator.forDouble()
+        ).apply {
+            put(1.6764, 2180.0)
+            put(2.782, 2400.0)
+            put(3.27, 2500.0)
+            put(4.03, 2650.0)
+            put(4.7, 2900.0)
+        }
+
+        fun getFlywheelVelocity(distance: Distance): AngularVelocity = speedInterpolationTable.get(distance.inMeters()).rpm
+        fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(speedInterpolationTable.get(distance.inMeters())) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
 
         fun runAtTarget(): Command = runEnd(
             {
@@ -568,7 +539,7 @@ object Shooter {
         val hoodAngle = atan2(vector[2,0], (sqrt(vector[0,0].pow(2) + vector[1,0]))).radians
         return ShooterProfile(
             turretAngle,
-            hoodAngle,
+            Hood.getHoodAngle(vector.norm().meters), // Made this change because I can't read the code.
             velocity,
         )
     }
@@ -609,8 +580,8 @@ object Shooter {
 
     object Constants {
         val FLYWHEEL_RADIUS = 0.0505.meters
-        val HOOD_ANGLE_TOLERANCE = 3.0.degrees
-        val FLYWHEEL_VELOCITY_TOLERANCE = 50.rpm
+        val HOOD_ANGLE_TOLERANCE = 6.0.degrees
+        val FLYWHEEL_VELOCITY_TOLERANCE = 70.rpm
         val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 400.rpm
         val SHOOTER_OFFSET = Translation2d(.184, -.184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps

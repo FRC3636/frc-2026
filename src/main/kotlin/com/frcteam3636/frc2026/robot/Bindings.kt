@@ -29,6 +29,7 @@ fun configureBindings() {
         joystickRight.hid
     )
     Shooter.Turret.defaultCommand = Shooter.Turret.turnToTargetTurretAngle()
+    // Shooter.Hood.defaultCommand = Shooter.Hood.turnToTargetHoodAngle()
     // (The button with the yellow tape on it)
     joystickLeft.button(8).onTrue(Commands.runOnce({
         println("Zeroing gyro.")
@@ -72,17 +73,15 @@ fun configureBindings() {
     joystickRight.button(1).whileTrue(
         Commands.sequence(
             Commands.parallel(
-                Shooter.Turret.turnToTargetTurretAngle().until(Shooter.Turret.atTargetTurretAngle),
-                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredStandingFlywheelVelocity),
+                Shooter.Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle)
             ),
-//            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
             Commands.parallel(
                 Commands.parallel(
-//                    Indexer.index(),
                     Feeder.feed(),
+                    Indexer.index()
                 ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
                 Shooter.Flywheel.runAtTarget(),
-                Shooter.Turret.turnToTargetTurretAngle(),
             ),
         )
     )
