@@ -456,32 +456,32 @@ object Shooter {
 
     //Desmos with the derivation of these equations
     // https://www.desmos.com/calculator/z4owtcakzy
-    fun getShooterProfileFromTranslation2d(targetTranslation: Translation2d) : ShooterProfile{
-        val toTarget = Drivetrain.estimatedPose.translation - targetTranslation
-        var hubDistance = nearestHubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)
-        if (toTarget < hubDistance) {
-            hubDistance = toTarget.norm / 2.0
-        }
-        val parabolicA = hubTranslation.z / (hubDistance.norm.pow(2.0) - (hubDistance.norm * toTarget))
-        val parabolicB = (hubTranslation.z/ hubDistance) - parabolicA*hubDistance
-        val parabolicSolutions = Pair(
-            -parabolicB - sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z)),
-            -parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z))
-        )
-        val adjustedDistance = max(parabolicSolutions.first, parabolicSolutions.second).meters
-        val targetLinearVelocity = (Flywheel.getFlywheelVelocity(adjustedDistance).inRPM() * Constants.FLYWHEEL_RADIUS.inMeters() * TAU / 60.0 * Constants.FLYWHEEL_TO_FUEL_RATIO).metersPerSecond
-        val targetHoodAngle = Hood.getHoodAngle(adjustedDistance)
-        val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
-        val targetVelocityVector = VecBuilder.fill(
-            horizontalVelocity.getHorizontalComponent(toTarget.angle.measure).inMetersPerSecond(),
-            horizontalVelocity.getVerticalComponent(toTarget.angle.measure).inMetersPerSecond(),
-            targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
-        )
-        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
-        val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
-        val adjustedVector = targetVelocityVector - robotVelocityVector
-        return getProfile(adjustedVector)
-    }
+//    fun getShooterProfileFromTranslation2d(targetTranslation: Translation2d) : ShooterProfile{
+//        val toTarget = Drivetrain.estimatedPose.translation - targetTranslation
+//        var hubDistance = nearestHubTranslation.toTranslation2d().getDistance(Drivetrain.estimatedPose.translation)
+//        if (toTarget < hubDistance) {
+//            hubDistance = toTarget.norm / 2.0
+//        }
+//        val parabolicA = hubTranslation.z / (hubDistance.norm.pow(2.0) - (hubDistance.norm * toTarget))
+//        val parabolicB = (hubTranslation.z/ hubDistance) - parabolicA*hubDistance
+//        val parabolicSolutions = Pair(
+//            -parabolicB - sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z)),
+//            -parabolicB + sqrt(parabolicB.pow(2) - (4 * parabolicA * -hubTranslation.z))
+//        )
+//        val adjustedDistance = max(parabolicSolutions.first, parabolicSolutions.second).meters
+//        val targetLinearVelocity = (Flywheel.getFlywheelVelocity(adjustedDistance).inRPM() * Constants.FLYWHEEL_RADIUS.inMeters() * TAU / 60.0 * Constants.FLYWHEEL_TO_FUEL_RATIO).metersPerSecond
+//        val targetHoodAngle = Hood.getHoodAngle(adjustedDistance)
+//        val horizontalVelocity = targetLinearVelocity.getHorizontalComponent(targetHoodAngle)
+//        val targetVelocityVector = VecBuilder.fill(
+//            horizontalVelocity.getHorizontalComponent(toTarget.angle.measure).inMetersPerSecond(),
+//            horizontalVelocity.getVerticalComponent(toTarget.angle.measure).inMetersPerSecond(),
+//            targetLinearVelocity.getVerticalComponent(targetHoodAngle).inMetersPerSecond()
+//        )
+//        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
+//        val robotVelocityVector = VecBuilder.fill(robotVelocity.x, robotVelocity.y, 0.0)
+//        val adjustedVector = targetVelocityVector - robotVelocityVector
+//        return getProfile(adjustedVector)
+//    }
 
     val targetVelocityVector: Vector<N3>
         get() {
@@ -555,7 +555,7 @@ object Shooter {
     }
 
     enum class Target(val profile: () -> ShooterProfile) {
-        AIM_AT_POSE({ getShooterProfileFromTranslation2d(Turret.getClosetTarget()) }),
+//        AIM_AT_POSE({ getShooterProfileFromTranslation2d(Turret.getClosetTarget()) }),
         VECTOR_AIM_AT_HUB({ getProfile(targetVelocityVector) }),
         AIM_AT_HUB({ ShooterProfile(
             shooterTranslationToHub.angle.measure - Drivetrain.estimatedPose.rotation.measure,
@@ -564,7 +564,7 @@ object Shooter {
         )}),
         STOWED({ShooterProfile(
             0.0.degrees.inRadians().radians,
-            20.0.degrees.inRadians().radians,
+            35.0.degrees.inRadians().radians,
             2000.0.rpm
         ) }),
         TUNING({ShooterProfile(
@@ -581,8 +581,8 @@ object Shooter {
     object Constants {
         val FLYWHEEL_RADIUS = 0.0505.meters
         val HOOD_ANGLE_TOLERANCE = 6.0.degrees
-        val FLYWHEEL_VELOCITY_TOLERANCE = 70.rpm
-        val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 400.rpm
+        val FLYWHEEL_VELOCITY_TOLERANCE = 50.rpm
+        val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 200.rpm
         val SHOOTER_OFFSET = Translation2d(.184, -.184)
         val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
         val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity

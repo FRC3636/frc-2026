@@ -29,7 +29,7 @@ fun configureBindings() {
         joystickRight.hid
     )
     Shooter.Turret.defaultCommand = Shooter.Turret.turnToTargetTurretAngle()
-    // Shooter.Hood.defaultCommand = Shooter.Hood.turnToTargetHoodAngle()
+     Shooter.Hood.defaultCommand = Shooter.Hood.turnToTargetHoodAngle()
     // (The button with the yellow tape on it)
     joystickLeft.button(8).onTrue(Commands.runOnce({
         println("Zeroing gyro.")
@@ -73,7 +73,7 @@ fun configureBindings() {
     joystickRight.button(1).whileTrue(
         Commands.sequence(
             Commands.parallel(
-                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredStandingFlywheelVelocity),
+                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
                 Shooter.Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle)
             ),
             Commands.parallel(
@@ -89,6 +89,27 @@ fun configureBindings() {
         println("Zeroing Turret Encoder")
         Shooter.Turret.zeroTurretEncoder()
     }).ignoringDisable(true))
+
+    controller.leftBumper().onTrue(
+        Commands.runOnce(SignalLogger::start)
+            .andThen(StatusLogger::start))
+    controller.rightBumper().onTrue(
+        Commands.runOnce(SignalLogger::stop)
+            .andThen(StatusLogger::stop)
+    )
+
+    controller.b().whileTrue(
+        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
+    )
+    controller.a().whileTrue(
+        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
+    )
+    controller.x().whileTrue(
+        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kForward)
+    )
+    controller.y().whileTrue(
+        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
+    )
 
 
 
@@ -109,22 +130,22 @@ fun configureBindings() {
 //    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
 //    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
 
-    controller.a().whileTrue(
-        Commands.parallel(
-            Commands.run({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }),
-            Commands.sequence(
-                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
-    //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
-                Commands.parallel(
-                    Commands.parallel(
-//                        Indexer.index(),
-                        Feeder.feed(),
-                    ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-                    Shooter.Flywheel.runAtTarget()
-                ),
-            ),
-        )
-    )
+//    controller.a().whileTrue(
+//        Commands.parallel(
+//            Commands.run({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }),
+//            Commands.sequence(
+//                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
+//    //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
+//                Commands.parallel(
+//                    Commands.parallel(
+////                        Indexer.index(),
+//                        Feeder.feed(),
+//                    ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
+//                    Shooter.Flywheel.runAtTarget()
+//                ),
+//            ),
+//        )
+//    )
 
 //    controller.x().whileTrue(
 //        Commands.parallel(

@@ -34,12 +34,12 @@ object Intake : Subsystem {
 
     fun intake(): Command =
             runEnd(
-                { io.setWheelMotorVoltage(6.0.volts) },
+                { io.setWheelMotorVoltage(5.0.volts) },
                 { io.setWheelMotorVoltage(0.volts) }
             )
 
     fun outtake(): Command = runEnd(
-        { io.setWheelMotorVoltage((-6.0).volts) },
+        { io.setWheelMotorVoltage((-5.0).volts) },
         { io.setWheelMotorVoltage(0.volts) },
     )
 

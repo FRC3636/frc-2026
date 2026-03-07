@@ -82,8 +82,8 @@ class FlywheelIOReal : FlywheelIO {
     }
 
     companion object Constants{
-        val PID_GAINS = PIDGains(0.03,0.0,0.001)
-        val FEED_FORWARD_GAINS = MotorFFGains(0.26064, 0.0021653097345132742, 0.006068)
+        val PID_GAINS = PIDGains(0.001,0.0,0.0)//0.0005)
+        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.0021606693158032443, 0.03)
     }
 }
 
