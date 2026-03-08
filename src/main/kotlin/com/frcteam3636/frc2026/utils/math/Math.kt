@@ -28,6 +28,30 @@ fun Angle.toRotation2d(): Rotation2d {
     return Rotation2d(this)
 }
 
+fun Angle.clamp(minimum: Angle, maximum: Angle): Angle {
+    if (this < minimum) {
+        return minimum
+    } else if (this > maximum) {
+        return maximum
+    } else {
+        return this
+    }
+}
+fun Angle.clamp_deadzone(minimum: Angle, maximum: Angle): Angle {
+    if (this < maximum && this > minimum) {
+        return this
+    }
+
+    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).radians
+    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).radians
+
+    if (dist_to_minimum < dist_to_maximum) {
+        return minimum
+    } else {
+        return maximum
+    }
+}
+
 fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {
     return this * sin(angle.inRadians())
 }
