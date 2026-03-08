@@ -12,6 +12,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.absoluteValue
 
 const val TAU = PI * 2
 const val GRAVITY = 9.81
@@ -42,8 +43,8 @@ fun Angle.clamp_deadzone(minimum: Angle, maximum: Angle): Angle {
         return this
     }
 
-    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).radians
-    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).radians
+    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).absoluteValue.radians
+    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).absoluteValue.radians
 
     if (dist_to_minimum < dist_to_maximum) {
         return minimum
