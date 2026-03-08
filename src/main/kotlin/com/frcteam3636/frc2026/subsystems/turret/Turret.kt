@@ -5,6 +5,7 @@ import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.shooter.*
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.autos.flipHorizontally
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.meters
@@ -18,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
-import org.dyn4j.geometry.Rotation
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
@@ -90,9 +90,18 @@ object Turret : Subsystem {
             io.turnToAngle(angle)
         }
 
+    private val maxAngle = 90.0.degrees
+    private val minAngle = (-85.0).degrees
     fun turnToTargetTurretAngle(): Command =
         run {
-            io.turnToAngle(shooterProfile.turretAngle)
+            val angleSetpoint = if(shooterProfile.turretAngle < maxAngle && shooterProfile.turretAngle > minAngle) {
+                shooterProfile.turretAngle
+            } else if (shooterProfile.turretAngle > (maxAngle + minAngle).div(2.0) + 180.0.degrees){
+                maxAngle
+            } else {
+                minAngle
+            }
+            io.turnToAngle(angleSetpoint)
         }
 
     fun turnToTargetHubAngle(): Command =

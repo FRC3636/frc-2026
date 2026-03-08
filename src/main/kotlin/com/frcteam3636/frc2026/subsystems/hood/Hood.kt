@@ -8,6 +8,7 @@ import com.frcteam3636.frc2026.utils.math.volts
 import com.frcteam3636.frc2026.shooter.shooterProfile
 import com.frcteam3636.frc2026.shooter.shooterTarget
 import com.frcteam3636.frc2026.utils.math.inMeters
+import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
@@ -52,7 +53,7 @@ object Hood: Subsystem {
 
     fun turnToTargetHoodAngle(): Command =
         run {
-            io.turnToAngle(shooterProfile.hoodAngle)
+            io.turnToAngle(clamp(shooterProfile.hoodAngle.inDegrees(), 25.0, 45.0).degrees)
         }
 
     fun turnToAngle(angle: Angle): Command =
