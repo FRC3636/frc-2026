@@ -15,9 +15,9 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
 
-class Climber : Subsystem {
-    internal companion object Constants {
-        private val CLIMBER_TOLERANCE = 0.2.inches
+object Climber : Subsystem {
+    private object Constants {
+        val CLIMBER_TOLERANCE = 0.2.inches
     }
 
     enum class Position(val height: Distance) {
@@ -68,5 +68,5 @@ class Climber : Subsystem {
         goToHeight(Position.STOWED, true),
     )
 
-    fun isAtTarget(): Boolean = abs((inputs.height - targetHeight).inMeters()) < CLIMBER_TOLERANCE.inMeters()
+    fun isAtTarget(): Boolean = abs((inputs.height - targetHeight).inMeters()) < Constants.CLIMBER_TOLERANCE.inMeters()
 }
