@@ -40,7 +40,8 @@ fun configureBindings() {
             Commands.runOnce(
                 { setShooterTarget(Target.AIM_AT_HUB) }
             ),
-            Flywheel.runAtTarget().until{ Flywheel.atDesiredFlywheelVelocity.asBoolean && Hood.atDesiredHoodAngle.asBoolean },
+            Commands.waitUntil(Hood.atDesiredHoodAngle.and(Turret.atTargetTurretAngle)),
+            Flywheel.runAtTarget().until(Flywheel.atDesiredFlywheelVelocity),
             Commands.parallel(
                 Flywheel.runAtTarget(),
                 Commands.parallel(

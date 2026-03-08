@@ -8,6 +8,7 @@ import com.frcteam3636.frc2026.utils.autos.flipHorizontally
 import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.meters
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
+import org.dyn4j.geometry.Rotation
 import org.littletonrobotics.junction.Logger
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
@@ -54,9 +56,12 @@ object Turret : Subsystem {
         Logger.recordOutput("Shooter/Shooter Pose", shooterFieldPose)
     }
 
-    val atTargetTurretAngle: Trigger = Trigger(
-        { abs(inputs.angle.inDegrees() - shooterProfile.turretAngle.inDegrees()) < 5.0 },
-    )
+    val turretAngle: Rotation2d
+        get() {
+            return Rotation2d(inputs.angle)
+        }
+
+    val atTargetTurretAngle: Trigger = Trigger { abs(inputs.angle.inDegrees() - shooterProfile.turretAngle.inDegrees()) < Constants.TURRET_TOLERANCE }
 
     fun getClosetTarget() : Translation2d {
         var ourAllianceZone = Zones.BlueAllianceZone
@@ -116,4 +121,5 @@ object Turret : Subsystem {
 }
 object Constants {
     val SHOOTER_OFFSET = Translation2d(.184, -.184)
+    val TURRET_TOLERANCE = 3.0
 }

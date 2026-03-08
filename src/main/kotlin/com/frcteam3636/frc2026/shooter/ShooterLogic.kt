@@ -8,6 +8,7 @@ import com.frcteam3636.frc2026.subsystems.flywheel.Constants.FLYWHEEL_TO_FUEL_RA
 import com.frcteam3636.frc2026.subsystems.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.hood.Hood
 import com.frcteam3636.frc2026.subsystems.turret.Constants.SHOOTER_OFFSET
+import com.frcteam3636.frc2026.subsystems.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
@@ -27,41 +28,41 @@ import kotlin.math.*
 
 object ShooterCalculator {
 
-    private fun stationaryLaunchVector(): Vector3d {
-        val distance: Distance = shooterToHub.norm.meters
-        val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(distance).inRPM()
-        val baseHoodAngle: Double = Hood.calculateHoodAngle(distance).inDegrees()
+    private val stationaryLaunchVector: Vector3d
+        get() {
+            val distance: Distance = shooterToHub.norm.meters
+            val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(distance).inRPM()
+            val baseHoodAngle: Double = Hood.calculateHoodAngle(distance).inDegrees()
 
-        val launchSpeedRobotRelative = (
-            baseFlywheelRpm * (2.0 * PI / 60.0) * FLYWHEEL_RADIUS.inMeters() * FLYWHEEL_TO_FUEL_RATIO
-        )
+            val launchSpeedRobotRelative = baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
 
-        val directionToHub = shooterToHub.angle
+            val directionToHub = shooterToHub.angle
 
-        val horizontalSpeedComponent = launchSpeedRobotRelative * cos(baseHoodAngle)
-        val verticalSpeedComponent = launchSpeedRobotRelative * sin(baseHoodAngle)
+            val horizontalSpeedComponent = launchSpeedRobotRelative * cos(baseHoodAngle)
+            val verticalSpeedComponent = launchSpeedRobotRelative * sin(baseHoodAngle)
 
-        return Vector3d(
-            horizontalSpeedComponent * cos(directionToHub.radians),
-            horizontalSpeedComponent * sin(directionToHub.radians),
-            verticalSpeedComponent
-        )
-    }
+            return Vector3d(
+                horizontalSpeedComponent * cos(directionToHub.radians),
+                horizontalSpeedComponent * sin(directionToHub.radians),
+                verticalSpeedComponent
+            )
+        }
 
-    private fun robotRelativeLaunchVector(): Vector3d {
-        val stationaryVector = stationaryLaunchVector()
-        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
-        return Vector3d(
-            stationaryVector.x - robotVelocity.x,
-            stationaryVector.y - robotVelocity.y,
-            stationaryVector.z    // robot vertical velocity should always be zero
-        )
-    }
+    private val movingLaunchVector: Vector3d
+        get() {
+            val stationaryVector = stationaryLaunchVector
+            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
+            return Vector3d(
+                stationaryVector.x - robotVelocity.x,
+                stationaryVector.y - robotVelocity.y,
+                stationaryVector.z    // robot vertical velocity should always be zero (except when climbing)
+            )
+        }
 
     fun aimAtHub(compensateForMotion: Boolean): ShooterProfile {
-        val vector = if (compensateForMotion) robotRelativeLaunchVector() else stationaryLaunchVector()
+        val vector = if (compensateForMotion) movingLaunchVector else stationaryLaunchVector
 
-        val turretAngleRobotRelative = atan2(vector.y, vector.x).radians
+        val turretAngleRobotRelative = atan2(vector.y, vector.x).radians - Drivetrain.estimatedPose.rotation.measure
 
         val horizontalMagnitude = hypot(vector.x, vector.y)
         val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
@@ -69,10 +70,14 @@ object ShooterCalculator {
         val requiredSpeed = vector.norm
 
         val requiredSpeedRPM = (
-            requiredSpeed / (2.0 * PI / 60.0 * FLYWHEEL_RADIUS.inMeters() * FLYWHEEL_TO_FUEL_RATIO)
+            requiredSpeed / ((2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO)
         ).rpm
 
-        return ShooterProfile(turretAngleRobotRelative, hoodAngle, requiredSpeedRPM)
+        return ShooterProfile(
+            turretAngleRobotRelative,
+            hoodAngle,
+            requiredSpeedRPM
+        )
     }
 
 }
@@ -119,10 +124,13 @@ val hubTranslation
     }
 
 val shooterFieldPose: Pose2d
-    get() = Pose2d(
-        Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-        Drivetrain.estimatedPose.rotation
-    )
+    get() {
+        val drivetrainRotation = Drivetrain.estimatedPose.rotation
+        return Pose2d(
+            Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(drivetrainRotation),
+            Turret.turretAngle - drivetrainRotation
+        )
+    }
 
 val shooterToHub: Translation2d
     get() = hubTranslation.toTranslation2d() - shooterFieldPose.translation
