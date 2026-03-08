@@ -50,10 +50,10 @@ object ShooterCalculator {
     private val fieldRelativeLaunchVector: Vector3d
         get() {
             val stationaryVector = stationaryLaunchVector
-            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
+            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
             return Vector3d(
-                stationaryVector.x - robotVelocity.x,
-                stationaryVector.y - robotVelocity.y,
+                stationaryVector.x - robotVelocity.vxMetersPerSecond,
+                stationaryVector.y - robotVelocity.vyMetersPerSecond,
                 stationaryVector.z    // robot vertical velocity should always be zero
             )
         }
