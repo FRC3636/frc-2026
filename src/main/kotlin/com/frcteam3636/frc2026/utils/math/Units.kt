@@ -112,6 +112,7 @@ inline fun LinearVelocity.inMetersPerSecond() = `in`(MetersPerSecond)
 inline fun LinearVelocity.inFeetPerSecond() = `in`(FeetPerSecond)
 inline fun LinearVelocity.inInchesPerSecond() = `in`(InchesPerSecond)
 fun LinearVelocity.toAngular(radius: Distance) = RadiansPerSecond.of(this.inMetersPerSecond() / radius.inMeters())!!
+fun LinearAcceleration.toAngular(radius: Distance) = RadiansPerSecondPerSecond.of(this.inMetersPerSecondPerSecond() / radius.inMeters())!!
 
 inline fun AngularVelocity.inRotationsPerSecond() = `in`(RotationsPerSecond)
 inline fun AngularVelocity.inRPM() = `in`(RPM)

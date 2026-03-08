@@ -16,6 +16,7 @@ import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
 import com.frcteam3636.frc2026.subsystems.turret.Turret
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -179,6 +180,7 @@ object Robot : LoggedRobot() {
         Indexer.register()
         Intake.register()
         Turret.register()
+        // Climber.register()
     }
 
 
