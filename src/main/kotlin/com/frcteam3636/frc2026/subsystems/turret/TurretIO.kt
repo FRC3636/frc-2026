@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.turret
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration

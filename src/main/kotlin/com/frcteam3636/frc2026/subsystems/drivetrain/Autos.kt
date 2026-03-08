@@ -1,15 +1,11 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.frcteam3636.frc2026.subsystems.intake.Intake
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
-import com.frcteam3636.frc2026.utils.math.centimeters
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
-import com.therekrab.autopilot.APTarget
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 

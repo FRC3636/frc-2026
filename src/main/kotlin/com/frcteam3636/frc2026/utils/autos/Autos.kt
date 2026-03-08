@@ -11,10 +11,6 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Distance
 import kotlin.math.PI
 
-const val FIELD_HEIGHT_METERS = 16.54048
-const val FIELD_WIDTH_METERS = 8.06958
-
-
 class APTargetWithTolerance(pose: Pose2d) : APTarget(pose) {
     var tolerance: Distance = 5.centimeters
 

@@ -10,10 +10,12 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.flywheel.Flywheel
+import com.frcteam3636.frc2026.subsystems.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter
+import com.frcteam3636.frc2026.subsystems.turret.Turret
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -171,10 +173,12 @@ object Robot : LoggedRobot() {
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
-//        Feeder.register()
+        Feeder.register()
+        Flywheel.register()
+        Hood.register()
         Indexer.register()
-        Shooter.registerSubsystems()
         Intake.register()
+        Turret.register()
     }
 
 

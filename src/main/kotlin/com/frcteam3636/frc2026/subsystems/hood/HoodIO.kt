@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.hood
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -16,7 +16,6 @@ import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Torque
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.team9432.annotation.Logged

@@ -1,7 +1,6 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.flywheel
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
@@ -9,17 +8,12 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
-import com.revrobotics.spark.config.FeedForwardConfig
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.Units.MetersPerSecond
 import edu.wpi.first.units.Units.RPM
-import edu.wpi.first.units.Units.Radians
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import edu.wpi.first.wpilibj2.command.button.Trigger
-import org.dyn4j.geometry.Rotation
 
 @Logged
 open class FlywheelInputs {
