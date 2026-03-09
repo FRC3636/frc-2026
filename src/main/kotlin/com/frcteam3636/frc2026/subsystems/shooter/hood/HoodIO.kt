@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.hood
+package com.frcteam3636.frc2026.subsystems.shooter.hood
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -12,6 +12,7 @@ import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
@@ -95,8 +96,9 @@ class HoodIOReal: HoodIO {
     }
 
     override fun turnToAngle(angle: Angle) {
-        setPoint = angle
-        motor.setControl(positionControl.withPosition(angle))
+        val angleSetpoint = angle.clamp(MIN_HOOD_ANGLE, MAX_HOOD_ANGLE)
+        setPoint = angleSetpoint
+        motor.setControl(positionControl.withPosition(angleSetpoint))
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -134,8 +136,8 @@ class HoodIOReal: HoodIO {
         private val PROFILE_VELOCITY = 3.0.rotationsPerSecond
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
-        private val MAX_HOOD_ANGLE = 50.degrees.inRadians()
-        private val MIN_HOOD_ANGLE = 0.degrees.inRadians()
+        private val MAX_HOOD_ANGLE = 50.degrees
+        private val MIN_HOOD_ANGLE = 30.degrees
     }
 }
 

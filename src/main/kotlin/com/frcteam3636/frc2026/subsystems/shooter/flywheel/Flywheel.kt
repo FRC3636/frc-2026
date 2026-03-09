@@ -1,9 +1,9 @@
-package com.frcteam3636.frc2026.subsystems.flywheel
+package com.frcteam3636.frc2026.subsystems.shooter.flywheel
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
-import com.frcteam3636.frc2026.shooter.shooterProfile
-import com.frcteam3636.frc2026.shooter.shooterToHub
+import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
+import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
@@ -20,8 +20,8 @@ import kotlin.math.sqrt
 
 object Flywheel: Subsystem {
     val atDesiredFlywheelVelocity = Trigger {
-        val error = abs((inputs.angularVelocity - calculateFlywheelVelocity(shooterToHub.norm.meters)).inRPM())
-        Logger.recordOutput("Shooter/Flywheel/Velocity Error", error)
+        val error = abs((inputs.angularVelocity - shooterProfile.angularVelocity).inRPM())
+        Logger.recordOutput("Shooter/Flywheel/Velocity Error", error.rpm)
         error < Constants.FLYWHEEL_VELOCITY_TOLERANCE.inRPM()
     }
 
@@ -42,6 +42,7 @@ object Flywheel: Subsystem {
         io.updateInputs(inputs)
         Logger.processInputs("Flywheel", inputs)
         Logger.recordOutput("Shooter/Flywheel/Desired Velocity", shooterProfile.angularVelocity)
+        Logger.recordOutput("Shooter/Flywheel/atDesiredFlywheelVelocity", atDesiredFlywheelVelocity)
     }
 
     fun calculateFlywheelVelocity(distance: Distance): AngularVelocity {
@@ -96,7 +97,7 @@ object Flywheel: Subsystem {
 object Constants {
     val FLYWHEEL_RADIUS = 0.0505.meters
     val FLYWHEEL_VELOCITY_TOLERANCE = 50.rpm
-    val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 200.rpm
+    val STANDING_FLYWHEEL_VELOCITY_TOLERANCE = 150.rpm
     const val ANGULAR_TO_LINEAR_RATIO = 18.0 // arbitrary ratio between flywheel rpm and fuel mps
     const val FLYWHEEL_TO_FUEL_RATIO = 0.5 // hypothetical ratio between flywheel tangential velocity and fuel velocity
 }

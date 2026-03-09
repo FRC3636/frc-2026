@@ -1,12 +1,12 @@
-package com.frcteam3636.frc2026.subsystems.hood
+package com.frcteam3636.frc2026.subsystems.shooter.hood
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.volts
-import com.frcteam3636.frc2026.shooter.shooterProfile
-import com.frcteam3636.frc2026.shooter.shooterTarget
+import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
+import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
 import com.frcteam3636.frc2026.utils.math.inMeters
 import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.units.measure.Angle
@@ -43,6 +43,7 @@ object Hood: Subsystem {
         Logger.processInputs("Shooter/Hood", inputs)
         Logger.recordOutput("Shooter/Shooter Target", shooterTarget.toString())
         Logger.recordOutput("Shooter/Hood/Reference", shooterProfile.hoodAngle)
+        Logger.recordOutput("Shooter/Hood/atDesiredHoodAngle", atDesiredHoodAngle)
     }
 
     fun calculateHoodAngle(distance: Distance): Angle {
@@ -53,7 +54,7 @@ object Hood: Subsystem {
 
     fun turnToTargetHoodAngle(): Command =
         run {
-            io.turnToAngle(clamp(shooterProfile.hoodAngle.inDegrees(), 25.0, 45.0).degrees)
+            io.turnToAngle(shooterProfile.hoodAngle)
         }
 
     fun turnToAngle(angle: Angle): Command =
@@ -94,5 +95,5 @@ object Hood: Subsystem {
 }
 
 object Constants {
-    val HOOD_ANGLE_TOLERANCE = 6.0.degrees
+    val HOOD_ANGLE_TOLERANCE = 3.0.degrees
 }

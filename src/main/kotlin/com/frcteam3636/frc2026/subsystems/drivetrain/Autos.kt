@@ -42,6 +42,23 @@ object TwoScore: Auto {
     }
 }
 
+object Stem: Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command {
+        return Commands.sequence(
+            Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+        )
+    }
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Trench(APTargetWithTolerance(Pose2d(12.047.meters, 0.487.meters, Rotation2d(0.442.radians)))),
+        Safe(APTargetWithTolerance(Pose2d(13.967.meters, 0.556.meters, Rotation2d(0.943.radians)))),
+        Center(APTargetWithTolerance(Pose2d(9.000.meters, 2.200.meters, Rotation2d(0.000.radians))))
+    }
+}
+
+
 object TestAuto: Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command = Commands.sequence(
         Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),

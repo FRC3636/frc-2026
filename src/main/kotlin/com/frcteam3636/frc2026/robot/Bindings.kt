@@ -1,15 +1,15 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.shooter.Target
-import com.frcteam3636.frc2026.shooter.setShooterTarget
+import com.frcteam3636.frc2026.subsystems.shooter.Target
+import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
-import com.frcteam3636.frc2026.subsystems.flywheel.Flywheel
-import com.frcteam3636.frc2026.subsystems.hood.Hood
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
+import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
-import com.frcteam3636.frc2026.subsystems.turret.Turret
+import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -35,13 +35,22 @@ fun configureBindings() {
         Intake.intake()
     )
 
+    joystickRight.button(4).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+    )
+    joystickRight.button(2).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB)
+    )
+    joystickRight.button(3).onTrue(
+        setShooterTarget(Target.TUNING)
+    )
+
+
     joystickRight.button(1).whileTrue(
         Commands.sequence(
-            Commands.runOnce(
-                { setShooterTarget(Target.AIM_AT_HUB) }
-            ),
-            Commands.waitUntil(Hood.atDesiredHoodAngle.and(Turret.atTargetTurretAngle)),
-            Flywheel.runAtTarget().until(Flywheel.atDesiredFlywheelVelocity),
+            Commands.parallel(
+                Flywheel.runAtTarget(),
+            ).until(Flywheel.atDesiredFlywheelVelocity),
             Commands.parallel(
                 Flywheel.runAtTarget(),
                 Commands.parallel(

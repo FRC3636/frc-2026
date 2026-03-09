@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.flywheel
+package com.frcteam3636.frc2026.subsystems.shooter.flywheel
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.signals.InvertedValue
@@ -49,7 +49,8 @@ class FlywheelIOReal : FlywheelIO {
         })
     }
 
-    private var ffController = SimpleMotorFeedforward(FEED_FORWARD_GAINS)
+    private val ffController = SimpleMotorFeedforward(FEED_FORWARD_GAINS)
+    private val pidController = PIDController(PID_GAINS)
 
     private var targetVelocity: AngularVelocity = 0.0.rpm
 
@@ -72,12 +73,12 @@ class FlywheelIOReal : FlywheelIO {
     override fun setVelocity(velocity: AngularVelocity){
         assert(velocity in 0.rpm..6000.rpm)
         targetVelocity = velocity
-        motor.setVoltage(ffController.calculate(velocity.inRPM()))
+        motor.setVoltage(ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM()))
     }
 
     companion object Constants{
-        val PID_GAINS = PIDGains(0.001,0.0,0.0)//0.0005)
-        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.0021606693158032443, 0.03)
+        val PID_GAINS = PIDGains(0.000,0.0,0.0)//0.0005)
+        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.002080215363677995, 0.03)
     }
 }
 

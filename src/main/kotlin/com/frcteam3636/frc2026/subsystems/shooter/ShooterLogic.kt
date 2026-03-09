@@ -1,13 +1,13 @@
-package com.frcteam3636.frc2026.shooter
+package com.frcteam3636.frc2026.subsystems.shooter
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.flywheel.Constants.FLYWHEEL_RADIUS
-import com.frcteam3636.frc2026.subsystems.flywheel.Constants.FLYWHEEL_TO_FUEL_RATIO
-import com.frcteam3636.frc2026.subsystems.flywheel.Flywheel
-import com.frcteam3636.frc2026.subsystems.hood.Hood
-import com.frcteam3636.frc2026.subsystems.turret.Constants.SHOOTER_OFFSET
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Constants.FLYWHEEL_RADIUS
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Constants.FLYWHEEL_TO_FUEL_RATIO
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
+import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
+import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
@@ -50,10 +50,10 @@ object ShooterCalculator {
     private val fieldRelativeLaunchVector: Vector3d
         get() {
             val stationaryVector = stationaryLaunchVector
-            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
+            val robotVelocity = Drivetrain.measuredChassisSpeeds
             return Vector3d(
-                stationaryVector.x - robotVelocity.vxMetersPerSecond,
-                stationaryVector.y - robotVelocity.vyMetersPerSecond,
+                stationaryVector.x - (robotVelocity.vxMetersPerSecond),
+                stationaryVector.y - (robotVelocity.vyMetersPerSecond),
                 stationaryVector.z    // robot vertical velocity should always be zero
             )
         }
@@ -186,10 +186,10 @@ val shooterFieldPose: Pose2d
     )
 
 val shooterToHub: Translation2d
-    get() = hubTranslation.toTranslation2d() - shooterFieldPose.translation
+    get() = shooterFieldPose.translation - hubTranslation.toTranslation2d()
 
 // used for populating interpolation tables
-val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 20.0)
+val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 35.0)
 val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
@@ -200,10 +200,10 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterCalculator.aimAtHub(compensateForMotion = true) }
     ),
     STOWED (
-        { ShooterProfile(0.0.radians, 0.0.degrees, 0.0.rpm) }
+        { ShooterProfile(0.0.radians, 35.0.degrees, 0.0.rpm) }
     ),
     TUNING (
-        { ShooterProfile(0.0.radians, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile(-40.degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 

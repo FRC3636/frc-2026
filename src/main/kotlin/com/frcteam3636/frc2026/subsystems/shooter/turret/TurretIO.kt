@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.turret
+package com.frcteam3636.frc2026.subsystems.shooter.turret
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -122,7 +122,7 @@ class TurretIOReal : TurretIO {
         val upperBound = 90.degrees
         val lowerBound = (-85).degrees
 
-        setPoint = angle.coerceIn(lowerBound, upperBound)
+        val setPoint = angle.clampDeadzone(lowerBound, upperBound)
         Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
         motor.setControl(positionControl.withPosition(setPoint))
     }

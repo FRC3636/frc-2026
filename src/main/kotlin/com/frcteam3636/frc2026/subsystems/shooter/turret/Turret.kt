@@ -1,9 +1,15 @@
-package com.frcteam3636.frc2026.subsystems.turret
+package com.frcteam3636.frc2026.subsystems.shooter.turret
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
-import com.frcteam3636.frc2026.shooter.*
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.shooter.FeedTranslation
+import com.frcteam3636.frc2026.subsystems.shooter.Zones
+import com.frcteam3636.frc2026.subsystems.shooter.hubTranslation
+import com.frcteam3636.frc2026.subsystems.shooter.shooterFieldPose
+import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
+import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
+import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
 import com.frcteam3636.frc2026.utils.autos.flipHorizontally
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
@@ -52,8 +58,9 @@ object Turret : Subsystem {
         Logger.processInputs("Shooter/Turret", inputs)
         io.updateInputs(inputs)
 
-        Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", shooterToHub)
+        Logger.recordOutput("Shooter/Turret/TurretDistanceToHub", shooterToHub.norm)
         Logger.recordOutput("Shooter/Shooter Pose", shooterFieldPose)
+        Logger.recordOutput("Shooter/Turret/atDesiredTurretAngle", atTargetTurretAngle)
     }
 
     val turretAngle: Rotation2d

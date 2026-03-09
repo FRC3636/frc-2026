@@ -5,9 +5,7 @@ package com.frcteam3636.frc2026.utils.math
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Velocity
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -38,7 +36,7 @@ fun Angle.clamp(minimum: Angle, maximum: Angle): Angle {
         return this
     }
 }
-fun Angle.clamp_deadzone(minimum: Angle, maximum: Angle): Angle {
+fun Angle.clampDeadzone(minimum: Angle, maximum: Angle): Angle {
     if (this < maximum && this > minimum) {
         return this
     }

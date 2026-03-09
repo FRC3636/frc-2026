@@ -13,6 +13,7 @@ import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.pidGains
+import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
 import edu.wpi.first.units.Units.Amps
@@ -26,7 +27,7 @@ import kotlin.apply
 open class IntakeInputs {
     var intakeMotorVelocity = 0.rotationsPerSecond
     var intakeMotorCurrent = Amps.zero()!!
-    var pivotAngle = 0.degrees
+    var pivotAngle = 0.rotations
     var leftPivotMotorCurrent = Amps.zero()!!
     var rightPivotMotorCurrent = Amps.zero()!!
 
@@ -46,8 +47,8 @@ class IntakeIOReal : IntakeIO {
         val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
         val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
         val PROFILE_JERK = 0.0
-        val ENCODER_TO_PIVOT_GEAR_RATIO = 2.25
-        val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
+        val ENCODER_TO_PIVOT_GEAR_RATIO = 0.5
+        val MOTOR_TO_ENCODER_GEAR_RATIO = .25
 
         val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
         val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
