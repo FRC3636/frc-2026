@@ -85,7 +85,7 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-//    Climber.defaultCommand = Climber.goToTargetHeight()
+   Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 

@@ -46,12 +46,12 @@ object Climber : Subsystem {
         Logger.processInputs("Climb", inputs)
     }
 
-    fun goToTargetHeight(): Command = Commands.run({
+    fun goToTargetHeight(): Command = run {
         val targetPosition = targetPosition.height.getOrNull()
         if (targetPosition != null) {
             io.goToHeight(targetPosition)
         }
-    })
+    }
 
     fun homeRoutine(): Command = Commands.sequence(
         Commands.runEnd(
