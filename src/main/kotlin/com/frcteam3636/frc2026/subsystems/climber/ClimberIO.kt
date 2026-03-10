@@ -40,7 +40,7 @@ open class ClimberInputs {
 
 interface ClimberIO {
     fun setVoltage(volts: Voltage)
-    fun goToHeight(height: Distance, slow: Boolean = false)
+    fun goToHeight(targetHeight: Distance)
     fun setEncoderPosition(position: Distance)
     fun updateInputs(inputs: ClimberInputs)
 }
@@ -98,11 +98,9 @@ class ClimberIOReal : ClimberIO {
         motor.setVoltage(volts.inVolts())
     }
 
-    override fun goToHeight(height: Distance, slow: Boolean) {
-        Logger.recordOutput("Climb/Height Setpoint", height)
-        val current_height = height
-        setVoltage(pid_controller.calculate(height.inMeters(), current_height.inMeters()).volts);
-        // motor.setControl(getMotionMagicVoltage(slow).withPosition(height.toAngular(SPOOL_RADIUS)))
+    override fun goToHeight(targetHeight: Distance) {
+        val currentHeight = height
+        setVoltage(pid_controller.calculate(targetHeight.inMeters(), currentHeight.inMeters()).volts);
     }
 
     override fun setEncoderPosition(position: Distance) {
@@ -139,7 +137,7 @@ class ClimberIOSim : ClimberIO {
         sim.inputVoltage = volts.inVolts()
     }
 
-    override fun goToHeight(height: Distance, slow: Boolean) {
+    override fun goToHeight(targetHeight: Distance) {
         sim.inputVoltage = pid.calculate(sim.angularPosition.toLinear(SPOOL_RADIUS).inMeters())
     }
 
