@@ -28,6 +28,8 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
+import com.frcteam3636.frc2026.CANcoder
+import com.ctre.phoenix6.configs.CANcoderConfiguration
 
 @Logged
 open class ClimberInputs {
@@ -60,12 +62,13 @@ class ClimberIOReal : ClimberIO {
 
     private val motorConfig = TalonFXConfiguration()
     private val motor = TalonFX(CTREDeviceId.ClimbMotor)
+    private val encoder = CANcoder(CTREDeviceId.ClimbEncoder)
     private val pid_controller = PIDController(PID_GAINS)
 
     init {
         motorConfig.apply {
             MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Brake
+                NeutralMode = NeutralModeValue.Coast
             }
 
             Slot0.apply {
@@ -88,24 +91,27 @@ class ClimberIOReal : ClimberIO {
         motor.optimizeBusUtilization()
     }
 
+    val height: Distance
+        get() = encoder.position.value.toLinear(SPOOL_RADIUS)
+
     override fun setVoltage(volts: Voltage) {
         motor.setVoltage(volts.inVolts())
     }
 
     override fun goToHeight(height: Distance, slow: Boolean) {
         Logger.recordOutput("Climb/Height Setpoint", height)
-        val current_height = motor.getPosition(false).value.toLinear(SPOOL_RADIUS)
+        val current_height = height
         setVoltage(pid_controller.calculate(height.inMeters(), current_height.inMeters()).volts);
         // motor.setControl(getMotionMagicVoltage(slow).withPosition(height.toAngular(SPOOL_RADIUS)))
     }
 
     override fun setEncoderPosition(position: Distance) {
-        motor.setPosition(position.toAngular(SPOOL_RADIUS))
+        encoder.setPosition(position.toAngular(SPOOL_RADIUS))
     }
 
     override fun updateInputs(inputs: ClimberInputs) {
-        inputs.height = motor.getPosition(false).value.toLinear(SPOOL_RADIUS)
-        inputs.velocity = motor.getVelocity(false).value.toLinear(SPOOL_RADIUS)
+        inputs.height = height
+        inputs.velocity = encoder.getVelocity(false).value.toLinear(SPOOL_RADIUS)
         inputs.current = motor.getSupplyCurrent(false).value
     }
 

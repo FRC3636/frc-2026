@@ -8,6 +8,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Constants.FLYWHEEL_TO
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
+import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
@@ -77,7 +78,7 @@ object ShooterCalculator {
 
         val shooterPose2d = Pose2d(
             Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-            Drivetrain.estimatedPose.rotation
+            Turret.turretAngle - Drivetrain.estimatedPose.rotation
         )
         val shooterPosition3d = Translation3d (
             shooterPose2d.translation.x.meters,
