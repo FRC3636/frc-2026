@@ -35,16 +35,18 @@ fun configureBindings() {
     joystickLeft.button(1).whileTrue(
         Intake.intake()
     )
-    joystickLeft.button(2).whileTrue(
-        Climber.homeRoutine()
-    )
     joystickLeft.button(3).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-        Climber.climb()
+//        Climber.homeRoutine()
+        Intake.setPivotPosition(Intake.Position.Deployed)
     )
     joystickLeft.button(4).whileTrue(
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+//        Climber.climb()
+        Intake.setPivotPosition(Intake.Position.Stowed)
     )
+//    joystickLeft.button(4).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//    )
 
 
     joystickRight.button(4).onTrue(

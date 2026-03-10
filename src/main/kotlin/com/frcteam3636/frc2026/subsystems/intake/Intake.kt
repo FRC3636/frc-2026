@@ -2,6 +2,7 @@ package com.frcteam3636.frc2026.subsystems.intake
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.utils.math.degrees
+import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
@@ -13,8 +14,8 @@ object Intake : Subsystem {
     var intakeDown = false
 
     enum class Position(val angle: Angle) {
-        Stowed(0.degrees),
-        Deployed(0.degrees),
+        Stowed(0.rotations),
+        Deployed((-0.19).rotations),
     }
 
     private val io: IntakeIO =
