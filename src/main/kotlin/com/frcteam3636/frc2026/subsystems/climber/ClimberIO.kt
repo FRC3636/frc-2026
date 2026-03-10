@@ -112,7 +112,7 @@ class ClimberIOReal : ClimberIO {
     override fun updateInputs(inputs: ClimberInputs) {
         inputs.height = height
         inputs.velocity = encoder.getVelocity(false).value.toLinear(SPOOL_RADIUS)
-        inputs.current = motor.getSupplyCurrent(false).value
+        inputs.current = motor.supplyCurrent.value
     }
 
     // private fun getMotionMagicVoltage(slow: Boolean): DynamicMotionMagicVoltage {
