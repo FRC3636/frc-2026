@@ -1,15 +1,11 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.frcteam3636.frc2026.subsystems.intake.Intake
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
-import com.frcteam3636.frc2026.utils.math.centimeters
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
-import com.therekrab.autopilot.APTarget
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 
@@ -45,6 +41,23 @@ object TwoScore: Auto {
         Target5(APTargetWithTolerance(Pose2d(6.7229344431681675.meters, 7.208045947731659.meters, Rotation2d((-0.6043055068662304).radians))))
     }
 }
+
+object Stem: Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command {
+        return Commands.sequence(
+            Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+        )
+    }
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Trench(APTargetWithTolerance(Pose2d(12.047.meters, 0.487.meters, Rotation2d(0.442.radians)))),
+        Safe(APTargetWithTolerance(Pose2d(13.967.meters, 0.556.meters, Rotation2d(0.943.radians)))),
+        Center(APTargetWithTolerance(Pose2d(9.000.meters, 2.200.meters, Rotation2d(0.000.radians))))
+    }
+}
+
 
 object TestAuto: Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command = Commands.sequence(

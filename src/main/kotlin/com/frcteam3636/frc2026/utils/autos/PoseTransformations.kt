@@ -1,7 +1,5 @@
-package com.frcteam3636.frc2026.utils
+package com.frcteam3636.frc2026.utils.autos
 
-import com.frcteam3636.frc2026.utils.math.inMeters
-import com.frcteam3636.frc2026.utils.math.meters
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d

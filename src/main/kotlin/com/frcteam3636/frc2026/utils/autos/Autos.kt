@@ -4,16 +4,17 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.centimeters
 import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.radians
 import com.therekrab.autopilot.APTarget
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Command
 import kotlin.math.PI
-
-const val FIELD_HEIGHT_METERS = 16.54048
-const val FIELD_WIDTH_METERS = 8.06958
-
+import kotlin.jvm.optionals.getOrNull
 
 class APTargetWithTolerance(pose: Pose2d) : APTarget(pose) {
     var tolerance: Distance = 5.centimeters
@@ -54,6 +55,17 @@ fun flipTargetVertical(target: APTargetWithTolerance): APTargetWithTolerance {
     )
 }
 
+fun flipTarget(target: APTargetWithTolerance, flipH: Boolean = false, flipV: Boolean = false): APTargetWithTolerance {
+    var new_target = target
+    if (flipH) {
+        new_target = flipTargetHorizontal(new_target)
+    }
+    if (flipV) {
+        new_target = flipTargetVertical(new_target)
+    }
+    return new_target
+}
+
 fun flipPath(
     path: Array<APTargetWithTolerance>, flipH: Boolean = false, flipV: Boolean = false
 ): Array<APTargetWithTolerance> {
@@ -61,12 +73,33 @@ fun flipPath(
         return path
     }
     for (i in 0..path.size) {
-        if (flipH) {
-            path[i] = flipTargetHorizontal(path[i])
-        }
-        if (flipV) {
-            path[i] = flipTargetVertical(path[i])
-        }
+        path[i] = flipTarget(path[i])
     }
     return path
+}
+
+private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
+    ClimbBlueRight(APTargetWithTolerance(Pose2d(1.071.meters, 2.837.meters, Rotation2d(9.425.radians)))),
+    ClimbBlueLeft(APTargetWithTolerance(Pose2d(1.089.meters, 4.643.meters, Rotation2d(0.000.radians)))),
+    ClimbBlueRunupLeft(APTargetWithTolerance(Pose2d(1.089.meters, 5.387.meters, Rotation2d(0.000.radians)))),
+    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(1.080.meters, 2.111.meters, Rotation2d(-3.142.radians))))
+}
+
+private fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupLeft.target, flipH = red_alliance, flipV = red_alliance),
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueLeft.target, flipH = red_alliance, flipV = red_alliance)
+)
+private fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequence(
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupRight.target, flipH = red_alliance, flipV = red_alliance),
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRight.target, flipH = red_alliance, flipV = red_alliance)
+)
+
+fun alignToClimb(): Command  {
+    var red_alliance = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
+    var side = Drivetrain.field_side
+
+    when (side) {
+        Drivetrain.FieldSide.Left -> return alignToClimbLeft(red_alliance)
+        Drivetrain.FieldSide.Right -> return alignToClimbRight(red_alliance)
+    }
 }

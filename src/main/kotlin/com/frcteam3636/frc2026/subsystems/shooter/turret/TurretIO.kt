@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.shooter.turret
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -78,7 +78,7 @@ class TurretIOReal : TurretIO {
         })
     }
 
-    private val Encoder =  CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
+    private val encoder =  CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
         configurator.apply(CANcoderConfiguration().apply {
 //                MagnetSensor.MagnetOffset = MAGNET_OFFSET
             MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
@@ -122,13 +122,7 @@ class TurretIOReal : TurretIO {
         val upperBound = 90.degrees
         val lowerBound = (-85).degrees
 
-        setPoint = if (angle in lowerBound..upperBound) {
-            angle
-        } else if (angle > (upperBound + lowerBound / 2.0) + 180.degrees) {
-            lowerBound
-        } else {
-            upperBound
-        }
+        val setPoint = angle.clampDeadzone(lowerBound, upperBound)
         Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
         motor.setControl(positionControl.withPosition(setPoint))
     }
@@ -148,7 +142,7 @@ class TurretIOReal : TurretIO {
     }
 
     override fun zeroEncoder() {
-        Encoder.setPosition(0.0.degrees)
+        encoder.setPosition(0.degrees)
     }
 
     override fun setBrakeMode(enabled: Boolean) {
