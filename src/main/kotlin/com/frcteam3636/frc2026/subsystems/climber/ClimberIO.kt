@@ -2,7 +2,6 @@ package com.frcteam3636.frc2026.subsystems.climber
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.TalonFXConfiguration
-import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
@@ -11,10 +10,8 @@ import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.volts
 import com.frcteam3636.frc2026.utils.math.inMeters
-import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.inches
-import com.frcteam3636.frc2026.utils.math.inchesPerSecond
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.metersPerSecondPerSecond
@@ -29,7 +26,6 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.CANcoder
-import com.ctre.phoenix6.configs.CANcoderConfiguration
 
 @Logged
 open class ClimberInputs {
@@ -48,7 +44,7 @@ interface ClimberIO {
 class ClimberIOReal : ClimberIO {
     internal companion object Constants {
         private val SPOOL_RADIUS = 1.0.inches // Not measured, approximation
-        private val PID_GAINS = PIDGains(5.0, 0.0, 0.0) // Not measured, approximation
+        private val PID_GAINS = PIDGains(10.0, 0.0, 0.0) // Not measured, approximation
         private val ROTOR_TO_MECHANISM_GEAR_RATIO = 0.1 // Not sure what this does, taken from ElevatorIO@frc-2025
 
         // Below values taken from frc-2025, again, need to be tuned.
@@ -124,7 +120,7 @@ class ClimberIOReal : ClimberIO {
 class ClimberIOSim : ClimberIO {
     internal companion object Constants {
         private val SPOOL_RADIUS = 1.0.inches // Not measured, approximation
-        private val PID_GAINS = PIDGains(30.0, 0.0, 0.0) // Not measured, approximation
+        private val PID_GAINS = PIDGains(5.0, 0.0, 0.0) // Not measured, approximation
     }
 
     private val motor = DCMotor.getKrakenX60(1)

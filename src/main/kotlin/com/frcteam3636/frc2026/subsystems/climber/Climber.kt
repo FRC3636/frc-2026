@@ -39,7 +39,7 @@ object Climber : Subsystem {
 
     val inputs = LoggedClimberInputs()
 
-    var targetPosition = Position.STOWED
+    var targetPosition = Position.UNHOMED
 
     override fun periodic() {
         io.updateInputs(inputs)

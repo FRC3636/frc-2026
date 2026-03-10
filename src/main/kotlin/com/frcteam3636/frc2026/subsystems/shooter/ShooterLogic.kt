@@ -76,13 +76,9 @@ object ShooterCalculator {
     // TO BE TESTED AFTER AIM AT HUB
     fun aimAtTarget(targetPosition: Translation3d, compensateForMotion: Boolean = false): ShooterProfile {
 
-        val shooterPose2d = Pose2d(
-            Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-            Turret.turretAngle - Drivetrain.estimatedPose.rotation
-        )
         val shooterPosition3d = Translation3d (
-            shooterPose2d.translation.x.meters,
-            shooterPose2d.translation.y.meters,
+            shooterFieldPose.translation.x.meters,
+            shooterFieldPose.translation.y.meters,
             SHOOTER_HEIGHT
         )
 
@@ -183,7 +179,7 @@ private val GRAVITY = 9.81.metersPerSecondPerSecond
 val shooterFieldPose: Pose2d
     get() = Pose2d(
         Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-        Drivetrain.estimatedPose.rotation
+        Turret.turretAngle - Drivetrain.estimatedPose.rotation
     )
 
 val shooterToHub: Translation2d

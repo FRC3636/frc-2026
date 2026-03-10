@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
@@ -10,7 +11,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -35,6 +35,17 @@ fun configureBindings() {
     joystickLeft.button(1).whileTrue(
         Intake.intake()
     )
+    joystickLeft.button(2).whileTrue(
+        Climber.homeRoutine()
+    )
+    joystickLeft.button(3).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+        Climber.climb()
+    )
+    joystickLeft.button(4).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+    )
+
 
     joystickRight.button(4).onTrue(
         setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
@@ -72,7 +83,7 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-    Climber.defaultCommand = Climber.goToTargetHeight()
+//    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 
