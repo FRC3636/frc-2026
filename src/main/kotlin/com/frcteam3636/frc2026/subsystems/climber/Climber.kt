@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
 
@@ -58,7 +59,7 @@ object Climber : Subsystem {
         {
 
         }
-    ).until { isAtTarget() }
+    ).until(isAtTarget())
 
     // Pulls down and hooks onto the L1 bar.
     fun climbL1(): Command = Commands.sequence(
@@ -68,5 +69,6 @@ object Climber : Subsystem {
         goToHeight(Position.STOWED, true),
     )
 
-    fun isAtTarget(): Boolean = abs((inputs.height - targetHeight).inMeters()) < Constants.CLIMBER_TOLERANCE.inMeters()
+    fun isAtTarget(): Trigger =
+        Trigger({ abs((inputs.height - targetHeight).inMeters()) < Constants.CLIMBER_TOLERANCE.inMeters() })
 }
