@@ -6,6 +6,8 @@ import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2026.utils.math.inches
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.volts
+import com.frcteam3636.frc2026.utils.math.amps
 import edu.wpi.first.networktables.DoubleTopic
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Distance
@@ -60,6 +62,18 @@ object Climber : Subsystem {
 
         }
     ).until(isAtTarget())
+
+    fun homeRoutine(): Command = Commands.sequence(
+        Commands.runEnd(
+            {
+                io.setVoltage(1.0.volts)
+            },
+            {
+                io.setVoltage(0.0.volts)
+            }
+        ).until({ inputs.current > 3.5.amps}),
+        Commands.runOnce({ io.setEncoderPosition(0.0.meters) })
+    )
 
     // Pulls down and hooks onto the L1 bar.
     fun climbL1(): Command = Commands.sequence(

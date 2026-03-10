@@ -59,7 +59,7 @@ class ClimberIOReal : ClimberIO {
     }
 
     private val motorConfig = TalonFXConfiguration()
-    private val motor = TalonFX(CTREDeviceId.ClimbMotor)
+    private val motor = TalonFX(CTREDeviceId.ClimberMotor)
     private val pid_controller = PIDController(PID_GAINS)
 
     init {
