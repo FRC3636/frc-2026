@@ -34,6 +34,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
@@ -54,7 +55,6 @@ object Drivetrain : Subsystem {
     }
     val inputs = LoggedDrivetrainInputs()
 
-    private val limiter = SlewRateLimiter(0.05)
     private var wheelRadiusModuleStates = DoubleArray(4)
     private var wheelRadiusLastAngle = Rotation2d.kZero
     private var wheelRadiusGyroDelta = 0.0
@@ -195,6 +195,43 @@ object Drivetrain : Subsystem {
 
     val modulePositions = Array(4) { SwerveModulePosition() }
     val moduleDeltas = Array(4) { SwerveModulePosition() }
+
+    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
+    val detectionTxAndTy: Pair<Array<Double>, Array<Double>>
+        get() {
+            val numDetections = detections.size / 12
+            val detectionTx = Array(numDetections) {0.0}
+            val detectionTy= Array(numDetections) {0.0}
+            for (i in 0..numDetections) {
+                val baseIndex = i * numDetections
+                detectionTx[i] = detections[baseIndex + 1] * 27.0
+                detectionTy[i] = detections[baseIndex + 2] * 27.0
+            }
+            return Pair(detectionTx, detectionTy)
+        }
+
+    fun driveToLargestFuelCluster(): Command =
+        Commands.run({
+            Logger.recordOutput("Drivetrain/TargetFuelStarted", true)
+            val (txResults, tyResults) = detectionTxAndTy
+            if (!txResults.none()) {
+                val groupedResults = txResults.withIndex()
+                    .groupBy { floor(it.value / 9.0) }
+                val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
+                val groupedAngles = tyResults.slice(largestCluster.indices)
+                val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
+                val distance =
+                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
+                Logger.recordOutput("Drivetrain/TargetFuelDistance", distance)
+                val targetHorizontalAngle = largestCluster.map { it.value }.average()
+                val targetPose = Pose2d(
+                    estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
+                    Rotation2d.k180deg,
+                )
+                Logger.recordOutput("Drivetrain/TargetFuelPose", targetPose)
+                alignWithAutopilot(APTarget(targetPose))
+            }
+        })
 
     override fun periodic() {
 //        if (Robot.model != Robot.Model.SIMULATION) {
@@ -413,8 +450,8 @@ object Drivetrain : Subsystem {
 
     @Suppress("unused")
     fun driveWithController(controller: CommandXboxController): Command = run {
-        val translationInput = Translation2d(controller.leftX, controller.leftY)
-        val rotationInput = Translation2d(controller.rightY, controller.rightX)
+        val translationInput = Translation2d(-controller.leftY, -controller.leftX)
+        val rotationInput = Translation2d(-controller.rightY, -controller.rightX)
 
         drive(translationInput, rotationInput)
     }
@@ -569,6 +606,10 @@ object Drivetrain : Subsystem {
 
     @Suppress("unused")
     internal object Constants {
+
+        val INTAKE_LIMELIGHT_HEIGHT = .25.meters
+        val FUEL_RADIUS = .075.meters
+
         // Translation/rotation coefficient for teleoperated driver controls
         /** Unit: Percent of max robot speed */
         const val TRANSLATION_SENSITIVITY = 1.0 // FIXME: Increase
@@ -659,6 +700,12 @@ object Drivetrain : Subsystem {
                         REVMotorControllerId.BackRightTurningMotor,
                     )
             )
+
+        val ALIGN_TARGET = APTarget(
+            Pose2d(Translation2d((546.87 + 48.0).inches, 158.3.inches), Rotation2d.k180deg)
+//            FIELD_LAYOUT.getTagPose(7).get().toPose2d() +
+//                    Transform2d(Translation2d((-4).feet, 0.feet), Rotation2d.k180deg)
+        )
 
         /** A position with the modules radiating outwards from the center of the robot, preventing movement. */
         val BRAKE_POSITION =
