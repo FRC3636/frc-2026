@@ -143,6 +143,7 @@ class TurretIOReal : TurretIO {
 
     override fun zeroEncoder() {
         encoder.setPosition(0.degrees)
+        motor.setPosition(0.degrees)
     }
 
     override fun setBrakeMode(enabled: Boolean) {
@@ -157,7 +158,7 @@ class TurretIOReal : TurretIO {
     }
 
     companion object Constants{
-        private val PID_GAINS = PIDGains(50.0, 0.0, 1.0)
+        private val PID_GAINS = PIDGains(65.0, 0.0, 1.2)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625

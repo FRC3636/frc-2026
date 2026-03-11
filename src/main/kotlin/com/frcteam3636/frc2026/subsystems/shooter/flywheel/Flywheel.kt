@@ -56,7 +56,7 @@ object Flywheel: Subsystem {
             io.setVelocity(shooterProfile.angularVelocity)
         },
         {
-            io.setVelocity(0.0.rpm)
+            io.setVoltage(0.0.volts)
         })
 
     fun spinAtTargetSpeed(velocity: AngularVelocity): Command = run {

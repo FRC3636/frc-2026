@@ -28,7 +28,7 @@ object Climber : Subsystem {
     enum class Position(val height: Optional<Distance>) {
         UNHOMED(Optional.empty()),
         STOWED(Optional.of(0.meters)),
-        GROUND_L1(Optional.of(0.5.meters)),
+        GROUND_L1(Optional.of(0.1.meters)),
         // ... Might be more complicated than just set heights, we'll see.
     }
 
@@ -56,12 +56,12 @@ object Climber : Subsystem {
     fun homeRoutine(): Command = Commands.sequence(
         Commands.runEnd(
             {
-                io.setVoltage(1.0.volts)
+                io.setVoltage(2.0.volts)
             },
             {
                 io.setVoltage(0.0.volts)
             }
-        ).until({ inputs.current > 3.5.amps}),
+        ).until({ inputs.current > 10.0.amps}),
         Commands.runOnce({
             io.setEncoderPosition(0.0.meters)
             targetPosition = Position.STOWED

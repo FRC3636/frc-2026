@@ -188,6 +188,7 @@ val shooterToHub: Translation2d
 // used for populating interpolation tables
 val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 35.0)
 val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
+val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", -40.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB (
@@ -200,7 +201,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterProfile(0.0.radians, 35.0.degrees, 0.0.rpm) }
     ),
     TUNING (
-        { ShooterProfile(-40.degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 

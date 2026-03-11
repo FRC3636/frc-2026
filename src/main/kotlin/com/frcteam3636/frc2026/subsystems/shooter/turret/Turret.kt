@@ -117,7 +117,8 @@ object Turret : Subsystem {
         }
 
     fun zeroTurretEncoder() : Command =
-        run{
+        runOnce {
+            println("zeroing turret")
             io.zeroEncoder()
         }
 

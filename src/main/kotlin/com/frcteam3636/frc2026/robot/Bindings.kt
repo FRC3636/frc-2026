@@ -32,17 +32,22 @@ fun configureBindings() {
 
     /* main bindings */
 
-    joystickLeft.button(1).whileTrue(
-        Intake.intake()
+    joystickLeft.button(2).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
     )
     joystickLeft.button(3).whileTrue(
 //        Climber.homeRoutine()
-        Intake.setPivotPosition(Intake.Position.Deployed)
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
     )
     joystickLeft.button(4).whileTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
 //        Climber.climb()
         Intake.setPivotPosition(Intake.Position.Stowed)
+    )
+    joystickLeft.button(5).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+//        Climber.climb()
+        Intake.setPivotPosition(Intake.Position.Deployed)
     )
 //    joystickLeft.button(4).whileTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
@@ -61,31 +66,32 @@ fun configureBindings() {
 
 
     joystickRight.button(1).whileTrue(
-        Commands.sequence(
-            Commands.parallel(
-                Flywheel.runAtTarget(),
-            ).until(Flywheel.atDesiredFlywheelVelocity),
-            Commands.parallel(
-                Flywheel.runAtTarget(),
-                Commands.parallel(
-                    Feeder.feed(),
-                    Indexer.index()
-                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
-            ),
-        )
+//        Commands.sequence(
+//            Commands.parallel(
+//                Flywheel.runAtTarget(),
+//            ).until(Flywheel.atDesiredFlywheelVelocity),
+//            Commands.parallel(
+//                Flywheel.runAtTarget(),
+//                Commands.parallel(
+//                    Feeder.feed(),
+//                    Indexer.index()
+//                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
+//            ),
+//        )
+        Flywheel.runAtTarget()
     )
 
     /*  default commands   */
 
-    Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks (
-        joystickLeft.hid,
-        joystickRight.hid
-    )
+//    Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks (
+//        joystickLeft.hid,
+//        joystickRight.hid
+//    )
 
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-   Climber.defaultCommand = Climber.goToTargetHeight()
+    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 
@@ -94,10 +100,11 @@ fun configureBindings() {
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
-    joystickRight.button(8).onTrue(Commands.runOnce({
-        println("Zeroing Turret Encoder")
-        Turret.zeroTurretEncoder()
-    }).ignoringDisable(true))
+    joystickRight.button(8).onTrue(
+        Turret.zeroTurretEncoder().ignoringDisable(true)
+    )
+
+    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
 
 
     /* dev bindings */
@@ -105,7 +112,8 @@ fun configureBindings() {
     if (Preferences.getBoolean("DeveloperMode", false)) {
         controllerDev.leftBumper().onTrue(
             Commands.runOnce(SignalLogger::start)
-                .andThen(StatusLogger::start))
+                .andThen(StatusLogger::start)
+        )
         controllerDev.rightBumper().onTrue(
             Commands.runOnce(SignalLogger::stop)
                 .andThen(StatusLogger::stop)

@@ -1,15 +1,19 @@
 package com.frcteam3636.frc2026.subsystems.climber
 
 import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.SensorDirectionValue
+import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDController
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.volts
 import com.frcteam3636.frc2026.utils.math.inMeters
 import com.frcteam3636.frc2026.utils.math.inVolts
@@ -25,6 +29,7 @@ import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.utils.math.pidGains
+import org.littletonrobotics.junction.Logger
 
 @Logged
 open class ClimberInputs {
@@ -43,12 +48,17 @@ interface ClimberIO {
 class ClimberIOReal : ClimberIO {
     internal companion object Constants {
         private val SPOOL_RADIUS = 0.25.inches // Half inch diameter hex shaft
-        private val PID_GAINS = PIDGains(10.0, 0.0, 0.0) // Not measured, approximation
+        private val PID_GAINS = PIDGains(100.0, 0.0, 0.0)
         private const val MOTOR_TO_ENCODER_GEAR_RATIO = 0.25
     }
 
     private val motorConfig = TalonFXConfiguration()
     private val motor = TalonFX(CTREDeviceId.ClimberMotor)
+    private val encoder =  CANcoder(CTREDeviceId.ClimberEncoder).apply {
+        configurator.apply(CANcoderConfiguration().apply {
+            MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive
+        })
+    }
     private val pidController = PIDController(PID_GAINS)
 
     init {
@@ -69,7 +79,7 @@ class ClimberIOReal : ClimberIO {
             }
 
             MotorOutput.apply {
-                Inverted = InvertedValue.CounterClockwise_Positive
+                Inverted = InvertedValue.Clockwise_Positive
             }
         }
         motor.configurator.apply(motorConfig)
@@ -84,24 +94,25 @@ class ClimberIOReal : ClimberIO {
     }
 
     val height: Distance
-        get() = motor.position.value.toLinear(SPOOL_RADIUS)
+        get() = encoder.position.value.toLinear(SPOOL_RADIUS)
 
     override fun setVoltage(volts: Voltage) {
         motor.setVoltage(volts.inVolts())
     }
 
     override fun goToHeight(targetHeight: Distance) {
+        Logger.recordOutput("/Climb/TargetHeight", targetHeight)
         val currentHeight = height
         setVoltage(pidController.calculate(targetHeight.inMeters(), currentHeight.inMeters()).volts);
     }
 
     override fun setEncoderPosition(position: Distance) {
-         motor.setPosition(position.toAngular(SPOOL_RADIUS))
+        encoder.setPosition(position.toAngular(SPOOL_RADIUS))
     }
 
     override fun updateInputs(inputs: ClimberInputs) {
         inputs.height = height
-        inputs.velocity = motor.getVelocity(false).value.toLinear(SPOOL_RADIUS)
+        inputs.velocity = encoder.getVelocity(false).value.toLinear(SPOOL_RADIUS)
         inputs.current = motor.supplyCurrent.value
     }
 
