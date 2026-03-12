@@ -32,13 +32,13 @@ fun configureBindings() {
 
     /* main bindings */
 
-    joystickLeft.button(2).whileTrue(
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-    )
-    joystickLeft.button(3).whileTrue(
-//        Climber.homeRoutine()
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-    )
+//    joystickLeft.button(2).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+//    )
+//    joystickLeft.button(3).whileTrue(
+////        Climber.homeRoutine()
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//    )
     joystickLeft.button(4).whileTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
 //        Climber.climb()
@@ -66,32 +66,31 @@ fun configureBindings() {
 
 
     joystickRight.button(1).whileTrue(
-//        Commands.sequence(
-//            Commands.parallel(
-//                Flywheel.runAtTarget(),
-//            ).until(Flywheel.atDesiredFlywheelVelocity),
-//            Commands.parallel(
-//                Flywheel.runAtTarget(),
-//                Commands.parallel(
-//                    Feeder.feed(),
-//                    Indexer.index()
-//                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
-//            ),
-//        )
-        Flywheel.runAtTarget()
+        Commands.sequence(
+            Commands.parallel(
+                Flywheel.runAtTarget(),
+            ).until(Flywheel.atDesiredFlywheelVelocity),
+            Commands.parallel(
+                Flywheel.runAtTarget(),
+                Commands.parallel(
+                    Feeder.feed(),
+                    Indexer.index()
+                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
+            ),
+        )
     )
 
     /*  default commands   */
 
-//    Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks (
-//        joystickLeft.hid,
-//        joystickRight.hid
-//    )
+    Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks (
+        joystickLeft.hid,
+        joystickRight.hid
+    )
 
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-    Climber.defaultCommand = Climber.goToTargetHeight()
+//    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 
@@ -104,7 +103,7 @@ fun configureBindings() {
         Turret.zeroTurretEncoder().ignoringDisable(true)
     )
 
-    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
+//    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
 
 
     /* dev bindings */

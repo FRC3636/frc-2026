@@ -12,6 +12,8 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Rotation2d.k180deg
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.units.measure.Angle
@@ -183,7 +185,7 @@ val shooterFieldPose: Pose2d
     )
 
 val shooterToHub: Translation2d
-    get() = shooterFieldPose.translation - hubTranslation.toTranslation2d()
+    get() = (shooterFieldPose.translation - hubTranslation.toTranslation2d()).unaryMinus()
 
 // used for populating interpolation tables
 val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 35.0)
@@ -201,7 +203,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterProfile(0.0.radians, 35.0.degrees, 0.0.rpm) }
     ),
     TUNING (
-        { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile( ShooterCalculator.aimAtHub(compensateForMotion = true).turretAngle, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 

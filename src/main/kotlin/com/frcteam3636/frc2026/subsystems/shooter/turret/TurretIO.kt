@@ -122,7 +122,7 @@ class TurretIOReal : TurretIO {
         val upperBound = 90.degrees
         val lowerBound = (-85).degrees
 
-        val setPoint = angle.clampDeadzone(lowerBound, upperBound)
+        val setPoint = ((angle + 180.degrees)).clampDeadzone(lowerBound, upperBound)
         Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
         motor.setControl(positionControl.withPosition(setPoint))
     }
