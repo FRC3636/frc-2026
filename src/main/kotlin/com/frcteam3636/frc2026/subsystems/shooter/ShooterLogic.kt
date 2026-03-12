@@ -177,7 +177,7 @@ private val GRAVITY = 9.81.metersPerSecondPerSecond
 val shooterFieldPose: Pose2d
     get() = Pose2d(
         Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-        Turret.turretAngle - Drivetrain.estimatedPose.rotation
+        Drivetrain.estimatedPose.rotation + Turret.turretAngle
     )
 
 val shooterToHub: Vector2d
