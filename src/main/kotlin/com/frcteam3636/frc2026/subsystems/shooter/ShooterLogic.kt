@@ -61,7 +61,7 @@ object ShooterCalculator {
         val vector = if (compensateForMotion) fieldRelativeLaunchVector else stationaryLaunchVector
 
         val fieldDirection = atan2(vector.y, vector.x).radians
-        val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).radians
+        val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
 
         val horizontalMagnitude = hypot(vector.x, vector.y)
         val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
@@ -116,7 +116,7 @@ object ShooterCalculator {
         }
 
         val fieldDirection = atan2(fieldRelativeLaunchVelocity.y, fieldRelativeLaunchVelocity.x).radians
-        val turretAngleRobotRelative = (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).radians
+        val turretAngleRobotRelative = (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
 
         val horizontalSpeedMagnitude = hypot(fieldRelativeLaunchVelocity.x, fieldRelativeLaunchVelocity.y)
 
@@ -177,7 +177,7 @@ private val GRAVITY = 9.81.metersPerSecondPerSecond
 val shooterFieldPose: Pose2d
     get() = Pose2d(
         Drivetrain.estimatedPose.translation + SHOOTER_OFFSET.rotateBy(Drivetrain.estimatedPose.rotation),
-        Turret.turretAngle - Drivetrain.estimatedPose.rotation
+        Drivetrain.estimatedPose.rotation + Turret.turretAngle
     )
 
 val shooterToHub: Vector2d
