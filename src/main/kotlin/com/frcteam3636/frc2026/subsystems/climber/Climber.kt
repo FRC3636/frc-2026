@@ -24,7 +24,7 @@ object Climber : Subsystem {
     enum class Position(val height: Optional<Distance>) {
         UNHOMED(Optional.empty()),
         STOWED(Optional.of(0.meters)),
-        GROUND_L1(Optional.of(0.14.meters)),
+        GROUND_L1(Optional.of(0.183.meters)),
         // ... Might be more complicated than just set heights, we'll shee.
     }
 
