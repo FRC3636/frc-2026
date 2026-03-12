@@ -130,7 +130,7 @@ object ShooterCalculator {
 
 }
 
-var shooterTarget: Target = Target.STOWED
+var shooterTarget: Target = Target.STATIONARY_TURRET
 var shooterProfile: ShooterProfile = shooterTarget.profile()
 
 fun setShooterTarget(target: Target): Command =
@@ -198,11 +198,11 @@ enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB_SHOOT_ON_MOVE (
         { ShooterCalculator.aimAtHub(compensateForMotion = true) }
     ),
-    STOWED (
-        { ShooterProfile(0.0.radians, 35.0.degrees, 0.0.rpm) }
+    STATIONARY_TURRET (
+        { ShooterProfile(0.0.degrees, 40.0.degrees, 2000.0.rpm) }
     ),
     TUNING (
-        { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile(40.degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 
