@@ -44,6 +44,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
+import org.photonvision.PhotonCamera
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
@@ -196,7 +197,9 @@ object Drivetrain : Subsystem {
     val modulePositions = Array(4) { SwerveModulePosition() }
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
-    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
+    val fuelDetector = PhotonCamera("color_camera")
+    private val detections = fuelDetector.allUnreadResults
+//    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
     val detectionTxAndTy: Pair<Array<Double>, Array<Double>>
         get() {
             val numDetections = detections.size / 12
