@@ -21,15 +21,11 @@ import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 object Climber : Subsystem {
-    private object Constants {
-        val CLIMBER_TOLERANCE = 0.2.inches
-    }
-
     enum class Position(val height: Optional<Distance>) {
         UNHOMED(Optional.empty()),
         STOWED(Optional.of(0.meters)),
-        GROUND_L1(Optional.of(0.1.meters)),
-        // ... Might be more complicated than just set heights, we'll see.
+        GROUND_L1(Optional.of(0.14.meters)),
+        // ... Might be more complicated than just set heights, we'll shee.
     }
 
     private val io: ClimberIO = when (Robot.model) {

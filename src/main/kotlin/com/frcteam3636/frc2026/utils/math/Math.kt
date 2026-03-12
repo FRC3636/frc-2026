@@ -66,3 +66,15 @@ data class Vector3d(val x: Double, val y: Double, val z: Double) {
     operator fun times(scalar: Double) = Vector3d(x * scalar, y * scalar, z * scalar)
     operator fun div(scalar: Double) = Vector3d(x / scalar, y / scalar, z / scalar)
 }
+
+data class Vector2d(val x: Double, val y: Double) {
+    val norm: Double get() = sqrt(x*x + y*y)
+    operator fun minus(other: Vector2d) = Vector2d(x - other.x, y - other.y)
+    operator fun plus(other: Vector2d) = Vector2d(x + other.x, y + other.y)
+    operator fun times(scalar: Double) = Vector2d(x * scalar, y * scalar)
+    operator fun div(scalar: Double) = Vector2d(x / scalar, y / scalar)
+}
+
+fun toVector2d( translation: Translation2d): Vector2d {
+    return Vector2d(translation.x, translation.y)
+}

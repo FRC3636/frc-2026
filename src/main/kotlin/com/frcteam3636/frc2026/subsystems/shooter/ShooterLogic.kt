@@ -12,8 +12,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Rotation2d.k180deg
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
 import edu.wpi.first.units.measure.Angle
@@ -38,14 +36,12 @@ object ShooterCalculator {
 
             val launchSpeedRobotRelative = baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
 
-            val directionToHub = shooterToHub.angle
-
             val horizontalSpeedComponent = launchSpeedRobotRelative * cos(baseHoodAngle)
             val verticalSpeedComponent = launchSpeedRobotRelative * sin(baseHoodAngle)
 
             return Vector3d(
-                horizontalSpeedComponent * cos(directionToHub.radians),
-                horizontalSpeedComponent * sin(directionToHub.radians),
+                horizontalSpeedComponent * cos(directionToHub.inRadians()),
+                horizontalSpeedComponent * sin(directionToHub.inRadians()),
                 verticalSpeedComponent
             )
         }
@@ -184,8 +180,11 @@ val shooterFieldPose: Pose2d
         Turret.turretAngle - Drivetrain.estimatedPose.rotation
     )
 
-val shooterToHub: Translation2d
-    get() = (shooterFieldPose.translation - hubTranslation.toTranslation2d()).unaryMinus()
+val shooterToHub: Vector2d
+    get() = toVector2d(hubTranslation.toTranslation2d()) - toVector2d(shooterFieldPose.translation)
+
+val directionToHub: Angle
+    get() = atan2(shooterToHub.y, shooterToHub.x).radians
 
 // used for populating interpolation tables
 val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 35.0)
@@ -203,7 +202,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterProfile(0.0.radians, 35.0.degrees, 0.0.rpm) }
     ),
     TUNING (
-        { ShooterProfile( ShooterCalculator.aimAtHub(compensateForMotion = true).turretAngle, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 
