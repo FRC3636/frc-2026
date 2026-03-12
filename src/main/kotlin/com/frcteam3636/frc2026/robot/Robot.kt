@@ -164,14 +164,14 @@ object Robot : LoggedRobot() {
 
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
-        Drivetrain.register()
-        Feeder.register()
+//        Drivetrain.register()
+//        Feeder.register()
         Flywheel.register()
         Hood.register()
-        Indexer.register()
-        Intake.register()
+//        Indexer.register()
+//        Intake.register()
         Turret.register()
-        Climber.register()
+//        Climber.register()
     }
 
 

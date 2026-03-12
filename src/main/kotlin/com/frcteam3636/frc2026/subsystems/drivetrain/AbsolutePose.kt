@@ -152,7 +152,7 @@ class LimelightPoseProvider(
             NetworkTableInstance.getDefault().flush()
 
             if (RobotState.beforeFirstEnable) {
-                imuModePublisher.accept(1.toLong()) // seed IMU
+                imuModePublisher.accept(0.toLong()) // seed IMU
             }
 
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
@@ -198,26 +198,26 @@ class LimelightPoseProvider(
             measurements.add(measurement)
         }
 
-        for (rawSample in megatag2Subscriber.readQueue()) {
-            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
-            val measurement = LimelightMeasurement()
-            val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0
-            val tagCount = rawSample.value[7].toInt()
-            if (tagCount == 0 || highSpeed) measurement.isLowQuality = true
-
-            for (i in 11 until rawSample.value.size step 7) {
-                measurement.observedTags.add(rawSample.value[i].toInt())
-            }
-
-            measurement.poseMeasurement = AbsolutePoseMeasurement(
-                parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
-                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
-                measurement.isLowQuality
-            )
-
-            measurements.add(measurement)
-        }
+//        for (rawSample in megatag2Subscriber.readQueue()) {
+//            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
+//            val measurement = LimelightMeasurement()
+//            val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0
+//            val tagCount = rawSample.value[7].toInt()
+//            if (tagCount == 0 || highSpeed) measurement.isLowQuality = true
+//
+//            for (i in 11 until rawSample.value.size step 7) {
+//                measurement.observedTags.add(rawSample.value[i].toInt())
+//            }
+//
+//            measurement.poseMeasurement = AbsolutePoseMeasurement(
+//                parsePose(rawSample.value),
+//                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
+//                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
+//                measurement.isLowQuality
+//            )
+//
+//            measurements.add(measurement)
+//        }
 
         return measurements
     }
