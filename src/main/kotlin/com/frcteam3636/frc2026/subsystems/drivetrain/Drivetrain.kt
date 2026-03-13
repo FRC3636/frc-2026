@@ -27,6 +27,7 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -45,6 +46,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import org.photonvision.PhotonCamera
+import javax.xml.crypto.dsig.Transform
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
@@ -198,35 +200,33 @@ object Drivetrain : Subsystem {
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     val fuelDetector = PhotonCamera("color_camera")
-    private val detections = fuelDetector.allUnreadResults
-//    private val detections = NetworkTableInstance.getDefault().getTable("limelight-intake").getEntry("rawdetections").getDoubleArray(doubleArrayOf())
-    val detectionTxAndTy: Pair<Array<Double>, Array<Double>>
+    val fuelTransforms: Array<Transform3d>
         get() {
-            val numDetections = detections.size / 12
-            val detectionTx = Array(numDetections) {0.0}
-            val detectionTy= Array(numDetections) {0.0}
-            for (i in 0..numDetections) {
-                val baseIndex = i * numDetections
-                detectionTx[i] = detections[baseIndex + 1] * 27.0
-                detectionTy[i] = detections[baseIndex + 2] * 27.0
+            val detections = fuelDetector.allUnreadResults.last().targets
+            val transforms = Array(detections.size) { Transform3d() }
+            for (i in 0 until detections.size) {
+                transforms[i] = detections[i].bestCameraToTarget
             }
-            return Pair(detectionTx, detectionTy)
+            return transforms
         }
 
     fun driveToLargestFuelCluster(): Command =
         Commands.run({
             Logger.recordOutput("Drivetrain/TargetFuelStarted", true)
-            val (txResults, tyResults) = detectionTxAndTy
-            if (!txResults.none()) {
-                val groupedResults = txResults.withIndex()
-                    .groupBy { floor(it.value / 9.0) }
-                val largestCluster = groupedResults.maxByOrNull { it.value.size }!!.value
-                val groupedAngles = tyResults.slice(largestCluster.indices)
-                val smallestVerticalAngle = groupedAngles.minByOrNull { it }!!
+            val transforms = fuelTransforms
+            if (!transforms.none()) {
+                val groupedTransforms = transforms
+                    .groupBy { floor(atan2(it.y, it.x).radians.inDegrees() / 9.0) }
+                val largestCluster = groupedTransforms.maxByOrNull { it.value.size }!!.value
+                val angles = Array(largestCluster.size) { 0.0 }
+                for (i in largestCluster.indices) {
+                    angles[i] = tan(largestCluster[i].y / largestCluster[i].x)
+                }
+                val furthestFuel = largestCluster.minByOrNull { atan2(it.z, hypot(it.x, it.y)) }!!
                 val distance =
-                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestVerticalAngle)).inMeters()
+                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(furthestFuel.z / hypot(furthestFuel.x, furthestFuel.y))).inMeters()
                 Logger.recordOutput("Drivetrain/TargetFuelDistance", distance)
-                val targetHorizontalAngle = largestCluster.map { it.value }.average()
+                val targetHorizontalAngle = angles.average()
                 val targetPose = Pose2d(
                     estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
                     Rotation2d.k180deg,
