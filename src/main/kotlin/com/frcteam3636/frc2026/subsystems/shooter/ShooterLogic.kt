@@ -199,7 +199,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterCalculator.aimAtHub(compensateForMotion = true) }
     ),
     STATIONARY_TURRET (
-        { ShooterProfile(0.0.degrees, 40.0.degrees, 2000.0.rpm) }
+        { ShooterProfile(0.0.degrees, Hood.calculateHoodAngle(shooterToHub.norm.meters), Flywheel.calculateFlywheelVelocity(shooterToHub.norm.meters)) }
     ),
     TUNING (
         { ShooterProfile(40.degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
