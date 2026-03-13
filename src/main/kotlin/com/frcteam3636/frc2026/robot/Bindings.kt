@@ -36,10 +36,10 @@ fun configureBindings() {
 //    joystickLeft.button(2).whileTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
 //    )
-//    joystickLeft.button(3).whileTrue(
-////        Climber.homeRoutine()
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-//    )
+    joystickLeft.button(3).whileTrue(
+//        Climber.homeRoutine()
+        Intake.intake()
+    )
     joystickLeft.button(4).onTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
 //        Climber.climb()
@@ -62,7 +62,7 @@ fun configureBindings() {
         setShooterTarget(Target.AIM_AT_HUB)
     )
     joystickRight.button(3).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+        setShooterTarget(Target.TUNING)
     )
 
 

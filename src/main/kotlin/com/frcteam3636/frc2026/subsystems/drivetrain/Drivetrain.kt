@@ -24,6 +24,7 @@ import com.frcteam3636.frc2026.utils.swerve.*
 import com.frcteam3636.frc2026.utils.translation2d
 import com.therekrab.autopilot.APConstraints
 import com.therekrab.autopilot.APProfile
+import com.therekrab.autopilot.APTarget
 import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
@@ -578,7 +579,7 @@ object Drivetrain : Subsystem {
 
     val autoPilotRotationPID =
             if (Robot.model == Model.COMPETITION) {
-                PIDController(PIDGains(1.3, 0.0, 0.05)).apply { enableContinuousInput(0.0, TAU) }
+                PIDController(PIDGains(3.0, 0.0, 0.05)).apply { enableContinuousInput(0.0, TAU) }
             } else {
                 PIDController(PIDGains(4.0, 0.0, 0.15)).apply { enableContinuousInput(0.0, TAU) }
             }
@@ -612,7 +613,7 @@ object Drivetrain : Subsystem {
                 )
     }
 
-    fun alignWithAutopilot(target: APTargetWithTolerance): Command {
+    fun alignWithAutopilot(target: APTarget): Command {
         return run {
             val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
             val vectorToTarget =
@@ -626,9 +627,9 @@ object Drivetrain : Subsystem {
                         }
                     }
 
-            autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
+//            autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
 
-            val output = autoPilot.calculate(estimatedPose, adjustedChassisSpeeds, target)
+            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
 
             val rotationOutput =
                     autoPilotRotationPID.calculate(
@@ -651,6 +652,7 @@ object Drivetrain : Subsystem {
             Logger.recordOutput("Drivetrain/APOutputY", output.vy)
             Logger.recordOutput("Drivetrain/APRotationOutput", rotationOutput)
             Logger.recordOutput("Drivetrain/APTarget", target.reference)
+            Logger.recordOutput("Drivetrain/APTargetEndingVelocity", target.velocity)
         }
                 .until { autoPilot.atTarget(estimatedPose, target) }
                 .finallyDo { -> desiredModuleStates = BRAKE_POSITION }

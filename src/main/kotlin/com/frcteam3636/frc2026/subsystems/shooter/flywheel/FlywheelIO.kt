@@ -71,8 +71,7 @@ class FlywheelIOReal : FlywheelIO {
     }
 
     override fun setVelocity(velocity: AngularVelocity){
-        assert(velocity in 0.rpm..6000.rpm)
-        targetVelocity = velocity
+        targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
         motor.setVoltage(ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM()))
     }
 

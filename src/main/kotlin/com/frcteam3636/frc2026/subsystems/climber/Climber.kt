@@ -42,6 +42,8 @@ object Climber : Subsystem {
         Logger.processInputs("Climb", inputs)
     }
 
+    fun setTargetPosition(position: Position): Command = runOnce { targetPosition = position }
+
     fun goToTargetHeight(): Command = run {
         val targetPosition = targetPosition.height.getOrNull()
         if (targetPosition != null) {
