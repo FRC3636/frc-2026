@@ -4,6 +4,7 @@ import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.centimeters
 import com.frcteam3636.frc2026.utils.math.inMeters
+import com.frcteam3636.frc2026.utils.math.inMetersPerSecond
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
 import com.therekrab.autopilot.APTarget
@@ -12,6 +13,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Command
 import kotlin.math.PI
@@ -27,6 +29,12 @@ class APTargetWithTolerance(pose: Pose2d) : APTarget(pose) {
         target.m_rotationRadius = m_rotationRadius
         target.tolerance = tolerance
         return target
+    }
+
+    fun withVelocity(velocity: LinearVelocity): APTargetWithTolerance {
+        val clone = this.clone()
+        clone.m_velocity = velocity.inMetersPerSecond()
+        return clone
     }
 
     fun withTolerance(tolerance: Distance): APTargetWithTolerance {

@@ -7,6 +7,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.radians
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -66,10 +67,10 @@ object Stem: Auto {
     }
 
     enum class Targets(val target: APTargetWithTolerance) {
-        Trench(APTargetWithTolerance(Pose2d(4.484.meters, 0.588.meters, Rotation2d(-3.142.radians)))),
-        Safe(APTargetWithTolerance(Pose2d(2.576.meters, 0.761.meters, Rotation2d(0.785.radians)))),
-        Center(APTargetWithTolerance(Pose2d(7.811.meters, 1.970.meters, Rotation2d(-1.571.radians)))),
-        Cycle1(APTargetWithTolerance(Pose2d(6.612.meters, 0.899.meters, Rotation2d(-2.749.radians))))
+        Trench(APTargetWithTolerance(Pose2d(4.484.meters, 0.588.meters, Rotation2d(-3.142.radians))).withVelocity(4.0.metersPerSecond)),
+        Safe(APTargetWithTolerance(Pose2d(2.576.meters, 0.761.meters, Rotation2d(0.785.radians))).withVelocity(4.0.metersPerSecond)),
+        Center(APTargetWithTolerance(Pose2d(7.811.meters, 1.970.meters, Rotation2d(-1.571.radians))).withVelocity(4.0.metersPerSecond)),
+        Cycle1(APTargetWithTolerance(Pose2d(6.612.meters, 0.899.meters, Rotation2d(-2.749.radians))).withVelocity(4.0.metersPerSecond)),
     }
 }
 
