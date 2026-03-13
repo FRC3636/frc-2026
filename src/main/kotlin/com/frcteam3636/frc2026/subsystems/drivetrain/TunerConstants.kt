@@ -127,8 +127,8 @@ object TunerConstants {
     private const val kFrontLeftSteerMotorInverted = false
     private const val kFrontLeftEncoderInverted = false
 
-    private val kFrontLeftXPos: Distance = Units.Inches.of(10.375)
-    private val kFrontLeftYPos: Distance = Units.Inches.of(10.375)
+    private val kFrontLeftXPos: Distance = Units.Inches.of(10.875)
+    private val kFrontLeftYPos: Distance = Units.Inches.of(10.875)
 
     // Front Right
     private const val kFrontRightDriveMotorId = 4
@@ -138,8 +138,8 @@ object TunerConstants {
     private const val kFrontRightSteerMotorInverted = false
     private const val kFrontRightEncoderInverted = false
 
-    private val kFrontRightXPos: Distance = Units.Inches.of(10.375)
-    private val kFrontRightYPos: Distance = Units.Inches.of(-10.375)
+    private val kFrontRightXPos: Distance = Units.Inches.of(10.875)
+    private val kFrontRightYPos: Distance = Units.Inches.of(-10.875)
 
     // Back Left
     private const val kBackLeftDriveMotorId = 2
@@ -149,8 +149,8 @@ object TunerConstants {
     private const val kBackLeftSteerMotorInverted = false
     private const val kBackLeftEncoderInverted = false
 
-    private val kBackLeftXPos: Distance = Units.Inches.of(-10.375)
-    private val kBackLeftYPos: Distance = Units.Inches.of(10.375)
+    private val kBackLeftXPos: Distance = Units.Inches.of(-10.875)
+    private val kBackLeftYPos: Distance = Units.Inches.of(10.875)
 
     // Back Right
     private const val kBackRightDriveMotorId = 3
@@ -160,8 +160,8 @@ object TunerConstants {
     private const val kBackRightSteerMotorInverted = false
     private const val kBackRightEncoderInverted = false
 
-    private val kBackRightXPos: Distance = Units.Inches.of(-10.375)
-    private val kBackRightYPos: Distance = Units.Inches.of(-10.375)
+    private val kBackRightXPos: Distance = Units.Inches.of(-10.875)
+    private val kBackRightYPos: Distance = Units.Inches.of(-10.875)
 
 
     val FrontLeft: SwerveModuleConstants<TalonFXConfiguration?, TalonFXConfiguration?, CANcoderConfiguration?>? =

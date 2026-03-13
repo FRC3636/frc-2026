@@ -202,7 +202,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterProfile(0.0.degrees, Hood.calculateHoodAngle(shooterToHub.norm.meters), Flywheel.calculateFlywheelVelocity(shooterToHub.norm.meters)) }
     ),
     TUNING (
-        { ShooterProfile(40.degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
+        { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     )
 }
 
