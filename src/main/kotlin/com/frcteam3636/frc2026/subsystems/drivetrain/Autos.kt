@@ -1,6 +1,10 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.ShooterCalculator
+import com.frcteam3636.frc2026.subsystems.shooter.ShooterProfile
+import com.frcteam3636.frc2026.subsystems.shooter.Target
+import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
@@ -47,14 +51,25 @@ object Stem: Auto {
         return Commands.sequence(
             Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
-            Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
+            Commands.parallel(
+                Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+                Intake.intake(),
+            ),
+            Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
+            Commands.parallel(
+                setShooterTarget(Target.AIM_AT_HUB),
+                Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
+            ),
         )
     }
 
     enum class Targets(val target: APTargetWithTolerance) {
-        Trench(APTargetWithTolerance(Pose2d(12.047.meters, 0.487.meters, Rotation2d(0.442.radians)))),
-        Safe(APTargetWithTolerance(Pose2d(13.967.meters, 0.556.meters, Rotation2d(0.943.radians)))),
-        Center(APTargetWithTolerance(Pose2d(9.000.meters, 2.200.meters, Rotation2d(0.000.radians))))
+        Trench(APTargetWithTolerance(Pose2d(4.484.meters, 0.588.meters, Rotation2d(-3.142.radians)))),
+        Safe(APTargetWithTolerance(Pose2d(2.576.meters, 0.761.meters, Rotation2d(0.785.radians)))),
+        Center(APTargetWithTolerance(Pose2d(7.811.meters, 1.970.meters, Rotation2d(-1.571.radians)))),
+        Cycle1(APTargetWithTolerance(Pose2d(6.612.meters, 0.899.meters, Rotation2d(-2.749.radians))))
     }
 }
 
