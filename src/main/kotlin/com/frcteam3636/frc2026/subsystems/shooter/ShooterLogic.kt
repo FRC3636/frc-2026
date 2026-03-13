@@ -49,7 +49,7 @@ object ShooterCalculator {
     private val fieldRelativeLaunchVector: Vector3d
         get() {
             val stationaryVector = stationaryLaunchVector
-            val robotVelocity = Drivetrain.measuredChassisSpeeds
+            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
             return Vector3d(
                 stationaryVector.x - (robotVelocity.vxMetersPerSecond),
                 stationaryVector.y - (robotVelocity.vyMetersPerSecond),

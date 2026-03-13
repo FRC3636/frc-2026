@@ -458,7 +458,7 @@ object Drivetrain : Subsystem {
     val field_side: FieldSide
         get() {
             var right_side =
-                    (estimatedPose.getY() < FIELD_HEIGHT_METERS / 2.0).xor(
+                    (estimatedPose.getY() > FIELD_HEIGHT_METERS / 2.0).xor(
                             DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
                     )
             return if (right_side) {

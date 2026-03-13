@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2026.utils.autos
 
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.utils.math.centimeters
 import com.frcteam3636.frc2026.utils.math.inMeters
@@ -79,10 +80,10 @@ fun flipPath(
 }
 
 private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
-    ClimbBlueRight(APTargetWithTolerance(Pose2d(1.071.meters, 2.837.meters, Rotation2d(9.425.radians)))),
+    ClimbBlueRight(APTargetWithTolerance(Pose2d(1.0964.meters, 2.837.meters, Rotation2d(9.425.radians)))),
+    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(1.0964.meters, 2.111.meters, Rotation2d(-3.142.radians)))),
     ClimbBlueLeft(APTargetWithTolerance(Pose2d(1.089.meters, 4.643.meters, Rotation2d(0.000.radians)))),
     ClimbBlueRunupLeft(APTargetWithTolerance(Pose2d(1.089.meters, 5.387.meters, Rotation2d(0.000.radians)))),
-    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(1.080.meters, 2.111.meters, Rotation2d(-3.142.radians))))
 }
 
 private fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
@@ -97,9 +98,13 @@ private fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequenc
 fun alignToClimb(): Command  {
     var red_alliance = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
     var side = Drivetrain.field_side
-
-    when (side) {
-        Drivetrain.FieldSide.Left -> return alignToClimbLeft(red_alliance)
-        Drivetrain.FieldSide.Right -> return alignToClimbRight(red_alliance)
+    var path = when (side) {
+        Drivetrain.FieldSide.Left -> alignToClimbLeft(red_alliance)
+        Drivetrain.FieldSide.Right -> alignToClimbRight(red_alliance)
     }
+
+    return Commands.sequence(Commands.parallel(
+        path,
+        Commands.runOnce({Climber.targetPosition = Climber.Position.GROUND_L1})
+    ), Commands.runOnce({Climber.targetPosition = Climber.Position.STOWED}))
 }

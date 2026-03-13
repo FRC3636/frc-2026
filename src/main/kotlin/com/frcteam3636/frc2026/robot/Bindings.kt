@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
@@ -10,6 +11,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
+import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -38,13 +40,13 @@ fun configureBindings() {
 ////        Climber.homeRoutine()
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
 //    )
-    joystickLeft.button(4).whileTrue(
+    joystickLeft.button(4).onTrue(
 //        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
 //        Climber.climb()
         Intake.setPivotPosition(Intake.Position.Stowed)
     )
-    joystickLeft.button(5).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+    joystickLeft.button(5).onTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
 //        Climber.climb()
         Intake.setPivotPosition(Intake.Position.Deployed)
     )
@@ -63,6 +65,12 @@ fun configureBindings() {
         setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
     )
 
+
+    joystickLeft.button(1).whileTrue(
+        Indexer.outdex()
+    )
+
+    joystickLeft.button(14).whileTrue(alignToClimb())
 
     joystickRight.button(1).whileTrue(
         Commands.sequence(
@@ -89,7 +97,7 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-//    Climber.defaultCommand = Climber.goToTargetHeight()
+    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 
@@ -102,7 +110,7 @@ fun configureBindings() {
         Turret.zeroTurretEncoder().ignoringDisable(true)
     )
 
-//    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
+    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
 
 
     /* dev bindings */

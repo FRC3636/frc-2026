@@ -45,13 +45,13 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(90.0, 0.0, 0.0)
+        val PID_GAINS = PIDGains(300.0, 0.0, 0.0)
         val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
         val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
         val PROFILE_JERK = 0.0
         val ENCODER_TO_PIVOT_GEAR_RATIO = 2.0
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
-        val MAGNET_OFFSET = 0.1777.rotations
+        val MAGNET_OFFSET = 0.1311.rotations
 
         val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
         val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
