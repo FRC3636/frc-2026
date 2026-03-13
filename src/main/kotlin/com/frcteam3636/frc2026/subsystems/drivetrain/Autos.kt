@@ -1,6 +1,10 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.ShooterCalculator
+import com.frcteam3636.frc2026.subsystems.shooter.ShooterProfile
+import com.frcteam3636.frc2026.subsystems.shooter.Target
+import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.radians
@@ -47,7 +51,15 @@ object Stem: Auto {
         return Commands.sequence(
             Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
-            Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+            Commands.parallel(
+                Drivetrain.alignAndFlip(Targets.Center.target, flipH, flipV),
+                Intake.intake(),
+            ),
+            Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
+            Commands.parallel(
+                setShooterTarget(Target.AIM_AT_HUB),
+                Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
+            )
         )
     }
 
