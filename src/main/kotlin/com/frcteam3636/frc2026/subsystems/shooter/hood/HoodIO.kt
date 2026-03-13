@@ -137,7 +137,7 @@ class HoodIOReal: HoodIO {
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
         private val MAX_HOOD_ANGLE = 50.degrees
-        private val MIN_HOOD_ANGLE = 30.degrees
+        private val MIN_HOOD_ANGLE = 32.degrees
     }
 }
 

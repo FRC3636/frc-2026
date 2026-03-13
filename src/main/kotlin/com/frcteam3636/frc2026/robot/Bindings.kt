@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
@@ -55,13 +54,13 @@ fun configureBindings() {
 
 
     joystickRight.button(4).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+        setShooterTarget(Target.STATIONARY_TURRET)
     )
     joystickRight.button(2).onTrue(
         setShooterTarget(Target.AIM_AT_HUB)
     )
     joystickRight.button(3).onTrue(
-        setShooterTarget(Target.TUNING)
+        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
     )
 
 
