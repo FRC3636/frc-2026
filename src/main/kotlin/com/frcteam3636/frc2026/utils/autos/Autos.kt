@@ -89,11 +89,14 @@ fun flipPath(
     return path
 }
 
+internal val CLIMB_RIGHT_OFFSET = Translation2d(1.0864.meters, 2.837.meters)
+internal val LEFT_OFFSET = 4.68.meters - 2.837.meters;
+
 private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
-    ClimbBlueRight(APTargetWithTolerance(Pose2d(1.0864.meters, 2.837.meters, Rotation2d(9.425.radians)))),
-    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(1.0864.meters, 2.111.meters, Rotation2d(-3.142.radians)))),
-    ClimbBlueLeft(APTargetWithTolerance(Pose2d(1.089.meters, 4.643.meters, Rotation2d(0.000.radians)))),
-    ClimbBlueRunupLeft(APTargetWithTolerance(Pose2d(1.089.meters, 5.387.meters, Rotation2d(0.000.radians)))),
+    ClimbBlueRight(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX, CLIMB_RIGHT_OFFSET.measureY, Rotation2d(9.425.radians)))),
+    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX + 0.1.meters, CLIMB_RIGHT_OFFSET.measureY, Rotation2d(-3.142.radians)))),
+    ClimbBlueLeft(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX, CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET, Rotation2d(0.000.radians)))),
+    ClimbBlueRunupLeft(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX + 0.1.meters, CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET, Rotation2d(0.000.radians)))),
 }
 
 private fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
