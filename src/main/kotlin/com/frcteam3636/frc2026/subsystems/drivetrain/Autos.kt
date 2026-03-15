@@ -9,13 +9,20 @@ import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
+import com.frcteam3636.frc2026.utils.autos.alignToClimb
+import com.frcteam3636.frc2026.utils.autos.alignToClimbRight
+import com.frcteam3636.frc2026.utils.autos.flipTarget
+import com.frcteam3636.frc2026.utils.autos.isRedAlliance
+import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.radians
+import com.frcteam3636.frc2026.utils.math.seconds
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import kotlin.math.PI
 
 interface Auto {
     fun getPath(flipH: Boolean, flipV: Boolean): Command
@@ -91,9 +98,93 @@ object TwoScore : Auto {
     }
 }
 
+object Middle : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                Drivetrain.poseEstimator.resetPose(
+                    flipTarget(
+                        Targets.StartPos.target,
+                        flipV = flipV,
+                        flipH = flipH
+                    ).reference
+                )
+            }),
+            Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+            Commands.parallel(
+                setShooterTarget(Target.AIM_AT_HUB),
+                Flywheel.runAtTarget(),
+                Indexer.index(),
+                Feeder.feed(),
+            ).withTimeout(2.seconds),
+            Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+            Commands.waitSeconds(3.0),
+            Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+            Commands.parallel(
+                setShooterTarget(Target.AIM_AT_HUB),
+                Flywheel.runAtTarget(),
+                Indexer.index(),
+                Feeder.feed(),
+            ).withTimeout(2.seconds),
+        )
+    }
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        StartPos(APTargetWithTolerance(Pose2d(3.60, 4.00, Rotation2d.kZero))),
+        Target1(APTargetWithTolerance(Pose2d(2.200.meters, 4.100.meters, Rotation2d(0.000.radians)))),
+        Target2(APTargetWithTolerance(Pose2d(0.400.meters, 0.700.meters, Rotation2d(0.000.radians)))),
+        Target3(APTargetWithTolerance(Pose2d(1.200.meters, 1.400.meters, Rotation2d(0.785.radians))))
+    }
+
+}
+
+object Climb : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command {
+        return Commands.sequence(
+            Commands.runOnce({
+                Drivetrain.poseEstimator.resetPose(
+                    flipTarget(
+                        Targets.Start.target,
+                        flipV = flipV,
+                        flipH = flipH
+                    ).reference
+                )
+            }),
+            Drivetrain.alignAndFlip(Targets.Shoot.target, flipH, flipV),
+            Commands.sequence(
+                Commands.parallel(
+                    Flywheel.runAtTarget(),
+                ).until(Flywheel.atDesiredFlywheelVelocity),
+                Commands.parallel(
+                    Flywheel.runAtTarget(),
+                    Commands.parallel(
+                        Feeder.feed(),
+                        Indexer.index()
+                    ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
+                )
+            ).withTimeout(2.seconds),
+            alignToClimbRight(isRedAlliance())
+        )
+    }
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Start(APTargetWithTolerance(Pose2d(3.700.meters, 4.100.meters, Rotation2d(0.000.radians)))),
+        Shoot(APTargetWithTolerance(Pose2d(2.279.meters, 2.892.meters, Rotation2d(0.494.radians))))
+    }
+}
+
 object Stem : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command {
         return Commands.sequence(
+            Commands.runOnce({
+                Drivetrain.poseEstimator.resetPose(
+                    flipTarget(
+                        Targets.StartPos.target,
+                        flipH = flipH,
+                        flipV = flipV
+                    ).reference
+                )
+            }),
             Intake.setPivotPosition(Intake.Position.Deployed),
             Commands.race(
                 Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
@@ -125,6 +216,7 @@ object Stem : Auto {
     }
 
     enum class Targets(val target: APTargetWithTolerance) {
+        StartPos(APTargetWithTolerance(Pose2d(3.778.meters, 0.606.meters, Rotation2d(PI.radians)))),
         Trench(
             APTargetWithTolerance(
                 Pose2d(

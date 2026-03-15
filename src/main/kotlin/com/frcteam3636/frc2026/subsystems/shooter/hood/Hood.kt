@@ -46,6 +46,8 @@ object Hood: Subsystem {
         Logger.recordOutput("Shooter/Hood/atDesiredHoodAngle", atDesiredHoodAngle)
     }
 
+
+
     fun calculateHoodAngle(distance: Distance): Angle {
         // https://www.desmos.com/calculator/504yoxmqbr
         // When we retune this probably isn't going to be logarithmic
@@ -61,6 +63,10 @@ object Hood: Subsystem {
         run {
             Logger.recordOutput("Shooter/Hood/setpoint", angle)
             io.turnToAngle(angle)
+        }
+    fun zeroEncoder(): Command =
+        run {
+            io.zeroEncoder()
         }
 
     fun setVoltage(voltage: Voltage): Command =

@@ -12,6 +12,7 @@ import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
+import com.frcteam3636.frc2026.utils.math.meters
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -33,44 +34,52 @@ fun configureBindings() {
 
     /* main bindings */
 
-//    joystickLeft.button(2).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-//    )
-    joystickLeft.button(3).whileTrue(
-//        Climber.homeRoutine()
-        Intake.intake()
+    joystickLeft.button(1).whileTrue(
+        Commands.sequence(
+            Intake.setPercent(-0.5).withTimeout(0.15),
+            Intake.intake()
+        )
     )
-    joystickLeft.button(4).onTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-//        Climber.climb()
+
+    joystickLeft.button(2).onTrue(
         Intake.setPivotPosition(Intake.Position.Stowed)
     )
-    joystickLeft.button(5).onTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-//        Climber.climb()
-        Intake.setPivotPosition(Intake.Position.Deployed)
+
+    joystickLeft.button(3).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
     )
-//    joystickLeft.button(4).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-//    )
+
+    joystickLeft.button(4).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+    )
 
 
-    joystickRight.button(4).onTrue(
+
+
+    joystickRight.button(9).whileTrue(
+        Climber.setPosition(0.183.meters).ignoringDisable(true)
+    )
+
+    joystickRight.button(3).onTrue(
         setShooterTarget(Target.STATIONARY_TURRET)
     )
-    joystickRight.button(2).onTrue(
+
+    joystickRight.button(4).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+    )
+
+    joystickRight.button(11).onTrue(
         setShooterTarget(Target.AIM_AT_HUB)
     )
-    joystickRight.button(3).onTrue(
-        setShooterTarget(Target.TUNING)
+
+    joystickRight.button(12).whileTrue(
+        Commands.parallel(
+            Indexer.outdex(),
+            Intake.outtake()
+        )
     )
 
-
-    joystickLeft.button(1).whileTrue(
-        Indexer.outdex()
-    )
-
-    joystickLeft.button(14).whileTrue(alignToClimb())
+    joystickRight.button(2).whileTrue(alignToClimb())
 
     joystickRight.button(1).whileTrue(
         Commands.sequence(
@@ -106,11 +115,24 @@ fun configureBindings() {
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
+    joystickLeft.button(14).onTrue(Commands.runOnce({
+        println("Zeroing gyro.")
+        Drivetrain.zeroGyro(isReversed = true)
+    }).ignoringDisable(true))
+
     joystickRight.button(8).onTrue(
-        Turret.zeroTurretEncoder().ignoringDisable(true)
+        Commands.parallel(
+            Turret.zeroTurretEncoder().ignoringDisable(true),
+            Hood.zeroEncoder().ignoringDisable(true),
+            Commands.runOnce({
+                println("Zeroing stuff.")
+            })
+        ).ignoringDisable(true)
+
     )
 
-    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
+
+//    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
 //    joystickLeft.button(9).whileTrue(Drivetrain.calculateWheelRadius())
 
 

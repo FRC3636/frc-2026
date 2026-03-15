@@ -30,5 +30,8 @@ enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
     None("None"),
     Stem("Stem"),
     TestAuto("Test Auto"),
-    TwoScore("TwoScore")
+    TwoScore("TwoScore"),
+    StemLeft("Stem Left"),
+    Middle("Middle"),
+    Climb("Climb"),
 }

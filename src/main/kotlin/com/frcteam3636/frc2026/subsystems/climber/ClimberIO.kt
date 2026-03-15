@@ -64,7 +64,7 @@ class ClimberIOReal : ClimberIO {
     init {
         motorConfig.apply {
             MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Coast
+                NeutralMode = NeutralModeValue.Brake
             }
 
             Slot0.apply {

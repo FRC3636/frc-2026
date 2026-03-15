@@ -16,6 +16,7 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.ROTATI
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.autos.FIELD_HEIGHT_METERS
+import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
 import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
@@ -211,7 +212,8 @@ object Drivetrain : Subsystem {
                     Pose2d.kZero, // initial pose
                     VecBuilder.fill(0.02, 0.02, 0.005),
                     // Overwrite each measurement
-                    VecBuilder.fill(0.0, 0.0, 0.0)
+                    VecBuilder.fill(0.5, 0.5, 0.5)
+//                    VecBuilder.fill(0.5, 0.5, 0.5)
             )
 
     /** Whether every sensor used for pose estimation is connected. */
@@ -417,13 +419,9 @@ object Drivetrain : Subsystem {
     val measuredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStates)
 
-    /**
-     * The chassis speeds that the drivetrain is attempting to move at.
-     *
-     * Note that the speeds are relative to the chassis, not the field.
-     */
     val measuredChassisSpeedsRelativeToField
-        get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
+//        get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
+        get() = ChassisSpeeds.fromRobotRelativeSpeeds(measuredChassisSpeeds, estimatedPose.rotation)
 
     private var desiredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(desiredModuleStates)
@@ -459,7 +457,7 @@ object Drivetrain : Subsystem {
     val field_side: FieldSide
         get() {
             var right_side =
-                    (estimatedPose.getY() > FIELD_HEIGHT_METERS / 2.0).xor(
+                    (estimatedPose.getY() > FIELD_WIDTH_METERS / 2.0).xor(
                             DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
                     )
             return if (right_side) {
@@ -615,7 +613,7 @@ object Drivetrain : Subsystem {
 
     fun alignWithAutopilot(target: APTarget): Command {
         return run {
-            val velocityVector = measuredChassisSpeeds.translation2dPerSecond.toVector()
+            val velocityVector = measuredChassisSpeedsRelativeToField.translation2dPerSecond.toVector()
             val vectorToTarget =
                     (estimatedPose.translation - target.reference.translation).toVector()
             // If we are moving away from the target, stop the robot immediately

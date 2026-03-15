@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration
-import com.ctre.phoenix6.configs.ExternalFeedbackConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
@@ -38,6 +37,7 @@ open class IntakeInputs {
 
 interface IntakeIO {
     fun setSpeed(percent: Double)
+    fun setPivotSpeed(pivot: Double)
     fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
     fun updateInputs(inputs: IntakeInputs)
@@ -102,6 +102,10 @@ class IntakeIOReal : IntakeIO {
 
     override fun setSpeed(percent: Double) {
         intakeMotor.set(percent)
+    }
+
+    override fun setPivotSpeed(pivot: Double) {
+        intakePivotMotor.set(pivot)
     }
 
     override fun setWheelMotorVoltage(voltage: Voltage) {

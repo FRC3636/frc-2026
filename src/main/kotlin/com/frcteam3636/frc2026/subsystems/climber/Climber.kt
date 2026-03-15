@@ -21,10 +21,9 @@ import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 object Climber : Subsystem {
-    enum class Position(val height: Optional<Distance>) {
-        UNHOMED(Optional.empty()),
-        STOWED(Optional.of(0.meters)),
-        GROUND_L1(Optional.of(0.183.meters)),
+    enum class Position(val height: Distance) {
+        STOWED(0.meters),
+        GROUND_L1(0.183.meters),
         // ... Might be more complicated than just set heights, we'll shee.
     }
 
@@ -35,20 +34,20 @@ object Climber : Subsystem {
 
     val inputs = LoggedClimberInputs()
 
-    var targetPosition = Position.UNHOMED
+    var targetPosition = Position.STOWED
 
     override fun periodic() {
         io.updateInputs(inputs)
         Logger.processInputs("Climb", inputs)
     }
 
-    fun setTargetPosition(position: Position): Command = runOnce { targetPosition = position }
+    fun setTargetPosition(position: Position): Command = Commands.runOnce({ targetPosition = position })
+
+    fun setPosition(pos: Distance): Command = Commands.runOnce({io.setEncoderPosition(pos)})
 
     fun goToTargetHeight(): Command = run {
-        val targetPosition = targetPosition.height.getOrNull()
-        if (targetPosition != null) {
-            io.goToHeight(targetPosition)
-        }
+        val targetPosition = targetPosition.height
+        io.goToHeight(targetPosition)
     }
 
     fun homeRoutine(): Command = Commands.sequence(

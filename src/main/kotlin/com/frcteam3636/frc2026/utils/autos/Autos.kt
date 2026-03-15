@@ -93,22 +93,57 @@ internal val CLIMB_RIGHT_OFFSET = Translation2d(1.0864.meters, 2.837.meters)
 internal val LEFT_OFFSET = 4.68.meters - 2.837.meters;
 
 private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
-    ClimbBlueRight(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX, CLIMB_RIGHT_OFFSET.measureY, Rotation2d(9.425.radians)))),
-    ClimbBlueRunupRight(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX + 0.1.meters, CLIMB_RIGHT_OFFSET.measureY, Rotation2d(-3.142.radians)))),
-    ClimbBlueLeft(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX, CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET, Rotation2d(0.000.radians)))),
-    ClimbBlueRunupLeft(APTargetWithTolerance(Pose2d(CLIMB_RIGHT_OFFSET.measureX + 0.1.meters, CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET, Rotation2d(0.000.radians)))),
+    ClimbBlueRight(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX,
+                CLIMB_RIGHT_OFFSET.measureY,
+                Rotation2d(9.425.radians)
+            )
+        )
+    ),
+    ClimbBlueRunupRight(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX + 0.4.meters,
+                CLIMB_RIGHT_OFFSET.measureY,
+                Rotation2d(-3.142.radians)
+            )
+        )
+    ),
+    ClimbBlueLeft(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX,
+                CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET,
+                Rotation2d(0.000.radians)
+            )
+        )
+    ),
+    ClimbBlueRunupLeft(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX + 0.4.meters,
+                CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET,
+                Rotation2d(0.000.radians)
+            )
+        )
+    ),
 }
 
-private fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
+fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupLeft.target, flipH = red_alliance, flipV = red_alliance),
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueLeft.target, flipH = red_alliance, flipV = red_alliance)
 )
-private fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequence(
+
+fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequence(
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupRight.target, flipH = red_alliance, flipV = red_alliance),
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRight.target, flipH = red_alliance, flipV = red_alliance)
 )
 
-fun alignToClimb(): Command  {
+fun isRedAlliance() = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
+
+fun alignToClimb(): Command {
     var red_alliance = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
     var side = Drivetrain.field_side
     var path = when (side) {
@@ -116,8 +151,11 @@ fun alignToClimb(): Command  {
         Drivetrain.FieldSide.Right -> alignToClimbRight(red_alliance)
     }
 
-    return Commands.sequence(Commands.parallel(
-        path,
-        Climber.setTargetPosition(Climber.Position.GROUND_L1)
-    )) // Climber.setTargetPosition(Climber.Position.STOWED)
+    return Commands.sequence(
+        Commands.parallel(
+            Climber.setTargetPosition(Climber.Position.GROUND_L1),
+            path,
+            Climber.setTargetPosition(Climber.Position.STOWED)
+        ),
+    )
 }

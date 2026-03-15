@@ -37,6 +37,7 @@ interface HoodIO {
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: HoodInputs)
     fun setBrakeMode(enabled: Boolean)
+    fun zeroEncoder()
     val signals: Array<BaseStatusSignal>
         get() = emptyArray()
 }
@@ -127,6 +128,10 @@ class HoodIOReal: HoodIO {
         )
     }
 
+    override fun zeroEncoder() {
+        motor.setPosition(30.degrees)
+    }
+
     companion object Constants {
         private val ENCODER_DISCONTINUITY_POINT = 0.8
         private val MAGNET_OFFSET = 0.8349
@@ -136,7 +141,7 @@ class HoodIOReal: HoodIO {
         private val PROFILE_VELOCITY = 3.0.rotationsPerSecond
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
-        private val MAX_HOOD_ANGLE = 50.degrees
+        private val MAX_HOOD_ANGLE = 45.degrees
         private val MIN_HOOD_ANGLE = 32.degrees
     }
 }
@@ -167,5 +172,9 @@ class HoodIOSim: HoodIO {
     override fun setBrakeMode(enabled: Boolean) {
         breakMode = enabled
     }
+
+    override fun zeroEncoder() {
+    }
+
 
 }

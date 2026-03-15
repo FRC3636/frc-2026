@@ -10,7 +10,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.math.absoluteValue
 
 const val TAU = PI * 2
 const val GRAVITY = 9.81
@@ -36,19 +35,34 @@ fun Angle.clamp(minimum: Angle, maximum: Angle): Angle {
         return this
     }
 }
+
+//fun Angle.clampDeadzone(minimum: Angle, maximum: Angle): Angle {
+//    if (this < maximum && this > minimum) {
+//        return this
+//    }
+//
+//    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).absoluteValue.radians
+//    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).absoluteValue.radians
+//
+//    if (dist_to_minimum < dist_to_maximum) {
+//        return minimum
+//    } else {
+//        return maximum
+//    }
+//}
+
 fun Angle.clampDeadzone(minimum: Angle, maximum: Angle): Angle {
-    if (this < maximum && this > minimum) {
-        return this
+    if (this in minimum..maximum) { return this }
+
+    fun shortestDistance(comparedAngle: Angle): Double {
+        val difference = (this.inRadians() - comparedAngle.inRadians().mod(360.0))
+        return if (difference > 180) (difference - 360.0) else difference
     }
 
-    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).absoluteValue.radians
-    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).absoluteValue.radians
+    val distToMinimum = kotlin.math.abs(shortestDistance(minimum))
+    val distToMaximum = kotlin.math.abs(shortestDistance(maximum))
 
-    if (dist_to_minimum < dist_to_maximum) {
-        return minimum
-    } else {
-        return maximum
-    }
+    return if (distToMinimum < distToMaximum) minimum else maximum
 }
 
 fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {

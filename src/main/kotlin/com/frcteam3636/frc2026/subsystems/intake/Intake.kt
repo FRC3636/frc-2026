@@ -6,6 +6,7 @@ import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import org.littletonrobotics.junction.Logger
 
@@ -14,8 +15,8 @@ object Intake : Subsystem {
     var intakeDown = false
 
     enum class Position(val angle: Angle) {
-        Stowed(0.rotations),
-        Deployed((-0.19).rotations),
+        Stowed((-0.54).degrees),
+        Deployed((-0.67).rotations),
     }
 
     private val io: IntakeIO =
@@ -32,6 +33,11 @@ object Intake : Subsystem {
             Logger.recordOutput("Intake/Pivot/Active Setpoint", position.angle)
             io.setPivotAngle(position.angle)
         }
+
+    fun setPercent(percent: Double): Command = Commands.runEnd(
+        {io.setPivotSpeed(percent)},
+        {io.setPivotSpeed(0.0)}
+    )
 
     fun intake(): Command =
             runEnd(

@@ -187,9 +187,9 @@ val directionToHub: Angle
     get() = atan2(shooterToHub.y, shooterToHub.x).radians
 
 // used for populating interpolation tables
-val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 35.0)
+val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
 val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
-val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", -40.0)
+val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", 0.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB (
