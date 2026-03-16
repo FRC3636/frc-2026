@@ -10,6 +10,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
+import com.frcteam3636.frc2026.utils.autos.alignToClimbLeft
 import com.frcteam3636.frc2026.utils.autos.alignToClimbRight
 import com.frcteam3636.frc2026.utils.autos.flipTarget
 import com.frcteam3636.frc2026.utils.autos.isRedAlliance
@@ -22,6 +23,7 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
+import edu.wpi.first.wpilibj2.command.Commands.runOnce
 import kotlin.math.PI
 
 interface Auto {
@@ -163,13 +165,13 @@ object Climb : Auto {
                     ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
                 )
             ).withTimeout(2.seconds),
-            alignToClimbRight(isRedAlliance())
+            alignToClimbLeft(isRedAlliance())
         )
     }
 
     enum class Targets(val target: APTargetWithTolerance) {
         Start(APTargetWithTolerance(Pose2d(3.700.meters, 4.100.meters, Rotation2d(0.000.radians)))),
-        Shoot(APTargetWithTolerance(Pose2d(2.279.meters, 2.892.meters, Rotation2d(0.494.radians))))
+        Shoot(APTargetWithTolerance(Pose2d(1.97.meters, 4.73.meters, Rotation2d((-0.12).radians))))
     }
 }
 
@@ -185,7 +187,10 @@ object Stem : Auto {
                     ).reference
                 )
             }),
-            Intake.setPivotPosition(Intake.Position.Deployed),
+            Commands.parallel(
+                Intake.deploy(),
+                runOnce({ Intake.intakeDown = true })
+            ),
             Commands.race(
                 Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
                 Intake.intake(),

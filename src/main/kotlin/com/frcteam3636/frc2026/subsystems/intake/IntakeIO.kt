@@ -39,6 +39,7 @@ interface IntakeIO {
     fun setSpeed(percent: Double)
     fun setPivotSpeed(pivot: Double)
     fun setWheelMotorVoltage(voltage: Voltage)
+    fun setPivotMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
     fun updateInputs(inputs: IntakeInputs)
 }
@@ -49,11 +50,11 @@ class IntakeIOReal : IntakeIO {
         val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
         val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
         val PROFILE_JERK = 0.0
-        val ENCODER_TO_PIVOT_GEAR_RATIO = 2.0
+        val ENCODER_TO_PIVOT_GEAR_RATIO = 32.0 / 12.0
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
-        val MAGNET_OFFSET = 0.1311.rotations
+        val MAGNET_OFFSET = 0.130359.rotations
 
-        val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
+        val LEFT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
         val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
     }
 
@@ -82,7 +83,11 @@ class IntakeIOReal : IntakeIO {
         })
     }
     private val intakeMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
+        configurator.apply(
+            TalonFXConfiguration().apply {
+                MotorOutput.Inverted = LEFT_MOTOR_DIRECTION
+            }
+        )
     }
 
 
@@ -91,6 +96,7 @@ class IntakeIOReal : IntakeIO {
             configurator.apply(CANcoderConfiguration().apply {
                 MagnetSensor.apply {
                     MagnetOffset = MAGNET_OFFSET.inRotations()
+                    AbsoluteSensorDiscontinuityPoint = 0.1
                 }
 //                ExternalFeedbackConfigs().apply {
 //                    SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
@@ -110,6 +116,10 @@ class IntakeIOReal : IntakeIO {
 
     override fun setWheelMotorVoltage(voltage: Voltage) {
         intakeMotor.setVoltage(voltage.inVolts())
+    }
+
+    override fun setPivotMotorVoltage(voltage: Voltage) {
+        intakePivotMotor.setVoltage(voltage.inVolts())
     }
 
     override fun setPivotAngle(angle: Angle) {

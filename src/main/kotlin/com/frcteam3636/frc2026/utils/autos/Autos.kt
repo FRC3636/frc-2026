@@ -89,7 +89,7 @@ fun flipPath(
     return path
 }
 
-internal val CLIMB_RIGHT_OFFSET = Translation2d(1.0864.meters, 2.837.meters)
+internal val CLIMB_RIGHT_OFFSET = Translation2d(0.9864.meters, 2.837.meters)
 internal val LEFT_OFFSET = 4.68.meters - 2.837.meters;
 
 private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
@@ -105,7 +105,7 @@ private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
     ClimbBlueRunupRight(
         APTargetWithTolerance(
             Pose2d(
-                CLIMB_RIGHT_OFFSET.measureX + 0.4.meters,
+                CLIMB_RIGHT_OFFSET.measureX + 0.7.meters,
                 CLIMB_RIGHT_OFFSET.measureY,
                 Rotation2d(-3.142.radians)
             )
@@ -123,7 +123,7 @@ private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
     ClimbBlueRunupLeft(
         APTargetWithTolerance(
             Pose2d(
-                CLIMB_RIGHT_OFFSET.measureX + 0.4.meters,
+                CLIMB_RIGHT_OFFSET.measureX + 0.7.meters,
                 CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET,
                 Rotation2d(0.000.radians)
             )

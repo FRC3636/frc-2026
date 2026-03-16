@@ -137,6 +137,7 @@ class LimelightPoseProvider(
 
     private fun updateCurrentMeasurements(): MutableList<LimelightMeasurement> {
         val measurements: MutableList<LimelightMeasurement> = mutableListOf()
+//        val currentAlgorithm =
 
         if (!isLL4) {
             gyroState[0] = gyroAngle.degrees
@@ -197,6 +198,15 @@ class LimelightPoseProvider(
 
             measurements.add(measurement)
         }
+
+//        if (RobotState.beforeFirstEnable) {
+//            var gyroOffset = 0.0
+//            for (measurement in measurements) {
+//                gyroOffset += measurement.poseMeasurement.pose.rotation.radians
+//            }
+//            gyroOffset /= measurements.size
+//            Drivetrain.zeroGyro(offset = Rotation2d(gyroOffset.radians))
+//        }
 
 //        for (rawSample in megatag2Subscriber.readQueue()) {
 //            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue

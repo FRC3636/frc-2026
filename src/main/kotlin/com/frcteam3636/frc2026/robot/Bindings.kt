@@ -13,6 +13,7 @@ import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -35,14 +36,18 @@ fun configureBindings() {
     /* main bindings */
 
     joystickLeft.button(1).whileTrue(
-        Commands.sequence(
-            Intake.setPercent(-0.5).withTimeout(0.15),
-            Intake.intake()
-        )
+        Intake.intake()
     )
 
-    joystickLeft.button(2).onTrue(
-        Intake.setPivotPosition(Intake.Position.Stowed)
+    joystickLeft.button(2).whileTrue(
+        Commands.parallel(
+            Intake.deploy(),
+            Commands.runOnce({
+              Intake.intakeDown = true
+            })
+        )
+//        Intake.setPivotPosition(Intake.Position.Stowed)
+
     )
 
     joystickLeft.button(3).whileTrue(
@@ -53,7 +58,12 @@ fun configureBindings() {
         Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
     )
 
-
+    joystickLeft.button(5).whileTrue(Commands.parallel(
+        Intake.stow(),
+        Commands.runOnce({
+            Intake.intakeDown = false
+        })
+    ))
 
 
     joystickRight.button(9).whileTrue(
@@ -108,6 +118,8 @@ fun configureBindings() {
 
     Climber.defaultCommand = Climber.goToTargetHeight()
 
+    Intake.defaultCommand = Intake.maintainPosition()
+
     /* zeroing commands */
 
     joystickLeft.button(8).onTrue(Commands.runOnce({
@@ -123,9 +135,8 @@ fun configureBindings() {
     joystickRight.button(8).onTrue(
         Commands.parallel(
             Turret.zeroTurretEncoder().ignoringDisable(true),
-            Hood.zeroEncoder().ignoringDisable(true),
             Commands.runOnce({
-                println("Zeroing stuff.")
+                println("Zeroing turret.")
             })
         ).ignoringDisable(true)
 
