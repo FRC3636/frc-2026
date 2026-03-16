@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+// mechanical advantage template: https://github.com/Mechanical-Advantage/AdvantageKit/blob/main/template_projects/sources/vision/src/main/java/frc/robot/subsystems/vision/VisionIOLimelight.java
 
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
@@ -92,7 +93,7 @@ class LimelightPoseProvider(
 
     private var gyroState = DoubleArray(6)
 
-    private var isThrottled = false
+    private var isThrottled = true
 
     private var wasIMUChanged = false
 
@@ -141,14 +142,14 @@ class LimelightPoseProvider(
 
         if (!isLL4) {
             gyroState[0] = gyroAngle.degrees
-            gyroState[1] = gyroVelocity.inDegreesPerSecond()
+//            gyroState[1] = gyroVelocity.inDegreesPerSecond()
             gyroPublisher.accept(gyroState)
             NetworkTableInstance.getDefault().flush()
         } else {
             // Idk why this was set to before first enable, we need to update the gyro pose every frame right?
             gyroState[0] = gyroAngle.degrees
             // Also we weren't setting yaw per second which I think is important for MT2
-            gyroState[1] = gyroVelocity.inDegreesPerSecond()
+//            gyroState[1] = gyroVelocity.inDegreesPerSecond()
             gyroPublisher.accept(gyroState)
             NetworkTableInstance.getDefault().flush()
 
@@ -159,19 +160,19 @@ class LimelightPoseProvider(
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
                 throttlePublisher.accept(100.toLong())
                 isThrottled = true
-            } else if (Robot.isEnabled && isThrottled) {
+            } else if (isThrottled) {
                 isThrottled = false
                 throttlePublisher.accept(0.toLong())
             }
         }
 
         if ((!RobotState.beforeFirstEnable) && (isLL4 && !wasIMUChanged)) {
-            imuModePublisher.accept(0.toLong()) // use robot gyro to seed IMU
+            imuModePublisher.accept(1.toLong()) // use robot gyro to seed IMU
             wasIMUChanged = true
         }
 
         for (rawSample in megatag1Subscriber.readQueue()) {
-//            if (rawSample.value.size == 0 || !RobotState.beforeFirstEnable) continue
+            if (rawSample.value.size == 0 || !RobotState.beforeFirstEnable) continue
             val measurement = LimelightMeasurement()
 
             val tagCount = rawSample.value[7].toInt()
@@ -191,7 +192,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
                 APRIL_TAG_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
@@ -199,35 +200,26 @@ class LimelightPoseProvider(
             measurements.add(measurement)
         }
 
-//        if (RobotState.beforeFirstEnable) {
-//            var gyroOffset = 0.0
-//            for (measurement in measurements) {
-//                gyroOffset += measurement.poseMeasurement.pose.rotation.radians
-//            }
-//            gyroOffset /= measurements.size
-//            Drivetrain.zeroGyro(offset = Rotation2d(gyroOffset.radians))
-//        }
+        for (rawSample in megatag2Subscriber.readQueue()) {
+            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
+            val measurement = LimelightMeasurement()
+            val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0
+            val tagCount = rawSample.value[7].toInt()
+            if (tagCount == 0 || highSpeed) measurement.isLowQuality = true
 
-//        for (rawSample in megatag2Subscriber.readQueue()) {
-//            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
-//            val measurement = LimelightMeasurement()
-//            val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0
-//            val tagCount = rawSample.value[7].toInt()
-//            if (tagCount == 0 || highSpeed) measurement.isLowQuality = true
-//
-//            for (i in 11 until rawSample.value.size step 7) {
-//                measurement.observedTags.add(rawSample.value[i].toInt())
-//            }
-//
-//            measurement.poseMeasurement = AbsolutePoseMeasurement(
-//                parsePose(rawSample.value),
-//                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
-//                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
-//                measurement.isLowQuality
-//            )
-//
-//            measurements.add(measurement)
-//        }
+            for (i in 11 until rawSample.value.size step 7) {
+                measurement.observedTags.add(rawSample.value[i].toInt())
+            }
+
+            measurement.poseMeasurement = AbsolutePoseMeasurement(
+                parsePose(rawSample.value),
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
+                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
+                measurement.isLowQuality
+            )
+
+            measurements.add(measurement)
+        }
 
         return measurements
     }
