@@ -3,31 +3,22 @@ package com.frcteam3636.frc2026.subsystems.shooter.turret
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.shooter.FeedTranslation
-import com.frcteam3636.frc2026.subsystems.shooter.Zones
 import com.frcteam3636.frc2026.subsystems.shooter.directionToHub
-import com.frcteam3636.frc2026.subsystems.shooter.hubTranslation
 import com.frcteam3636.frc2026.subsystems.shooter.shooterFieldPose
 import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
 import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
-import com.frcteam3636.frc2026.utils.autos.flipHorizontally
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
-import com.frcteam3636.frc2026.utils.math.inMeters
-import com.frcteam3636.frc2026.utils.math.meters
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.abs
 
 object Turret : Subsystem {
@@ -70,28 +61,6 @@ object Turret : Subsystem {
         }
 
     val atTargetTurretAngle: Trigger = Trigger { abs(inputs.angle.inDegrees() - shooterProfile.turretAngle.inDegrees()) < Constants.TURRET_TOLERANCE }
-
-    fun getClosetTarget() : Translation2d {
-        var ourAllianceZone = Zones.BlueAllianceZone
-        var opposingAllianceZone = Zones.RedAllianceZone
-
-        if (DriverStation.getAlliance().getOrNull() == Alliance.Red){
-            ourAllianceZone = Zones.RedAllianceZone
-            opposingAllianceZone = Zones.BlueAllianceZone
-        }
-
-        val target =  when (Drivetrain.estimatedPose.x) {
-            in ourAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> hubTranslation.toTranslation2d()
-            in opposingAllianceZone.startY.inMeters()..ourAllianceZone.endY.inMeters() -> FeedTranslation.RightSideNeutralZone.target
-            else -> FeedTranslation.RightSideAllianceZone.target
-        }
-
-        if (Drivetrain.estimatedPose.translation.y < 4.035.meters.inMeters()) {
-            return target.flipHorizontally()
-        }
-
-        return target
-    }
 
     fun setTargetAngle(angle: Angle): Command =
         run {
