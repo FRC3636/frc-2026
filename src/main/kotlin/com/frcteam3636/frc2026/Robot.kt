@@ -49,7 +49,7 @@ import kotlin.io.path.exists
  */
 object Robot : LoggedRobot() {
     private val controller = CommandXboxController(2)
-    private val joystickLeft = CommandJoystick(0)
+//    private val joystickLeft = CommandJoystick(0)
     private val joystickRight = CommandJoystick(1)
 
     @Suppress("unused")
@@ -193,12 +193,12 @@ object Robot : LoggedRobot() {
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
 //        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
-        Drivetrain.defaultCommand = Drivetrain.driveWithController(controller)
+//        Drivetrain.defaultCommand = Drivetrain.driveWithController(controller)
         // (The button with the yellow tape on it)
-        joystickLeft.button(8).onTrue(Commands.runOnce({
-            println("Zeroing gyro.")
-            Drivetrain.zeroGyro()
-        }).ignoringDisable(true))
+//        joystickLeft.button(8).onTrue(Commands.runOnce({
+//            println("Zeroing gyro.")
+//            Drivetrain.zeroGyro()
+//        }).ignoringDisable(true))
 
         controller.b().onTrue(Commands.runOnce( {
             println("Zeroing gyro.")
@@ -246,7 +246,7 @@ object Robot : LoggedRobot() {
         Diagnostics.periodic()
         Diagnostics.report(rioCANBus)
         Diagnostics.report(canivore)
-        Diagnostics.reportDSPeripheral(joystickLeft.hid, isController = false)
+//        Diagnostics.reportDSPeripheral(joystickLeft.hid, isController = false)
         Diagnostics.reportDSPeripheral(joystickRight.hid, isController = false)
         Diagnostics.reportDSPeripheral(controller.hid, isController = true)
     }

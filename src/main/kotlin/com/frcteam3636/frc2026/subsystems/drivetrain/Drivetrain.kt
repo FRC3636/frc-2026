@@ -1,11 +1,8 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
-import com.ctre.phoenix6.BaseStatusSignal
-import com.ctre.phoenix6.SignalLogger
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.REVMotorControllerId
 import com.frcteam3636.frc2026.Robot
-import com.frcteam3636.frc2026.Robot.odometryLock
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
@@ -24,10 +21,8 @@ import com.therekrab.autopilot.APTarget
 import com.therekrab.autopilot.Autopilot
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
-import edu.wpi.first.math.filter.SlewRateLimiter
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.geometry.Transform2d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -35,18 +30,14 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.littletonrobotics.junction.Logger
 import org.photonvision.PhotonCamera
-import javax.xml.crypto.dsig.Transform
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
@@ -200,49 +191,62 @@ object Drivetrain : Subsystem {
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     val fuelDetector = PhotonCamera("color camera")
-    val fuelTransforms: Array<Transform3d>
+    val cameraDetections
+        get() = fuelDetector.allUnreadResults.last().targets
+
+    val fuelYaws: Array<Double>
         get() {
-            val detections = fuelDetector.allUnreadResults.last().targets
-            val transforms = Array(detections.size) { Transform3d() }
+            val detections = cameraDetections
+            val yaws = Array(detections.size) { 0.0 }
             for (i in 0 until detections.size) {
-                transforms[i] = detections[i].bestCameraToTarget
+                yaws[i] = detections[i].yaw
             }
-            return transforms
+            return yaws
+        }
+
+    val fuelPitches: Array<Double>
+        get() {
+            val detections = cameraDetections
+            val pitches = Array(detections.size) { 0.0 }
+            for (i in 0 until detections.size) {
+                pitches[i] = detections[i].pitch
+            }
+            return pitches
         }
 
     fun driveToLargestFuelCluster(): Command =
         run {
             Logger.recordOutput("photonvision/Target Fuel Started", true)
-            println("happiness")
-            val transforms = fuelTransforms
-            if (!transforms.none()) {
-                val groupedTransforms = transforms
-                    .groupBy { floor(atan2(it.y, it.x).radians.inDegrees() / 9.0) }
-                val largestCluster = groupedTransforms.maxByOrNull { it.value.size }!!.value
-                val angles = Array(largestCluster.size) { 0.0 }
+            val yaws = fuelYaws
+            val pitches = fuelPitches
+            if (!yaws.none()) {
+                val groupedYaws = yaws
+                    .groupBy { floor(it.radians.inDegrees() / 9.0) }
+                val largestCluster = groupedYaws.maxByOrNull { it.value.size }!!.value
+                val groupedPitches = Array(largestCluster.size) { 0.0 }
                 for (i in largestCluster.indices) {
-                    angles[i] = tan(largestCluster[i].y / largestCluster[i].x)
+                    groupedPitches[i] = pitches[i]
                 }
-                val furthestFuel = largestCluster.minByOrNull { atan2(it.z, hypot(it.x, it.y)) }!!
-                val distance =
-                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(
-                        furthestFuel.z / hypot(
-                            furthestFuel.x,
-                            furthestFuel.y
-                        )
-                    )).inMeters()
-                Logger.recordOutput("photonvision/Target Fuel Distance", distance)
-                val targetHorizontalAngle = angles.average()
-                val targetPose = Pose2d(
-                    estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
-                    Rotation2d.k180deg,
-                )
-                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
+                val smallestPitch = groupedPitches.maxByOrNull { it }!!
+                val distance = (Constants.INTAKE_CAMERA_HEIGHT - Constants.FUEL_RADIUS) / tan(smallestPitch + Constants.INTAKE_CAMERA_PITCH.inRadians())
+                Logger.recordOutput("photonvision/Largest Cluster Distance", distance)
+                val targetHorizontalAngle = largestCluster.average()
+                Logger.recordOutput("photonvision/Largest Cluster Yaw", targetHorizontalAngle)
+//                val targetPose = Pose2d(
+//                    estimatedPose.translation + Translation2d(distance.inMeters(), Rotation2d(targetHorizontalAngle.degrees)),
+//                    Rotation2d.k180deg,
+//                )
+//                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
 //                alignWithAutopilot(APTarget(targetPose))
             }
         }
 
     override fun periodic() {
+//        odometryLock.lock()
+//        io.updateInputs(inputs)
+//        Logger.processInputs("Drivetrain", inputs)
+        Logger.recordOutput("Drivetrain/happiness", true)
+//        Logger.recordOutput("photonvision/color camera/fuel transform", fuelTransforms[0])
 //        if (Robot.model != Robot.Model.SIMULATION) {
 //            try {
 //                odometryLock.lock()
@@ -282,7 +286,8 @@ object Drivetrain : Subsystem {
 //            } finally {
 //                odometryLock.unlock()
 //            }
-//        } else {
+//        }
+        //        else {
 //            io.updateInputs(inputs)
 //            Logger.processInputs("Drivetrain", inputs)
 //            rawGyroRotation = inputs.gyroRotation
@@ -616,7 +621,9 @@ object Drivetrain : Subsystem {
     @Suppress("unused")
     internal object Constants {
 
-        val INTAKE_LIMELIGHT_HEIGHT = .25.meters
+        val INTAKE_CAMERA_OFFSET = Translation2d((-25.5).inches, 0.0.inches)
+        val INTAKE_CAMERA_HEIGHT = .25.meters
+        val INTAKE_CAMERA_PITCH = (-20).degrees
         val FUEL_RADIUS = .075.meters
 
         // Translation/rotation coefficient for teleoperated driver controls
