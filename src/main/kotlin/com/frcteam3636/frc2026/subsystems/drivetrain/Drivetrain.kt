@@ -199,7 +199,7 @@ object Drivetrain : Subsystem {
     val modulePositions = Array(4) { SwerveModulePosition() }
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
-    val fuelDetector = PhotonCamera("color_camera")
+    val fuelDetector = PhotonCamera("color camera")
     val fuelTransforms: Array<Transform3d>
         get() {
             val detections = fuelDetector.allUnreadResults.last().targets
@@ -211,8 +211,9 @@ object Drivetrain : Subsystem {
         }
 
     fun driveToLargestFuelCluster(): Command =
-        Commands.run({
-            Logger.recordOutput("Drivetrain/TargetFuelStarted", true)
+        run {
+            Logger.recordOutput("photonvision/Target Fuel Started", true)
+            println("happiness")
             val transforms = fuelTransforms
             if (!transforms.none()) {
                 val groupedTransforms = transforms
@@ -224,17 +225,22 @@ object Drivetrain : Subsystem {
                 }
                 val furthestFuel = largestCluster.minByOrNull { atan2(it.z, hypot(it.x, it.y)) }!!
                 val distance =
-                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(furthestFuel.z / hypot(furthestFuel.x, furthestFuel.y))).inMeters()
-                Logger.recordOutput("Drivetrain/TargetFuelDistance", distance)
+                    ((Constants.INTAKE_LIMELIGHT_HEIGHT - Constants.FUEL_RADIUS) / tan(
+                        furthestFuel.z / hypot(
+                            furthestFuel.x,
+                            furthestFuel.y
+                        )
+                    )).inMeters()
+                Logger.recordOutput("photonvision/Target Fuel Distance", distance)
                 val targetHorizontalAngle = angles.average()
                 val targetPose = Pose2d(
                     estimatedPose.translation + Translation2d(distance, targetHorizontalAngle),
                     Rotation2d.k180deg,
                 )
-                Logger.recordOutput("Drivetrain/TargetFuelPose", targetPose)
-                alignWithAutopilot(APTarget(targetPose))
+                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
+//                alignWithAutopilot(APTarget(targetPose))
             }
-        })
+        }
 
     override fun periodic() {
 //        if (Robot.model != Robot.Model.SIMULATION) {
