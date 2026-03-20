@@ -8,6 +8,7 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.controller.SimpleMotorFeedforward
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.RPM
@@ -30,6 +31,7 @@ interface FlywheelIO {
     fun setVoltage(volts: Voltage)
     fun setSpeed(percentage: Double)
     fun setVelocity(velocity: AngularVelocity)
+    fun ffGains() : SimpleMotorFeedforward
 }
 
 class FlywheelIOReal : FlywheelIO {
@@ -50,6 +52,7 @@ class FlywheelIOReal : FlywheelIO {
         })
     }
 
+    private val ffControllerLoaded = SimpleMotorFeedforward(FEED_FORWARD_LOAD_GAINS)
     private val ffController = SimpleMotorFeedforward(FEED_FORWARD_GAINS)
     private val pidController = PIDController(PID_GAINS)
 
@@ -72,14 +75,24 @@ class FlywheelIOReal : FlywheelIO {
         motor.set(percentage)
     }
 
+    override fun ffGains(): SimpleMotorFeedforward {
+        if (motor.supplyCurrent.value > CURRENT_UNDER_LOAD && Flywheel.atDesiredFlywheelVelocity.asBoolean) {
+            return ffControllerLoaded
+        }
+        return ffController
+    }
+
     override fun setVelocity(velocity: AngularVelocity){
+
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-        motor.setVoltage(ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM()))
+        motor.setVoltage(ffGains().calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM()))
     }
 
     companion object Constants{
         val PID_GAINS = PIDGains(0.0075,0.0,0.0)
         val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.002080215363677995 * (2000.0 / 1973.5), 0.03)
+        val FEED_FORWARD_LOAD_GAINS = MotorFFGains(0.24428, 0.002080215363677995 * (2000.0 / 1973.5), 0.03)
+        val CURRENT_UNDER_LOAD = 10.amps
     }
 }
 
