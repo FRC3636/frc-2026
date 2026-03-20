@@ -22,6 +22,7 @@ open class FlywheelInputs {
 //    var linearVelocity = MetersPerSecond.zero()!!
     var targetAngularVelocity = RPM.zero()!!
     var angle = Rotations.zero()!!
+    var current = 0.amps
 }
 
 interface FlywheelIO {
@@ -60,6 +61,7 @@ class FlywheelIOReal : FlywheelIO {
 //        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
         inputs.angle = motor.position.value
         inputs.targetAngularVelocity = targetVelocity
+        inputs.current = motor.supplyCurrent.value
     }
 
     override fun setVoltage(volts: Voltage) {

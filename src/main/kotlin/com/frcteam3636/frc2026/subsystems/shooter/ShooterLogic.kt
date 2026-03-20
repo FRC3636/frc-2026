@@ -280,7 +280,10 @@ enum class Target(val profile: () -> ShooterProfile) {
     ),
     TUNING (
         { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
-    )
+    ),
+    HUNDRED_RPM (
+        {ShooterProfile(0.degrees,40.degrees,100.rpm)}
+    ),
 }
 
 enum class FeedTranslation(val target : Translation2d) {
