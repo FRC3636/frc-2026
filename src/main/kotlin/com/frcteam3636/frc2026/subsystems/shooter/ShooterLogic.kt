@@ -57,75 +57,64 @@ object ShooterCalculator {
             )
         }
 
-    fun aimAtHub(compensateForMotion: Boolean): ShooterProfile {
-        val vector = if (compensateForMotion) fieldRelativeLaunchVector else stationaryLaunchVector
+    fun aimAtHub(): ShooterProfile {
+        val distance: Distance = shooterToHub.norm.meters
+        val baseFlywheelRpm = Flywheel.calculateFlywheelVelocity(distance).inRPM()
+        val baseHoodAngle = Hood.calculateHoodAngle(distance).inRadians()
 
-        val fieldDirection = atan2(vector.y, vector.x).radians
-        val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
+        val launchSpeed = baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
+        val horizontalSpeed = launchSpeed * cos(baseHoodAngle)
+        val verticalSpeed = launchSpeed * sin(baseHoodAngle)
 
-        val horizontalMagnitude = hypot(vector.x, vector.y)
-        val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
+        val fieldDirection = atan2(shooterToHub.y, shooterToHub.x).radians
+        val turretAngle = (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians)
+            .IEEErem(2 * PI).radians
 
-        val requiredFlywheelSpeedRPM = vector.norm.metersPerSecond.toAngular(FLYWHEEL_RADIUS * FLYWHEEL_TO_FUEL_RATIO).inRPM()
-
-        return ShooterProfile(turretAngleRobotRelative, hoodAngle, requiredFlywheelSpeedRPM.rpm)
+        return ShooterProfile(turretAngle, baseHoodAngle.radians, baseFlywheelRpm.rpm)
     }
 
-    // TO BE TESTED AFTER AIM AT HUB
-    fun aimAtTarget(targetPosition: Translation3d, compensateForMotion: Boolean = false): ShooterProfile {
-
-        val shooterPosition3d = Translation3d (
+    fun aimAtHubShootOnMove(): ShooterProfile {
+        val hubPos = hubTranslation
+        val shooterPos = Translation3d (
             shooterFieldPose.translation.x.meters,
             shooterFieldPose.translation.y.meters,
             SHOOTER_HEIGHT
         )
 
-        val relativeTargetVector = targetPosition.minus(shooterPosition3d)
-        val deltaX = relativeTargetVector.x
-        val deltaY = relativeTargetVector.y
-        val deltaZ = relativeTargetVector.z
-        val horizontalDistance = hypot(deltaX, deltaY)
+        // Robot velocity in field coordinates (m/s)
+        val robotVel = Drivetrain.measuredChassisSpeedsRelativeToField
+        val robotVelVector = Vector3d(robotVel.vxMetersPerSecond, robotVel.vyMetersPerSecond, 0.0)
 
-        val minimumLaunchSpeedSquared = GRAVITY.inMetersPerSecondPerSecond() * (deltaZ + sqrt(horizontalDistance.pow(2) + deltaZ.pow(2)))
-        val minimumLaunchSpeed = sqrt(minimumLaunchSpeedSquared).metersPerSecond
+        // Horizontal distance from shooter to hub
+        val dx = hubPos.x - shooterPos.x
+        val dy = hubPos.y - shooterPos.y
+        val dz = hubPos.z - shooterPos.z
+        val shooterToHubDistance = hypot(dx, dy).meters
 
-        // The formula for theta at minimum speed is tan(theta) = (deltaZ + sqrt(distance^2 + deltaZ^2)) / distance
-        val tanTheta = (deltaZ + sqrt(horizontalDistance.pow(2) + deltaZ.pow(2))) / horizontalDistance
-        val stationaryLaunchHoodAngle = atan(tanTheta).radians
+        // Time of flight is an estimate
+        val stationaryDistance = shooterToHubDistance
+        val stationaryFlywheelRpm = Flywheel.calculateFlywheelVelocity(stationaryDistance).inRPM()
+        val stationaryHoodAngle = Hood.calculateHoodAngle(stationaryDistance).inRadians()
+        val stationaryLaunchSpeed = stationaryFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
+        val stationaryHorizontalBallSpeed = stationaryLaunchSpeed * cos(stationaryHoodAngle)
+        val timeOfFlight = if (stationaryHorizontalBallSpeed > 0) shooterToHubDistance.inMeters() / stationaryHorizontalBallSpeed else 1.0
 
-        val horizontalLaunchSpeed = minimumLaunchSpeed.inMetersPerSecond() * cos(stationaryLaunchHoodAngle.inRadians())
-        val verticalLaunchSpeed = minimumLaunchSpeed.inMetersPerSecond() * sin(stationaryLaunchHoodAngle.inRadians())
+        val ballVelocityFieldRelative = Vector3d(dx / timeOfFlight, dy / timeOfFlight, dz / timeOfFlight)
 
-        val directionToTarget = atan2(deltaY, deltaX).radians
+        val launchVelocityRobotRelative = ballVelocityFieldRelative.minus(robotVelVector)
 
-        val stationaryLaunchVectorFieldRelative = Vector3d(
-            horizontalLaunchSpeed * cos(directionToTarget.inRadians()),
-            horizontalLaunchSpeed * sin(directionToTarget.inRadians()),
-            verticalLaunchSpeed
-        )
+        // Compute turret angle (relative to robot forward)
+        val turretAngle = atan2(launchVelocityRobotRelative.y, launchVelocityRobotRelative.x).radians
 
-        val fieldRelativeLaunchVelocity = if (compensateForMotion) {
-            val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField.translation2dPerSecond
-            Vector3d(
-                stationaryLaunchVectorFieldRelative.x - robotVelocity.x,
-                stationaryLaunchVectorFieldRelative.y - robotVelocity.y,
-                stationaryLaunchVectorFieldRelative.z   // robot vertical velocity should always be zero
-            )
-        } else {
-            stationaryLaunchVectorFieldRelative
-        }
+        // Compute required launch speed and hood angle
+        val launchSpeed = hypot(launchVelocityRobotRelative.x, launchVelocityRobotRelative.y, launchVelocityRobotRelative.z)
+        val horizontalSpeed = hypot(launchVelocityRobotRelative.x, launchVelocityRobotRelative.y)
+        val hoodAngle = atan2(launchVelocityRobotRelative.z, horizontalSpeed).radians
 
-        val fieldDirection = atan2(fieldRelativeLaunchVelocity.y, fieldRelativeLaunchVelocity.x).radians
-        val turretAngleRobotRelative = (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
+        // Convert launch speed to flywheel RPM
+        val requiredRPM = launchSpeed / (2.0 * PI * FLYWHEEL_RADIUS.inMeters() * FLYWHEEL_TO_FUEL_RATIO / 60.0)
 
-        val horizontalSpeedMagnitude = hypot(fieldRelativeLaunchVelocity.x, fieldRelativeLaunchVelocity.y)
-
-        val requiredHoodAngle = atan2(fieldRelativeLaunchVelocity.z, horizontalSpeedMagnitude).radians
-        val requiredSpeed = fieldRelativeLaunchVelocity.norm
-
-        val requiredSpeedRPM = requiredSpeed / (2.0 * PI / 60.0 * FLYWHEEL_RADIUS.inMeters() * FLYWHEEL_TO_FUEL_RATIO)
-
-        return ShooterProfile(turretAngleRobotRelative, requiredHoodAngle, requiredSpeedRPM.rpm)
+        return ShooterProfile(turretAngle, hoodAngle, requiredRPM.rpm)
     }
 
 }
@@ -193,10 +182,10 @@ val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", 0.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB (
-        { ShooterCalculator.aimAtHub(compensateForMotion = false) }
+        { ShooterCalculator.aimAtHub() }
     ),
     AIM_AT_HUB_SHOOT_ON_MOVE (
-        { ShooterCalculator.aimAtHub(compensateForMotion = true) }
+        { ShooterCalculator.aimAtHubShootOnMove() }
     ),
     STATIONARY_TURRET (
         { ShooterProfile(0.0.degrees, Hood.calculateHoodAngle(shooterToHub.norm.meters), Flywheel.calculateFlywheelVelocity(shooterToHub.norm.meters)) }
