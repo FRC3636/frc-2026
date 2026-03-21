@@ -133,7 +133,7 @@ class TurretIOReal : TurretIO {
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        inputs.angle = motor.position.value
+        inputs.angle = positionSignal.value
         inputs.motorCurrent = currentSignal.value
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value

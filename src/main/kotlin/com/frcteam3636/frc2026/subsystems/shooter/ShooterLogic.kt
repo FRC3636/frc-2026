@@ -11,7 +11,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSE
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
-import edu.wpi.first.hal.DriverStationJNI
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -31,7 +30,7 @@ import kotlin.math.*
 object ShooterCalculator {
 
     // stationary fuel velocity vector for shooting to hub
-    private val stationaryLaunchVector: Vector3d
+    private val stationaryHubLaunchVector: Vector3d
         get() {
             val distance: Distance = shooterToHub.norm.meters
             val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(distance).inRPM()
@@ -81,7 +80,7 @@ object ShooterCalculator {
     }
 
     // create fuel velocity vector that accounts for field relative robot velocity
-    fun getFieldRelativeLaunchVector(vector: Vector3d): Vector3d {
+    fun movingLaunchVector(vector: Vector3d): Vector3d {
         val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
         return Vector3d(
             vector.x - (robotVelocity.vxMetersPerSecond),
@@ -92,7 +91,7 @@ object ShooterCalculator {
 
     // creates shooter profile from fuel velocity vector to hub
     fun aimAtHub(compensateForMotion: Boolean): ShooterProfile {
-        val vector = if (compensateForMotion) getFieldRelativeLaunchVector(stationaryLaunchVector) else stationaryLaunchVector
+        val vector = if (compensateForMotion) movingLaunchVector(stationaryHubLaunchVector) else stationaryHubLaunchVector
 
         val fieldDirection = atan2(vector.y, vector.x).radians
         val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
@@ -130,7 +129,7 @@ object ShooterCalculator {
 
     // creates shooter profile from fuel velocity vector to field translation
     fun pass(compensateForMotion: Boolean): ShooterProfile {
-        val vector =  if (compensateForMotion) getFieldRelativeLaunchVector(stationaryFieldTargetVector(targetPassTranslation)) else stationaryFieldTargetVector(targetPassTranslation)
+        val vector =  if (compensateForMotion) movingLaunchVector(stationaryFieldTargetVector(targetPassTranslation)) else stationaryFieldTargetVector(targetPassTranslation)
         val fieldDirection = atan2(vector.y, vector.x).radians
         val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
 

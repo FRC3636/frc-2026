@@ -108,7 +108,7 @@ class HoodIOReal: HoodIO {
     }
 
     override fun updateInputs(inputs: HoodInputs) {
-        inputs.hoodAngle = motor.position.value
+        inputs.hoodAngle = positionSignal.value
         inputs.hoodVelocity = velocitySignal.value
         inputs.hoodCurrent = currentSignal.value
         inputs.motorTemperature = temperatureSignal.value
