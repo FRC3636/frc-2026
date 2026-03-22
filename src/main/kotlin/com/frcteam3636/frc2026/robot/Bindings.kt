@@ -10,6 +10,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.math.meters
@@ -86,19 +87,7 @@ fun configureBindings() {
 
     // shoot sequence
     joystickRight.button(1).whileTrue(
-        Commands.sequence(
-            Commands.parallel(
-                Flywheel.runAtTarget(),
-            ).until(Flywheel.atDesiredFlywheelVelocity),
-            Commands.parallel(
-                Flywheel.runAtTarget(),
-                Commands.parallel(
-                    Feeder.feed(),
-                    Indexer.index(),
-                    Intake.setVoltage(5.volts).withTimeout(1.0.seconds).repeatedly(),
-                )//.onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
-            ),
-        )
+        shoot()
     )
 
     /*  default commands   */

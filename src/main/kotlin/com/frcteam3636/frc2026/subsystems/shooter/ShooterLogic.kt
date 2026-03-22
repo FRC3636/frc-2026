@@ -3,6 +3,8 @@ package com.frcteam3636.frc2026.subsystems.shooter
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Constants.FLYWHEEL_RADIUS
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Constants.FLYWHEEL_TO_FUEL_RATIO
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
@@ -237,6 +239,19 @@ val shooterToHub: Vector2d
 val directionToHub: Angle
     get() = atan2(shooterToHub.y, shooterToHub.x).radians
 
+fun shoot() : Command =
+    Commands.sequence(
+        Commands.parallel(
+            Flywheel.runAtTarget(),
+        ).until(Flywheel.atDesiredFlywheelVelocity),
+        Commands.parallel(
+            Flywheel.runAtTarget(),
+            Commands.parallel(
+                Feeder.feed(),
+                Indexer.index()
+            )
+        )
+    )
 // used for populating interpolation tables
 val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
 val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 3000.0)

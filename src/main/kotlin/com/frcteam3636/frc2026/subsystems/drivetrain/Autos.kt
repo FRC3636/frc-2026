@@ -8,6 +8,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.ShooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
+import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.autos.alignToClimbLeft
@@ -19,6 +20,7 @@ import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.seconds
+import com.therekrab.autopilot.APTarget
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
@@ -139,6 +141,52 @@ object Middle : Auto {
     }
 
 }
+
+object Lebron : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command =
+        Commands.sequence(
+            runOnce({
+                Drivetrain.poseEstimator.resetPose(
+                    flipTarget(
+                        Targets.Start.target,
+                        flipV = flipV,
+                        flipH = flipH
+                    ).reference
+                )
+            }),
+            Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
+            Commands.race(
+                Intake.intake(),
+                Commands.sequence(
+                    Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target5.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target6.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target7.target, flipH, flipV),
+                )
+            ),
+            Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
+            Commands.parallel(
+                Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
+                shoot().withTimeout(4.seconds)
+            )
+        )
+
+    enum class Targets(val target: APTarget) {
+        Start(APTargetWithTolerance(Pose2d(4.364.meters, 0.657.meters, Rotation2d(3.142.radians)))),
+        Target2(APTargetWithTolerance(Pose2d(6.001.meters, 0.845.meters, Rotation2d(-2.749.radians))).withVelocity(2.000.metersPerSecond)),
+        Target3(APTargetWithTolerance(Pose2d(7.621.meters, 1.425.meters, Rotation2d(-2.015.radians))).withVelocity(2.000.metersPerSecond)),
+        Target4(APTargetWithTolerance(Pose2d(8.200.meters, 2.600.meters, Rotation2d(-1.571.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(-1.571.radians))),
+        Target5(APTargetWithTolerance(Pose2d(7.900.meters, 3.600.meters, Rotation2d(-0.785.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(-1.178.radians))),
+        Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(2.000.metersPerSecond)),
+        Target7(APTargetWithTolerance(Pose2d(5.794.meters, 2.721.meters, Rotation2d(0.780.radians))).withVelocity(2.000.metersPerSecond)),
+        Target8(APTargetWithTolerance(Pose2d(3.278.meters, 2.500.meters, Rotation2d(0.893.radians)))),
+        Target9(APTargetWithTolerance(Pose2d(3.400.meters, 0.700.meters, Rotation2d(2.322.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(1.931.radians)))
+    }
+
+}
+
 
 object Climb : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command {

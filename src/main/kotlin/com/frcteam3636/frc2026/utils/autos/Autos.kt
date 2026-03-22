@@ -46,7 +46,7 @@ class APTargetWithTolerance(pose: Pose2d) : APTarget(pose) {
     }
 }
 
-fun flipTargetHorizontal(target: APTargetWithTolerance): APTargetWithTolerance {
+fun flipTargetHorizontal(target: APTarget): APTarget {
     return target.withReference(
         Pose2d(
             Translation2d(
@@ -56,7 +56,7 @@ fun flipTargetHorizontal(target: APTargetWithTolerance): APTargetWithTolerance {
     )
 }
 
-fun flipTargetVertical(target: APTargetWithTolerance): APTargetWithTolerance {
+fun flipTargetVertical(target: APTarget): APTarget {
     return target.withReference(
         Pose2d(
             Translation2d(
@@ -66,7 +66,7 @@ fun flipTargetVertical(target: APTargetWithTolerance): APTargetWithTolerance {
     )
 }
 
-fun flipTarget(target: APTargetWithTolerance, flipH: Boolean = false, flipV: Boolean = false): APTargetWithTolerance {
+fun flipTarget(target: APTarget, flipH: Boolean = false, flipV: Boolean = false): APTarget {
     var new_target = target
     if (flipH) {
         new_target = flipTargetHorizontal(new_target)
@@ -78,8 +78,8 @@ fun flipTarget(target: APTargetWithTolerance, flipH: Boolean = false, flipV: Boo
 }
 
 fun flipPath(
-    path: Array<APTargetWithTolerance>, flipH: Boolean = false, flipV: Boolean = false
-): Array<APTargetWithTolerance> {
+    path: Array<APTarget>, flipH: Boolean = false, flipV: Boolean = false
+): Array<APTarget> {
     if (!(flipH || flipV)) {
         return path
     }
