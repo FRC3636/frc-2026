@@ -13,6 +13,7 @@ import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
@@ -83,6 +84,7 @@ fun configureBindings() {
 
     joystickRight.button(2).whileTrue(alignToClimb())
 
+    // shoot sequence
     joystickRight.button(1).whileTrue(
         Commands.sequence(
             Commands.parallel(
@@ -92,7 +94,8 @@ fun configureBindings() {
                 Flywheel.runAtTarget(),
                 Commands.parallel(
                     Feeder.feed(),
-                    Indexer.index()
+                    Indexer.index(),
+                    Intake.setVoltage(5.volts).withTimeout(1.0.seconds).repeatedly(),
                 )//.onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
             ),
         )
