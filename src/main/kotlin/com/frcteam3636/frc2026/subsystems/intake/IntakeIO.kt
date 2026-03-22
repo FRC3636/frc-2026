@@ -29,6 +29,7 @@ open class IntakeInputs {
     var intakeMotorVelocity = 0.rotationsPerSecond
     var intakeMotorCurrent = Amps.zero()!!
     var pivotAngle = 0.degrees
+    var pivotSetpoint = 0.degrees
     var intakePivotMotorCurrent = Amps.zero()!!
     var rightPivotMotorCurrent = Amps.zero()!!
 }
@@ -83,7 +84,6 @@ class IntakeIOReal : IntakeIO {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = WHEEL_MOTOR_DIRECTION })
     }
 
-
     init {
         CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
             configurator.apply(CANcoderConfiguration().apply {
@@ -122,6 +122,8 @@ class IntakeIOReal : IntakeIO {
         intakePivotMotor.setControl(positionControl.withPosition(angle))
     }
 
+    var setpoint = 0.degrees
+
     override fun updateInputs(inputs: IntakeInputs) {
         inputs.intakeMotorVelocity = intakeMotor.velocity.value
         inputs.intakeMotorCurrent = intakeMotor.supplyCurrent.value
@@ -129,7 +131,7 @@ class IntakeIOReal : IntakeIO {
         inputs.intakePivotMotorCurrent = intakePivotMotor.supplyCurrent.value
 //        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
         inputs.pivotAngle = intakePivotMotor.position.value
-
+        inputs.pivotSetpoint = setpoint
     }
 }
 

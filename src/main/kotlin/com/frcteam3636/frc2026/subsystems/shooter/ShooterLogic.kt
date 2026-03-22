@@ -130,7 +130,7 @@ object ShooterCalculator {
         val horizontalMagnitude = hypot(vector.x, vector.y)
         val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
 
-        val requiredFlywheelSpeedRPM = vector.norm.metersPerSecond.toAngular(FLYWHEEL_RADIUS * FLYWHEEL_TO_FUEL_RATIO).inRPM()
+        val requiredFlywheelSpeedRPM = vector.norm / ((2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO)
 
         return ShooterProfile(turretAngleRobotRelative, hoodAngle, requiredFlywheelSpeedRPM.rpm)
     }

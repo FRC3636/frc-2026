@@ -178,7 +178,7 @@ object Climb : Auto {
 object Stem : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command {
         return Commands.sequence(
-            Commands.runOnce({
+            runOnce({
                 Drivetrain.poseEstimator.resetPose(
                     flipTarget(
                         Targets.StartPos.target,
@@ -187,10 +187,7 @@ object Stem : Auto {
                     ).reference
                 )
             }),
-            Commands.parallel(
-                Intake.deploy(),
-                runOnce({ Intake.intakeDown = true })
-            ),
+            Intake.setPivotPosition(Intake.Position.Deployed).until(Intake.atDesiredPivotAngle),
             Commands.race(
                 Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
                 Intake.intake(),
