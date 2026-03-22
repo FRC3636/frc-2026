@@ -80,7 +80,6 @@ class TurretIOReal : TurretIO {
 
     private val encoder =  CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
         configurator.apply(CANcoderConfiguration().apply {
-//                MagnetSensor.MagnetOffset = MAGNET_OFFSET
             MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
         })
         setPosition(0.degrees)
@@ -96,7 +95,6 @@ class TurretIOReal : TurretIO {
     private var setPoint = 0.0.degrees
 
     init {
-
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
             positionSignal,
@@ -105,25 +103,16 @@ class TurretIOReal : TurretIO {
             temperatureSignal
         )
         motor.optimizeBusUtilization()
-
-//         CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
-//            configurator.apply(CANcoderConfiguration().apply {
-////                MagnetSensor.MagnetOffset = MAGNET_OFFSET
-//                MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
-//            })
-//            setPosition(0.degrees)
-//        }
-
     }
 
+
     override fun turnToAngle(angle: Angle) {
-//        assert(angle in (-85).degrees..135.degrees)
+        // This is fine to do because the PID acts on a linear system, meaning that there will be no wrapping through the bad angles.
+        val clampedAngle = angle.coerceIn(TURRET_MIN_ANGLE..TURRET_MAX_ANGLE)
 
-        val upperBound = 90.degrees
-        val lowerBound = (-85).degrees
-
-        val setPoint = angle.clampDeadzone(lowerBound, upperBound)
+        setPoint = clampedAngle
         Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
+
         motor.setControl(positionControl.withPosition(setPoint))
     }
 
@@ -143,7 +132,6 @@ class TurretIOReal : TurretIO {
 
     override fun zeroEncoder() {
         encoder.setPosition(0.degrees)
-        motor.setPosition(0.degrees)
     }
 
     override fun setBrakeMode(enabled: Boolean) {
@@ -158,6 +146,9 @@ class TurretIOReal : TurretIO {
     }
 
     companion object Constants{
+        val TURRET_MAX_ANGLE = 90.degrees
+        val TURRET_MIN_ANGLE = (-85).degrees
+
         private val PID_GAINS = PIDGains(65.0, 0.0, 1.2)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0

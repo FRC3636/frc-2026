@@ -92,3 +92,5 @@ data class Vector2d(val x: Double, val y: Double) {
 fun toVector2d( translation: Translation2d): Vector2d {
     return Vector2d(translation.x, translation.y)
 }
+
+fun hypot(x: Double, y: Double, z: Double): Double = sqrt(x * x + y * y + z * z)
