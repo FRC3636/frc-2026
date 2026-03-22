@@ -173,7 +173,7 @@ object Robot : LoggedRobot() {
         Flywheel.register()
         Hood.register()
         Indexer.register()
-//        Intake.register()
+        Intake.register()
 //        Turret.register()
         Climber.register()
     }

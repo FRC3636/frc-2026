@@ -13,6 +13,7 @@ import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -36,13 +37,13 @@ fun configureBindings() {
 
     joystickLeft.button(1).whileTrue(
         Commands.sequence(
-            Intake.setPercent(-0.5).withTimeout(0.15),
+//            Intake.setPivotPosition(Intake.Position.Deployed),
             Intake.intake()
         )
     )
 
-    joystickLeft.button(2).onTrue(
-        Intake.setPivotPosition(Intake.Position.Stowed)
+    joystickLeft.button(2).whileTrue(
+        Intake.setVoltage(7.volts)
     )
 
     joystickLeft.button(3).whileTrue(
@@ -50,7 +51,8 @@ fun configureBindings() {
     )
 
     joystickLeft.button(4).whileTrue(
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+        Climber.climb()
     )
 
 
@@ -61,7 +63,7 @@ fun configureBindings() {
     )
 
     joystickRight.button(3).onTrue(
-        setShooterTarget(Target.STATIONARY_TURRET)
+        setShooterTarget(Target.TUNING)
     )
 
     joystickRight.button(4).onTrue(
@@ -91,7 +93,7 @@ fun configureBindings() {
                 Commands.parallel(
                     Feeder.feed(),
                     Indexer.index()
-                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
+                )//.onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
             ),
         )
     )

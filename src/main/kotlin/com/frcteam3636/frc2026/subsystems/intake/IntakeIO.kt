@@ -11,12 +11,10 @@ import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.degrees
-import com.frcteam3636.frc2026.utils.math.inRotations
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.pidGains
-import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
 import edu.wpi.first.units.Units.Amps
@@ -37,6 +35,7 @@ open class IntakeInputs {
 
 interface IntakeIO {
     fun setSpeed(percent: Double)
+    fun setVoltage(voltage: Voltage)
     fun setPivotSpeed(pivot: Double)
     fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
@@ -45,19 +44,18 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(300.0, 0.0, 0.0)
-        val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
-        val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
-        val PROFILE_JERK = 0.0
-        val ENCODER_TO_PIVOT_GEAR_RATIO = 2.0
+        val PID_GAINS = PIDGains(100.0, 0.0, 20.0)
+        val PROFILE_CRUISE_VELOCITY = 20.0.rotationsPerSecond
+        val PROFILE_ACCELERATION = 20.rotationsPerSecondPerSecond
+        val PROFILE_JERK = 20.0
+        val ENCODER_TO_PIVOT_GEAR_RATIO = 32.0 / 12.0
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
-        val MAGNET_OFFSET = 0.1311.rotations
+        val DISCONTINUITY_POINT = 0.999
+        val MAGNET_OFFSET = 0.130859375
 
-        val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
-        val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
+        val PIVOT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
+        val WHEEL_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
     }
-
-    private val pivotMotorConfig = TalonFXConfiguration()
 
     private val intakePivotMotor = TalonFX(CTREDeviceId.IntakePivotMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
@@ -70,19 +68,19 @@ class IntakeIOReal : IntakeIO {
                 MotionMagicJerk = PROFILE_JERK
             }
             Feedback.apply {
-                FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
+                FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
                 FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
                 SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
                 RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
             }
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.CounterClockwise_Positive
+                Inverted = PIVOT_MOTOR_DIRECTION
             }
         })
     }
     private val intakeMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
+        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = WHEEL_MOTOR_DIRECTION })
     }
 
 
@@ -90,7 +88,8 @@ class IntakeIOReal : IntakeIO {
         CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
             configurator.apply(CANcoderConfiguration().apply {
                 MagnetSensor.apply {
-                    MagnetOffset = MAGNET_OFFSET.inRotations()
+                    AbsoluteSensorDiscontinuityPoint = DISCONTINUITY_POINT
+                    MagnetOffset = MAGNET_OFFSET
                 }
 //                ExternalFeedbackConfigs().apply {
 //                    SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
@@ -108,14 +107,19 @@ class IntakeIOReal : IntakeIO {
         intakePivotMotor.set(pivot)
     }
 
+    override fun setVoltage(voltage: Voltage) {
+        intakePivotMotor.setVoltage(voltage.inVolts())
+    }
+
     override fun setWheelMotorVoltage(voltage: Voltage) {
         intakeMotor.setVoltage(voltage.inVolts())
     }
 
+    private val positionControl = MotionMagicVoltage(0.0)
+
     override fun setPivotAngle(angle: Angle) {
         Logger.recordOutput("Intake/Pivot Setpoint", angle)
-        val controlRequest = MotionMagicVoltage(angle)
-        intakePivotMotor.setControl(controlRequest.withPosition(angle))
+        intakePivotMotor.setControl(positionControl.withPosition(angle))
     }
 
     override fun updateInputs(inputs: IntakeInputs) {

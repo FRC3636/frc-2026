@@ -10,6 +10,7 @@ import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
+import edu.wpi.first.units.Units.Amps
 import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.AngularVelocity
@@ -22,6 +23,7 @@ open class FlywheelInputs {
 //    var linearVelocity = MetersPerSecond.zero()!!
     var targetAngularVelocity = RPM.zero()!!
     var angle = Rotations.zero()!!
+    var current = Amps.zero()!!
 }
 
 interface FlywheelIO {
@@ -60,6 +62,7 @@ class FlywheelIOReal : FlywheelIO {
 //        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
         inputs.angle = motor.position.value
         inputs.targetAngularVelocity = targetVelocity
+        inputs.current = motor.supplyCurrent.value
     }
 
     override fun setVoltage(volts: Voltage) {
@@ -76,8 +79,8 @@ class FlywheelIOReal : FlywheelIO {
     }
 
     companion object Constants{
-        val PID_GAINS = PIDGains(0.0075,0.0,0.0)
-        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.002080215363677995 * (2000.0 / 1973.5), 0.03)
+        val PID_GAINS = PIDGains(0.004,0.0, 0.00012)
+        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.0021578280449554683, 0.03)
     }
 }
 
