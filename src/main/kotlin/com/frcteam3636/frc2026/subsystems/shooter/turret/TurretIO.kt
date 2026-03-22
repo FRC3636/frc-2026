@@ -147,9 +147,9 @@ class TurretIOReal : TurretIO {
 
     companion object Constants{
         val TURRET_MAX_ANGLE = 90.degrees
-        val TURRET_MIN_ANGLE = (-85).degrees
+        val TURRET_MIN_ANGLE = (-100).degrees
 
-        private val PID_GAINS = PIDGains(65.0, 0.0, 1.2)
+        private val PID_GAINS = PIDGains(80.0, 0.0, 1.2)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625

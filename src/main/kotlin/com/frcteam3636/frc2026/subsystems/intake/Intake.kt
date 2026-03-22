@@ -3,6 +3,7 @@ package com.frcteam3636.frc2026.subsystems.intake
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
+import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.rotations
 import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
@@ -18,8 +19,8 @@ object Intake : Subsystem {
     var intakeDown = false
 
     enum class Position(val angle: Angle) {
-        Stowed(0.degrees),
-        Deployed(0.87.rotations),
+        Deployed(7.degrees),
+        Stowed(40.degrees),
     }
 
     private val io: IntakeIO =
@@ -42,6 +43,22 @@ object Intake : Subsystem {
         {io.setPivotSpeed(0.0)}
     )
 
+    fun setVoltage(volts: Voltage): Command = Commands.runEnd(
+        {io.setVoltage(volts)},
+        {io.setVoltage(0.volts)}
+    )
+
+    fun intakeSequence(): Command = runEnd(
+        {
+            Commands.run({ io.setVoltage(-5.volts) }).withTimeout(1.0.seconds)
+            io.setWheelMotorVoltage(6.volts)
+        },
+        {
+            io.setVoltage(0.volts)
+            io.setWheelMotorVoltage(0.volts)
+        },
+    )
+
     fun intake(): Command =
             runEnd(
                 { io.setWheelMotorVoltage(5.0.volts) },
@@ -56,33 +73,7 @@ object Intake : Subsystem {
     fun pivot(): Command = startEnd(
         { io.setPivotAngle(Position.Deployed.angle) },
         { io.setPivotAngle(Position.Stowed.angle) }
-    ).onlyWhile { !intakeDown }
-
-    fun pivotVoltage(): Command = startEnd(
-        {
-            Commands.sequence(
-                run { io.setPivotMotorVoltage(3.6.volts) }.until { inputs.intakePivotMotorCurrent > 50.0.amps },
-                run { io.setPivotMotorVoltage(1.0.volts) }
-              )
-        },
-        {
-            run { io.setPivotMotorVoltage(-1.0.volts) }
-        }
-    )
-
-    fun maintainPosition(): Command = run {
-        if (intakeDown) {
-            io.setPivotMotorVoltage(-0.5.volts)
-        } else {
-            io.setPivotMotorVoltage(0.5.volts)
-        }
-    }
-
-    fun deploy(): Command = runPivotVoltage(-1.0.volts).withTimeout(2.0.seconds)
-
-    fun stow(): Command = runPivotVoltage(3.6.volts).withTimeout(2.0.seconds)
-
-    fun runPivotVoltage(voltage: Voltage): Command = Commands.runEnd({io.setPivotMotorVoltage(voltage)}, {io.setPivotMotorVoltage(0.0.volts)}).until { inputs.intakePivotMotorCurrent > 50.0.amps }
+    ).onlyWhile { intakeDown }
 
 //    val IntakeSimulation
 //        get() = if (io is IntakeIOSim) { io.intakeSimulation }

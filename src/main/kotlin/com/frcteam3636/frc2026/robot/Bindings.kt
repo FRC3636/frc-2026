@@ -36,18 +36,14 @@ fun configureBindings() {
     /* main bindings */
 
     joystickLeft.button(1).whileTrue(
-        Intake.intake()
+        Commands.sequence(
+//            Intake.setPivotPosition(Intake.Position.Deployed),
+            Intake.intake()
+        )
     )
 
     joystickLeft.button(2).whileTrue(
-        Commands.parallel(
-            Intake.deploy(),
-            Commands.runOnce({
-              Intake.intakeDown = true
-            })
-        )
-//        Intake.setPivotPosition(Intake.Position.Stowed)
-
+        Intake.setVoltage(7.volts)
     )
 
     joystickLeft.button(3).whileTrue(
@@ -55,15 +51,11 @@ fun configureBindings() {
     )
 
     joystickLeft.button(4).whileTrue(
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+        Climber.climb()
     )
 
-    joystickLeft.button(5).whileTrue(Commands.parallel(
-        Intake.stow(),
-        Commands.runOnce({
-            Intake.intakeDown = false
-        })
-    ))
+
 
 
     joystickRight.button(9).whileTrue(
@@ -71,7 +63,7 @@ fun configureBindings() {
     )
 
     joystickRight.button(3).onTrue(
-        setShooterTarget(Target.STATIONARY_TURRET)
+        setShooterTarget(Target.TUNING)
     )
 
     joystickRight.button(4).onTrue(
@@ -101,7 +93,7 @@ fun configureBindings() {
                 Commands.parallel(
                     Feeder.feed(),
                     Indexer.index()
-                ).onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
+                )//.onlyWhile(Flywheel.atDesiredStandingFlywheelVelocity).repeatedly()
             ),
         )
     )
@@ -117,8 +109,6 @@ fun configureBindings() {
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
     Climber.defaultCommand = Climber.goToTargetHeight()
-
-    Intake.defaultCommand = Intake.maintainPosition()
 
     /* zeroing commands */
 

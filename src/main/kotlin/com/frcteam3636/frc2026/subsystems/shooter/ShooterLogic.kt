@@ -239,7 +239,7 @@ val directionToHub: Angle
 
 // used for populating interpolation tables
 val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
-val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1000.0)
+val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 3000.0)
 val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", 0.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
