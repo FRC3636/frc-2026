@@ -10,7 +10,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.*
-import com.frcteam3636.frc2026.utils.swerve.translation2dPerSecond
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.geometry.Translation3d
@@ -30,7 +29,7 @@ import kotlin.math.*
 object ShooterCalculator {
 
     // stationary fuel velocity vector for shooting to hub
-    private val stationaryHubLaunchVector: Vector3d
+    val stationaryHubLaunchVector: Vector3d
         get() {
             val distance: Distance = shooterToHub.norm.meters
             val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(distance).inRPM()
@@ -49,72 +48,52 @@ object ShooterCalculator {
         }
 
     // stationary fuel velocity vector for passing to field translation
-    fun stationaryFieldTargetVector(target: Translation2d): Vector3d {
-        val translationToTarget = target - shooterFieldPose.translation
-        val distance = translationToTarget.norm
-        val hubHeight = hubTranslation.z
-        /*
-        create trajectory with vertex halfway between robot and target translation and height 1 meter above hub
-        h = -a(x)(x - d)
-        a = -h / ((x)(x - d))
-        */
-        val trajectoryConstant = ((hubHeight + 1.0) / (distance / 2).pow(2)).unaryMinus()
-        // plot hub on trajectory and solve for distance
-        val a = trajectoryConstant
-        val b = -distance * trajectoryConstant
-        val hubDistance =((-b - sqrt(b.pow(2) - 4 * a * hubHeight)) / (2 * a)).meters
+    val stationaryFieldTargetVector: Vector3d
+        get() {
+            val target = targetPassTranslation
+            val translationToTarget = target - shooterFieldPose.translation
+            val distance = translationToTarget.norm
+            val hubHeight = hubTranslation.z
+            /*
+            create trajectory with vertex halfway between robot and target translation and height 1 meter above hub
+            h = -a(x)(x - d)
+            a = -h / ((x)(x - d))
+            */
+            val trajectoryConstant = ((hubHeight + 1.0) / (distance / 2).pow(2)).unaryMinus()
+            // plot hub on trajectory and solve for distance
+            val a = trajectoryConstant
+            val b = -distance * trajectoryConstant
+            val hubDistance = ((-b - sqrt(b.pow(2) - 4 * a * hubHeight)) / (2 * a)).meters
 
-        val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(hubDistance).inRPM()
-        val baseHoodAngle: Double = Hood.calculateHoodAngle(hubDistance).inRadians()
+            val baseFlywheelRpm: Double = Flywheel.calculateFlywheelVelocity(hubDistance).inRPM()
+            val baseHoodAngle: Double = Hood.calculateHoodAngle(hubDistance).inRadians()
 
-        val launchSpeedRobotRelative = baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
+            val launchSpeedRobotRelative =
+                baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
 
-        val horizontalSpeedComponent = launchSpeedRobotRelative * cos(baseHoodAngle)
-        val verticalSpeedComponent = launchSpeedRobotRelative * sin(baseHoodAngle)
+            val horizontalSpeedComponent = launchSpeedRobotRelative * cos(baseHoodAngle)
+            val verticalSpeedComponent = launchSpeedRobotRelative * sin(baseHoodAngle)
 
-        return Vector3d(
-            horizontalSpeedComponent * cos(directionToHub.inRadians()),
-            horizontalSpeedComponent * sin(directionToHub.inRadians()),
-            verticalSpeedComponent
-        )
-    }
-
-    // create fuel velocity vector that accounts for field relative robot velocity
-    fun movingLaunchVector(vector: Vector3d): Vector3d {
-        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
-        return Vector3d(
-            vector.x - (robotVelocity.vxMetersPerSecond),
-            vector.y - (robotVelocity.vyMetersPerSecond),
-            vector.z    // robot vertical velocity should always be zero
-        )
-    }
-
-    fun aimAtHub(): ShooterProfile {
-        val distance: Distance = shooterToHub.norm.meters
-        val baseFlywheelRpm = Flywheel.calculateFlywheelVelocity(distance).inRPM()
-        val baseHoodAngle = Hood.calculateHoodAngle(distance).inRadians()
-    // creates shooter profile from fuel velocity vector to hub
-    fun aimAtHub(compensateForMotion: Boolean): ShooterProfile {
-        val vector = if (compensateForMotion) movingLaunchVector(stationaryHubLaunchVector) else stationaryHubLaunchVector
-
-        val fieldDirection = atan2(vector.y, vector.x).radians
-        val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
-
-        val horizontalMagnitude = hypot(vector.x, vector.y)
-        val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
-
-        val requiredFlywheelSpeedRPM = vector.norm.metersPerSecond.toAngular(FLYWHEEL_RADIUS * FLYWHEEL_TO_FUEL_RATIO).inRPM()
-
-        return ShooterProfile(turretAngleRobotRelative, hoodAngle, requiredFlywheelSpeedRPM.rpm)
-    }
+            return Vector3d(
+                horizontalSpeedComponent * cos(directionToHub.inRadians()),
+                horizontalSpeedComponent * sin(directionToHub.inRadians()),
+                verticalSpeedComponent
+            )
+        }
 
     // check for alliance color and which of six zones robot is in
     val targetPassTranslation: Translation2d
         get() {
             val alliance = DriverStation.getAlliance().getOrNull()
-            return if (Drivetrain.estimatedPose.translation.inZone(Zones.TopBlueAllianceZone) || Drivetrain.estimatedPose.translation.inZone(Zones.TopRedAllianceZone)) {
+            return if (Drivetrain.estimatedPose.translation.inZone(Zones.TopBlueAllianceZone) || Drivetrain.estimatedPose.translation.inZone(
+                    Zones.TopRedAllianceZone
+                )
+            ) {
                 FeedTranslation.TopNeutralZone.target
-            } else if (Drivetrain.estimatedPose.translation.inZone(Zones.BottomBlueAllianceZone) || Drivetrain.estimatedPose.translation.inZone(Zones.BottomRedAllianceZone)) {
+            } else if (Drivetrain.estimatedPose.translation.inZone(Zones.BottomBlueAllianceZone) || Drivetrain.estimatedPose.translation.inZone(
+                    Zones.BottomRedAllianceZone
+                )
+            ) {
                 FeedTranslation.BottomNeutralZone.target
             } else if (Drivetrain.estimatedPose.translation.inZone(Zones.TopNeutralZone)) {
                 if (alliance == Alliance.Blue) {
@@ -131,21 +110,29 @@ object ShooterCalculator {
             }
         }
 
-    // creates shooter profile from fuel velocity vector to field translation
-    fun pass(compensateForMotion: Boolean): ShooterProfile {
-        val vector =  if (compensateForMotion) movingLaunchVector(stationaryFieldTargetVector(targetPassTranslation)) else stationaryFieldTargetVector(targetPassTranslation)
+    // create fuel velocity vector that accounts for field relative robot velocity
+    fun movingLaunchVector(vector: Vector3d): Vector3d {
+        val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
+        return Vector3d(
+            vector.x - (robotVelocity.vxMetersPerSecond),
+            vector.y - (robotVelocity.vyMetersPerSecond),
+            vector.z    // robot vertical velocity should always be zero (climbing?)
+        )
+    }
+
+    // creates shooter profile from fuel velocity vector to hub
+    fun vectorToShooterProfile(compensateForMotion: Boolean, stationaryVector: Vector3d): ShooterProfile {
+        val vector = if (compensateForMotion) movingLaunchVector(stationaryVector) else stationaryVector
+
         val fieldDirection = atan2(vector.y, vector.x).radians
         val turretAngleRobotRelative =  (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians).IEEErem(2 * PI).radians
 
-        val launchSpeed = baseFlywheelRpm * (2.0 * PI * FLYWHEEL_RADIUS.inMeters()) / 60.0 * FLYWHEEL_TO_FUEL_RATIO
-        val horizontalSpeed = launchSpeed * cos(baseHoodAngle)
-        val verticalSpeed = launchSpeed * sin(baseHoodAngle)
+        val horizontalMagnitude = hypot(vector.x, vector.y)
+        val hoodAngle = atan2(vector.z, horizontalMagnitude).radians
 
-        val fieldDirection = atan2(shooterToHub.y, shooterToHub.x).radians
-        val turretAngle = (fieldDirection.inRadians() - Drivetrain.estimatedPose.rotation.radians)
-            .IEEErem(2 * PI).radians
+        val requiredFlywheelSpeedRPM = vector.norm.metersPerSecond.toAngular(FLYWHEEL_RADIUS * FLYWHEEL_TO_FUEL_RATIO).inRPM()
 
-        return ShooterProfile(turretAngle, baseHoodAngle.radians, baseFlywheelRpm.rpm)
+        return ShooterProfile(turretAngleRobotRelative, hoodAngle, requiredFlywheelSpeedRPM.rpm)
     }
 
     fun aimAtHubShootOnMove(): ShooterProfile {
@@ -257,19 +244,20 @@ val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", 0.0)
 
 enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB (
-        { ShooterCalculator.aimAtHub() }
+        { ShooterCalculator.vectorToShooterProfile(false, ShooterCalculator.stationaryHubLaunchVector) }
     ),
     AIM_AT_HUB_SHOOT_ON_MOVE (
-        { ShooterCalculator.aimAtHubShootOnMove() }
+//        { ShooterCalculator.aimAtHubShootOnMove() }
+        { ShooterCalculator.vectorToShooterProfile(true, ShooterCalculator.stationaryHubLaunchVector) }
     ),
     STATIONARY_TURRET (
         { ShooterProfile(0.0.degrees, Hood.calculateHoodAngle(shooterToHub.norm.meters), Flywheel.calculateFlywheelVelocity(shooterToHub.norm.meters)) }
     ),
     STATIONARY_PASS (
-        { ShooterCalculator.pass(false) }
+        { ShooterCalculator.vectorToShooterProfile(false, ShooterCalculator.stationaryFieldTargetVector) }
     ),
     MOVING_PASS (
-        { ShooterCalculator.pass(true) }
+        { ShooterCalculator.vectorToShooterProfile(true, ShooterCalculator.stationaryFieldTargetVector) }
     ),
     TUNING (
         { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
