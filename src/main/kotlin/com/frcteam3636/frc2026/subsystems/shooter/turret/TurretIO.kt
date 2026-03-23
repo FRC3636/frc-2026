@@ -127,7 +127,7 @@ class TurretIOReal : TurretIO {
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
-//        inputs.setPoint = setPoint
+        inputs.setPoint = setPoint
     }
 
     override fun zeroEncoder() {
@@ -153,9 +153,9 @@ class TurretIOReal : TurretIO {
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625
-        private val PROFILE_ACCELERATION = 5.0.rotationsPerSecondPerSecond
+        private val PROFILE_ACCELERATION = 10.0.rotationsPerSecondPerSecond
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = 7.0.rotationsPerSecond
+        private val PROFILE_VELOCITY = 14.0.rotationsPerSecond
     }
 }
 

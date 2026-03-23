@@ -236,6 +236,7 @@ object Drivetrain : Subsystem {
                 odometryLock.lock()
                 io.updateInputs(inputs)
                 Logger.processInputs("Drivetrain", inputs)
+                Logger.recordOutput("Drivetrain/Field Relative Speeds", measuredChassisSpeedsRelativeToField)
                 val odometryTimestamps = io.odometryTimestamps
                 val odometryPositions = io.odometryPositions
                 val odometryYawPositons = io.odometryYawPositions

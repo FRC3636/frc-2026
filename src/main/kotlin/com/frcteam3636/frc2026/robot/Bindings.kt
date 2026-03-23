@@ -38,31 +38,35 @@ fun configureBindings() {
     /* main bindings */
 
     joystickLeft.button(1).whileTrue(
-        Commands.sequence(
+        Commands.parallel(
 //            Intake.setPivotPosition(Intake.Position.Deployed),
-            Intake.intake()
+            Intake.intakeSequence()
+
         )
     )
 
     joystickLeft.button(2).whileTrue(
-        Intake.setVoltage(7.volts)
+        Commands.sequence(
+            Intake.setVoltage(5.0.volts).withTimeout(1.seconds),
+            Intake.setVoltage(0.0.volts).withTimeout(1.seconds)
+        ).repeatedly()
     )
 
-    joystickLeft.button(3).whileTrue(
-        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-    )
+//    joystickLeft.button(3).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+//    )
 
-    joystickLeft.button(4).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-        Climber.climb()
-    )
-
-
+//    joystickLeft.button(4).whileTrue(
+////        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//        Climber.climb()
+//    )
 
 
-    joystickRight.button(9).whileTrue(
-        Climber.setPosition(0.183.meters).ignoringDisable(true)
-    )
+
+
+//    joystickRight.button(9).whileTrue(
+//        Climber.setPosition(0.183.meters).ignoringDisable(true)
+//    )
 
     joystickRight.button(3).onTrue(
         setShooterTarget(Target.TUNING)
@@ -100,7 +104,7 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToTargetTurretAngle()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-    Climber.defaultCommand = Climber.goToTargetHeight()
+//    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 

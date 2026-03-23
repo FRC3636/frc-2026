@@ -56,16 +56,25 @@ object Intake : Subsystem {
         {io.setVoltage(0.volts)}
     )
 
-    fun intakeSequence(): Command = runEnd(
-        {
-            Commands.run({ io.setVoltage(-5.volts) }).withTimeout(1.0.seconds)
-            io.setWheelMotorVoltage(6.volts)
-        },
-        {
-            io.setVoltage(0.volts)
-            io.setWheelMotorVoltage(0.volts)
-        },
-    )
+    fun intakeSequence(): Command =
+        Commands.parallel(
+            Commands.runEnd(
+                {
+                    io.setVoltage((-7).volts)
+                },
+                {
+                    io.setVoltage(0.volts)
+                }
+            ).withTimeout(0.5.seconds),
+            Commands.runEnd(
+                {
+                    io.setWheelMotorVoltage(6.volts)
+                },
+                {
+                    io.setWheelMotorVoltage(0.volts)
+                }
+            )
+        )
 
     fun intake(): Command =
             runEnd(

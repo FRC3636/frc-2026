@@ -50,7 +50,7 @@ object Hood: Subsystem {
 
     fun calculateHoodAngle(distance: Distance): Angle {
         // https://www.desmos.com/calculator/504yoxmqbr
-        return (7.1083 * distance.inMeters() + 9.66796).degrees
+        return (6.42401 * distance.inMeters() + -16.17569).degrees
     }
 
     fun turnToTargetHoodAngle(): Command =

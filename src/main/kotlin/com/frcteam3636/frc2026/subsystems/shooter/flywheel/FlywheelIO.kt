@@ -8,6 +8,7 @@ import edu.wpi.first.units.measure.Voltage
 import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.filter.MedianFilter
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.Amps
@@ -15,6 +16,7 @@ import edu.wpi.first.units.Units.RPM
 import edu.wpi.first.units.Units.Rotations
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
+import java.util.logging.Logger
 
 @Logged
 open class FlywheelInputs {
@@ -55,10 +57,12 @@ class FlywheelIOReal : FlywheelIO {
     private val pidController = PIDController(PID_GAINS)
 
     private var targetVelocity: AngularVelocity = 0.0.rpm
+    // mitigate noise in flywheel data
+    private val velocityFilter = MedianFilter(10)
 
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = motor.motorVoltage.value
-        inputs.angularVelocity = motor.velocity.value
+        inputs.angularVelocity = velocityFilter.calculate(motor.velocity.value.inRPM()).rpm
 //        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
         inputs.angle = motor.position.value
         inputs.targetAngularVelocity = targetVelocity
@@ -75,11 +79,13 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-        motor.setVoltage(ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM()))
+        val output = ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM())
+        org.littletonrobotics.junction.Logger.recordOutput("Shooter/Flywheel/controller output", output.volts)
+        motor.setVoltage(output)
     }
 
     companion object Constants{
-        val PID_GAINS = PIDGains(0.004,0.0, 0.00012)
+        val PID_GAINS = PIDGains(4E-1,0.0, 6E-3)
         val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.0021578280449554683, 0.03)
     }
 }

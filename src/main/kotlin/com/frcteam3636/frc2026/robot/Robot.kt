@@ -174,8 +174,8 @@ object Robot : LoggedRobot() {
         Hood.register()
         Indexer.register()
         Intake.register()
-//        Turret.register()
-        Climber.register()
+        Turret.register()
+//        Climber.register()
     }
 
 
