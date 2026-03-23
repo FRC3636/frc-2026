@@ -1,6 +1,8 @@
 package com.frcteam3636.frc2026.subsystems.shooter.flywheel
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
@@ -45,10 +47,12 @@ class FlywheelIOReal : FlywheelIO {
 
             CurrentLimits.apply {
                 SupplyCurrentLimit = 40.0
+                CurrentLimits = CurrentLimitsConfigs()
             }
 
             Slot0.apply{
                 pidGains = PID_GAINS
+                motorFFGains = FEED_FORWARD_GAINS
             }
         })
     }
@@ -63,7 +67,6 @@ class FlywheelIOReal : FlywheelIO {
     override fun updateInputs(inputs: FlywheelInputs) {
         inputs.motorVolts = motor.motorVoltage.value
         inputs.angularVelocity = velocityFilter.calculate(motor.velocity.value.inRPM()).rpm
-//        inputs.linearVelocity = motor.velocity.value.toLinear(Constants.FLYWHEEL_RADIUS)
         inputs.angle = motor.position.value
         inputs.targetAngularVelocity = targetVelocity
         inputs.current = motor.supplyCurrent.value
@@ -79,9 +82,10 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-        val output = ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM())
-        org.littletonrobotics.junction.Logger.recordOutput("Shooter/Flywheel/controller output", output.volts)
-        motor.setVoltage(output)
+//        val output = ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM())
+//        org.littletonrobotics.junction.Logger.recordOutput("Shooter/Flywheel/controller output", output.volts)
+//        motor.setVoltage(output)
+        motor.setControl(VelocityVoltage(targetVelocity))
     }
 
     companion object Constants{
