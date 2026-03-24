@@ -105,54 +105,22 @@ class LimelightPoseProvider(
     val gyroConnected: Boolean
         get() = gyroConnectionGetter()
 
-//    init {
-//        thread(isDaemon = true, name = name) { // TODO: do we need to keep this in a thread?
-//            while (true) {
-//                val temp = updateCurrentMeasurements()
-//                try {
-//                    lock.lock()
-//                    if (measurements.isEmpty())
-//                        observedTags.clear()
-//                    for (measurement in temp) {
-//                        measurements.add(measurement.poseMeasurement!!)
-//                        for (tag in measurement.observedTags) {
-//                            observedTags.add(tag)
-//                        }
-//                    }
-//                    // We assume the camera has disconnected if there are no new updates for several ticks.
-//                    val hb = hbSubscriber.get()
-//                    connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
-//                    if (hb == lastSeenHb)
-//                        loopsSinceLastSeen++
-//                    else
-//                        loopsSinceLastSeen = 0
-//                    lastSeenHb = hb
-//                } finally {
-//                    lock.unlock()
-//                }
-//                Thread.sleep(Robot.period.seconds.inMilliseconds().toLong())
-//            }
-//        }
-//    }
-
     private fun updateCurrentMeasurements(): MutableList<LimelightMeasurement> {
         val measurements: MutableList<LimelightMeasurement> = mutableListOf()
 
-        if (!isLL4) {
-            gyroState[0] = gyroAngle.degrees
-            gyroState[1] = gyroVelocity.inDegreesPerSecond()
-            gyroPublisher.accept(gyroState)
-            NetworkTableInstance.getDefault().flush()
-        } else {
-            // Idk why this was set to before first enable, we need to update the gyro pose every frame right?
-            gyroState[0] = gyroAngle.degrees
-            // Also we weren't setting yaw per second which I think is important for MT2
-            gyroState[1] = gyroVelocity.inDegreesPerSecond()
-            gyroPublisher.accept(gyroState)
-            NetworkTableInstance.getDefault().flush()
+        gyroState[0] = gyroAngle.degrees
+        gyroState[1] = gyroVelocity.inDegreesPerSecond()
+        gyroPublisher.accept(gyroState)
+        NetworkTableInstance.getDefault().flush()
 
+        if (isLL4) {
             if (RobotState.beforeFirstEnable) {
-                imuModePublisher.accept(1.toLong()) // seed IMU
+                imuModePublisher.accept(0) // seed IMU
+            }
+
+            if (!RobotState.beforeFirstEnable && !wasIMUChanged) {
+                imuModePublisher.accept(0.toLong()) // use robot gyro to seed IMU
+                wasIMUChanged = true
             }
 
             if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
@@ -164,25 +132,17 @@ class LimelightPoseProvider(
             }
         }
 
-        if ((!RobotState.beforeFirstEnable) && (isLL4 && !wasIMUChanged)) {
-            imuModePublisher.accept(0.toLong()) // use robot gyro to seed IMU
-            wasIMUChanged = true
-        }
-
+        // Megatag 1
         for (rawSample in megatag1Subscriber.readQueue()) {
-//            if (rawSample.value.size == 0 || !RobotState.beforeFirstEnable) continue
-            val measurement = LimelightMeasurement()
 
+            val measurement = LimelightMeasurement()
             val tagCount = rawSample.value[7].toInt()
+            val ambiguity = if (tagCount == 1) rawSample.value[17] else 0.0
 
             // Reject zero tag or low-quality one tag readings
-            if (tagCount == 0) {
+            if (tagCount == 0 || (tagCount == 1 && ambiguity > AMBIGUITY_THRESHOLD)) {
                 measurement.isLowQuality = true
-            } else if (tagCount == 1) {
-                if (rawSample.value[17] > AMBIGUITY_THRESHOLD)
-                    measurement.isLowQuality = true
             }
-
 
             for (i in 11 until rawSample.value.size step 7) {
                 measurement.observedTags.add(rawSample.value[i].toInt())
@@ -198,8 +158,10 @@ class LimelightPoseProvider(
             measurements.add(measurement)
         }
 
+        // Megatag 2
         for (rawSample in megatag2Subscriber.readQueue()) {
             if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
+
             val measurement = LimelightMeasurement()
             val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0
             val tagCount = rawSample.value[7].toInt()
@@ -209,10 +171,21 @@ class LimelightPoseProvider(
                 measurement.observedTags.add(rawSample.value[i].toInt())
             }
 
+            // MegaTag2’s built-in standard deviations
+            val stdDevX = rawSample.value[rawSample.value.size - 3]
+            val stdDevY = rawSample.value[rawSample.value.size - 2]
+            val stdDevTheta = rawSample.value[rawSample.value.size - 1]
+            val stdDevMatrix = if (stdDevX > 0 && stdDevY > 0 && stdDevTheta > 0) {
+                VecBuilder.fill(stdDevX, stdDevY, stdDevTheta)
+            } else {
+                // Fallback if Limelight decides to not work
+                MEGATAG2_STD_DEV(rawSample.value[9], tagCount)
+            }
+
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
-                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
+                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
+                stdDevMatrix,
                 measurement.isLowQuality
             )
 
@@ -236,17 +209,7 @@ class LimelightPoseProvider(
     var loopsSinceLastSeen = 0
 
     override fun updateInputs(inputs: AbsolutePoseProviderInputs) {
-//        try {
-//            lock.lock()
-//            inputs.measurements = measurements.toTypedArray()
-//            inputs.observedTags = observedTags.toIntArray()
-//            measurements.clear()
-//            inputs.latestTargetObservation =
-//                TargetObservation(Rotation2d(txSubscriber.get().degrees), Rotation2d(tySubscriber.get().degrees))
-//            inputs.connected = connected
-//        } finally {
-//            lock.unlock()
-//        }
+
         val newData = updateCurrentMeasurements()
 
         observedTags.clear()
@@ -264,9 +227,6 @@ class LimelightPoseProvider(
             Rotation2d(tySubscriber.get().degrees),
             tvSubscriber.get() == 0.toLong()
         )
-
-//        inputs.connected = (RobotController.getFPGATime() - hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
-//        inputs.connected = (hbSubscriber.lastChange / 1000) < CONNECTED_TIMEOUT
 
         // We assume the camera has disconnected if there are no new updates for several ticks.
         val heartBeat = hbSubscriber.get()
