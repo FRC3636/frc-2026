@@ -109,7 +109,8 @@ class LimelightPoseProvider(
         val measurements: MutableList<LimelightMeasurement> = mutableListOf()
 
         gyroState[0] = gyroAngle.degrees
-        gyroState[1] = gyroVelocity.inDegreesPerSecond()
+        // would be gyroVelocity.inDegreesPerSecond(), Some teams have had issues with the gyro velocity MT2 field
+        gyroState[1] = 0.0
         gyroPublisher.accept(gyroState)
         NetworkTableInstance.getDefault().flush()
 
@@ -150,7 +151,7 @@ class LimelightPoseProvider(
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
                 APRIL_TAG_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
@@ -171,21 +172,11 @@ class LimelightPoseProvider(
                 measurement.observedTags.add(rawSample.value[i].toInt())
             }
 
-            // MegaTag2’s built-in standard deviations
-            val stdDevX = rawSample.value[rawSample.value.size - 3]
-            val stdDevY = rawSample.value[rawSample.value.size - 2]
-            val stdDevTheta = rawSample.value[rawSample.value.size - 1]
-            val stdDevMatrix = if (stdDevX > 0 && stdDevY > 0 && stdDevTheta > 0) {
-                VecBuilder.fill(stdDevX, stdDevY, stdDevTheta)
-            } else {
-                // Fallback if Limelight decides to not work
-                MEGATAG2_STD_DEV(rawSample.value[9], tagCount)
-            }
 
             measurement.poseMeasurement = AbsolutePoseMeasurement(
                 parsePose(rawSample.value),
-                rawSample.timestamp.microseconds - rawSample.value[6].microseconds,
-                stdDevMatrix,
+                rawSample.timestamp.microseconds - rawSample.value[6].milliseconds,
+                MEGATAG2_STD_DEV(rawSample.value[9], tagCount),
                 measurement.isLowQuality
             )
 
