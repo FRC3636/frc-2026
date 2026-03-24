@@ -177,10 +177,7 @@ object Drivetrain : Subsystem {
                                 "Limelight Left" to
                                         LimelightPoseProvider(
                                                 "limelight-left",
-                                                {
-                                                    // not poseEstimator.estimatedPosition.rotation because it's yaw was already changed by old vision updates
-                                                    inputs.gyroRotation
-                                                },
+                                                { poseEstimator.estimatedPosition.rotation },
                                                 { inputs.gyroVelocity },
                                                 { inputs.gyroConnected },
                                                 true,
@@ -188,7 +185,7 @@ object Drivetrain : Subsystem {
                                 "Limelight Right" to
                                         LimelightPoseProvider(
                                                 "limelight-right",
-                                                { inputs.gyroRotation },
+                                                { poseEstimator.estimatedPosition.rotation },
                                                 { inputs.gyroVelocity },
                                                 { inputs.gyroConnected },
                                                 true,
@@ -215,7 +212,7 @@ object Drivetrain : Subsystem {
                     Pose2d.kZero, // initial pose
                     VecBuilder.fill(0.02, 0.02, 0.005),
                     // Overwrite each measurement
-                    VecBuilder.fill(0.5, 0.5, 0.5)
+                    VecBuilder.fill(0.0, 0.0, 0.0)
             )
 
     /** Whether every sensor used for pose estimation is connected. */
