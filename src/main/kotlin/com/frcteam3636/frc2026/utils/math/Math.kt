@@ -5,12 +5,11 @@ package com.frcteam3636.frc2026.utils.math
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.Velocity
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 const val TAU = PI * 2
 const val GRAVITY = 9.81
@@ -27,6 +26,45 @@ fun Angle.toRotation2d(): Rotation2d {
     return Rotation2d(this)
 }
 
+fun Angle.clamp(minimum: Angle, maximum: Angle): Angle {
+    if (this < minimum) {
+        return minimum
+    } else if (this > maximum) {
+        return maximum
+    } else {
+        return this
+    }
+}
+
+//fun Angle.clampDeadzone(minimum: Angle, maximum: Angle): Angle {
+//    if (this < maximum && this > minimum) {
+//        return this
+//    }
+//
+//    val dist_to_minimum = (this.inRadians() - minimum.inRadians()).absoluteValue.radians
+//    val dist_to_maximum = (this.inRadians() - maximum.inRadians()).absoluteValue.radians
+//
+//    if (dist_to_minimum < dist_to_maximum) {
+//        return minimum
+//    } else {
+//        return maximum
+//    }
+//}
+
+fun Angle.clampDeadzone(minimum: Angle, maximum: Angle): Angle {
+    if (this in minimum..maximum) { return this }
+
+    fun shortestDistance(comparedAngle: Angle): Double {
+        val difference = (this.inRadians() - comparedAngle.inRadians().mod(360.0))
+        return if (difference > 180) (difference - 360.0) else difference
+    }
+
+    val distToMinimum = kotlin.math.abs(shortestDistance(minimum))
+    val distToMaximum = kotlin.math.abs(shortestDistance(maximum))
+
+    return if (distToMinimum < distToMaximum) minimum else maximum
+}
+
 fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {
     return this * sin(angle.inRadians())
 }
@@ -34,3 +72,25 @@ fun LinearVelocity.getVerticalComponent(angle: Angle): LinearVelocity {
 fun LinearVelocity.getHorizontalComponent(angle: Angle): LinearVelocity {
     return this * cos(angle.inRadians())
 }
+
+data class Vector3d(val x: Double, val y: Double, val z: Double) {
+    val norm: Double get() = sqrt(x*x + y*y + z*z)
+    operator fun minus(other: Vector3d) = Vector3d(x - other.x, y - other.y, z - other.z)
+    operator fun plus(other: Vector3d) = Vector3d(x + other.x, y + other.y, z + other.z)
+    operator fun times(scalar: Double) = Vector3d(x * scalar, y * scalar, z * scalar)
+    operator fun div(scalar: Double) = Vector3d(x / scalar, y / scalar, z / scalar)
+}
+
+data class Vector2d(val x: Double, val y: Double) {
+    val norm: Double get() = sqrt(x*x + y*y)
+    operator fun minus(other: Vector2d) = Vector2d(x - other.x, y - other.y)
+    operator fun plus(other: Vector2d) = Vector2d(x + other.x, y + other.y)
+    operator fun times(scalar: Double) = Vector2d(x * scalar, y * scalar)
+    operator fun div(scalar: Double) = Vector2d(x / scalar, y / scalar)
+}
+
+fun toVector2d( translation: Translation2d): Vector2d {
+    return Vector2d(translation.x, translation.y)
+}
+
+fun hypot(x: Double, y: Double, z: Double): Double = sqrt(x * x + y * y + z * z)

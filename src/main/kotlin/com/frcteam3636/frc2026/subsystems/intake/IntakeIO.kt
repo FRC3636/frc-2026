@@ -1,10 +1,12 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
@@ -27,14 +29,15 @@ open class IntakeInputs {
     var intakeMotorVelocity = 0.rotationsPerSecond
     var intakeMotorCurrent = Amps.zero()!!
     var pivotAngle = 0.degrees
-    var leftPivotMotorCurrent = Amps.zero()!!
+    var pivotSetpoint = 0.degrees
+    var intakePivotMotorCurrent = Amps.zero()!!
     var rightPivotMotorCurrent = Amps.zero()!!
-
-
 }
 
 interface IntakeIO {
     fun setSpeed(percent: Double)
+    fun setVoltage(voltage: Voltage)
+    fun setPivotSpeed(pivot: Double)
     fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
     fun updateInputs(inputs: IntakeInputs)
@@ -42,37 +45,21 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(25.0, 0.0, 0.0)
-        val PROFILE_CRUISE_VELOCITY = 1.0.rotationsPerSecond
-        val PROFILE_ACCELERATION = (6.7 / 2.0).rotationsPerSecondPerSecond
-        val PROFILE_JERK = 0.0
-        val ENCODER_TO_PIVOT_GEAR_RATIO = 2.25
+        val PID_GAINS = PIDGains(100.0, 0.0, 20.0)
+        val PROFILE_CRUISE_VELOCITY = 20.0.rotationsPerSecond
+        val PROFILE_ACCELERATION = 20.rotationsPerSecondPerSecond
+        val PROFILE_JERK = 20.0
+        val ENCODER_TO_PIVOT_GEAR_RATIO = 32.0 / 12.0
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
+        val DISCONTINUITY_POINT = 0.999
+        val MAGNET_OFFSET = 0.130859375
 
-        val LEFT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
-        val RIGHT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
+        val PIVOT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
+        val WHEEL_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
     }
 
-    private val pivotMotorConfig = TalonFXConfiguration()
-
-    private val intakePivotMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
+    private val intakePivotMotor = TalonFX(CTREDeviceId.IntakePivotMotor).apply {
         configurator.apply(TalonFXConfiguration().apply {
-            MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Brake
-                Inverted = InvertedValue.CounterClockwise_Positive
-            }
-        })
-    }
-    private val leftPivotMotor = TalonFX(CTREDeviceId.LeftPivotMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = LEFT_MOTOR_DIRECTION })
-    }
-//    private val rightPivotMotor = TalonFX(CTREDeviceId.RightPivotMotor).apply {
-//        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = RIGHT_MOTOR_DIRECTION })
-//    }
-
-
-    init {
-        pivotMotorConfig.apply {
             Slot0.apply {
                 pidGains = PID_GAINS
             }
@@ -82,41 +69,69 @@ class IntakeIOReal : IntakeIO {
                 MotionMagicJerk = PROFILE_JERK
             }
             Feedback.apply {
-                FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder
+                FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
                 FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
                 SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
                 RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
             }
             MotorOutput.apply {
                 NeutralMode = NeutralModeValue.Brake
+                Inverted = PIVOT_MOTOR_DIRECTION
             }
+        })
+    }
+    private val intakeMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
+        configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = WHEEL_MOTOR_DIRECTION })
+    }
+
+    init {
+        CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
+            configurator.apply(CANcoderConfiguration().apply {
+                MagnetSensor.apply {
+                    AbsoluteSensorDiscontinuityPoint = DISCONTINUITY_POINT
+                    MagnetOffset = MAGNET_OFFSET
+                }
+//                ExternalFeedbackConfigs().apply {
+//                    SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
+//                    RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
+//                }
+            })
         }
-        leftPivotMotor.configurator.apply(pivotMotorConfig)
-//        rightPivotMotor.configurator.apply(pivotMotorConfig)
     }
 
     override fun setSpeed(percent: Double) {
-        intakePivotMotor.set(percent)
+        intakeMotor.set(percent)
     }
 
-    override fun setWheelMotorVoltage(voltage: Voltage) {
+    override fun setPivotSpeed(pivot: Double) {
+        intakePivotMotor.set(pivot)
+    }
+
+    override fun setVoltage(voltage: Voltage) {
         intakePivotMotor.setVoltage(voltage.inVolts())
     }
 
-    override fun setPivotAngle(angle: Angle) {
-        Logger.recordOutput("Intake/Pivot Setpoint", angle)
-        val controlRequest = MotionMagicVoltage(angle)
-        leftPivotMotor.setControl(controlRequest.withPosition(angle))
+    override fun setWheelMotorVoltage(voltage: Voltage) {
+        intakeMotor.setVoltage(voltage.inVolts())
     }
 
+    private val positionControl = MotionMagicVoltage(0.0)
+
+    override fun setPivotAngle(angle: Angle) {
+        Logger.recordOutput("Intake/Pivot Setpoint", angle)
+        intakePivotMotor.setControl(positionControl.withPosition(angle))
+    }
+
+    var setpoint = 0.degrees
+
     override fun updateInputs(inputs: IntakeInputs) {
-        inputs.intakeMotorVelocity = intakePivotMotor.velocity.value
-        inputs.intakeMotorCurrent = intakePivotMotor.supplyCurrent.value
+        inputs.intakeMotorVelocity = intakeMotor.velocity.value
+        inputs.intakeMotorCurrent = intakeMotor.supplyCurrent.value
 
-        inputs.leftPivotMotorCurrent = leftPivotMotor.supplyCurrent.value
+        inputs.intakePivotMotorCurrent = intakePivotMotor.supplyCurrent.value
 //        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
-        inputs.pivotAngle = leftPivotMotor.position.value
-
+        inputs.pivotAngle = intakePivotMotor.position.value
+        inputs.pivotSetpoint = setpoint
     }
 }
 

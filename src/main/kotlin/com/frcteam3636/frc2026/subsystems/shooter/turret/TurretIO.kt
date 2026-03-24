@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.shooter.turret
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -80,7 +80,6 @@ class TurretIOReal : TurretIO {
 
     private val encoder =  CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
         configurator.apply(CANcoderConfiguration().apply {
-//                MagnetSensor.MagnetOffset = MAGNET_OFFSET
             MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
         })
         setPosition(0.degrees)
@@ -96,7 +95,6 @@ class TurretIOReal : TurretIO {
     private var setPoint = 0.0.degrees
 
     init {
-
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
             positionSignal,
@@ -105,31 +103,16 @@ class TurretIOReal : TurretIO {
             temperatureSignal
         )
         motor.optimizeBusUtilization()
-
-//         CANcoder(CTREDeviceId.TurretTurningEncoder).apply {
-//            configurator.apply(CANcoderConfiguration().apply {
-////                MagnetSensor.MagnetOffset = MAGNET_OFFSET
-//                MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive
-//            })
-//            setPosition(0.degrees)
-//        }
-
     }
 
+
     override fun turnToAngle(angle: Angle) {
-//        assert(angle in (-85).degrees..135.degrees)
+        // This is fine to do because the PID acts on a linear system, meaning that there will be no wrapping through the bad angles.
+        val clampedAngle = angle.coerceIn(TURRET_MIN_ANGLE..TURRET_MAX_ANGLE)
 
-        val upperBound = 90.degrees
-        val lowerBound = (-85).degrees
-
-        setPoint = if (angle in lowerBound..upperBound) {
-            angle
-        } else if (angle > (upperBound + lowerBound / 2.0) + 180.degrees) {
-            lowerBound
-        } else {
-            lowerBound
-        }
+        setPoint = clampedAngle
         Logger.recordOutput("Shooter/Turret/Setpoint", setPoint)
+
         motor.setControl(positionControl.withPosition(setPoint))
     }
 
@@ -139,12 +122,12 @@ class TurretIOReal : TurretIO {
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        inputs.angle = motor.position.value
+        inputs.angle = positionSignal.value
         inputs.motorCurrent = currentSignal.value
         inputs.motorVelocity = velocitySignal.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
-//        inputs.setPoint = setPoint
+        inputs.setPoint = setPoint
     }
 
     override fun zeroEncoder() {
@@ -163,13 +146,16 @@ class TurretIOReal : TurretIO {
     }
 
     companion object Constants{
-        private val PID_GAINS = PIDGains(50.0, 0.0, 1.0)
+        val TURRET_MAX_ANGLE = 90.degrees
+        val TURRET_MIN_ANGLE = (-100).degrees
+
+        private val PID_GAINS = PIDGains(80.0, 0.0, 1.2)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625
-        private val PROFILE_ACCELERATION = 5.0.rotationsPerSecondPerSecond
+        private val PROFILE_ACCELERATION = 10.0.rotationsPerSecondPerSecond
         private const val PROFILE_JERK = 0.0
-        private val PROFILE_VELOCITY = 7.0.rotationsPerSecond
+        private val PROFILE_VELOCITY = 14.0.rotationsPerSecond
     }
 }
 

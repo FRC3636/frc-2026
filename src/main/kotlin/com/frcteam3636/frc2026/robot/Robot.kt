@@ -10,10 +10,16 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
 import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
+import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
-import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter
+import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
+import com.frcteam3636.frc2026.subsystems.climber.Climber
+import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
+import com.frcteam3636.frc2026.subsystems.drivetrain.Middle
+import com.frcteam3636.frc2026.subsystems.drivetrain.Stem
+import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -21,21 +27,15 @@ import com.frcteam3636.version.GIT_SHA
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.hal.FRCNetComm
 import edu.wpi.first.hal.HAL
-import edu.wpi.first.wpilibj.*
-import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.wpilibj.Alert
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.PowerDistribution
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj.Threads
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.button.CommandJoystick
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import org.ironmaple.simulation.SimulatedArena
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
@@ -43,12 +43,10 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
-import java.awt.DefaultKeyboardFocusManager
-import java.awt.KeyboardFocusManager
 import java.util.concurrent.locks.ReentrantLock
-import javax.swing.plaf.basic.BasicSplitPaneUI
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.jvm.optionals.getOrNull
 
 /**
  * The VM is configured to automatically run this object (which basically functions as a singleton
@@ -171,10 +169,13 @@ object Robot : LoggedRobot() {
     /** Start robot subsystems so that their periodic tasks are run */
     private fun configureSubsystems() {
         Drivetrain.register()
-//        Feeder.register()
+        Feeder.register()
+        Flywheel.register()
+        Hood.register()
         Indexer.register()
-        Shooter.registerSubsystems()
         Intake.register()
+        Turret.register()
+//        Climber.register()
     }
 
 
@@ -183,12 +184,17 @@ object Robot : LoggedRobot() {
 
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
+        val flipH = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
         if (lastSelectedAuto != selectedAuto) {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
-                AutoModes.TestAuto -> TestAuto.getPath(flipH = false, flipV = false)
-                AutoModes.TwoScore -> TwoScore.getPath(flipH = false, flipV = false)
+                AutoModes.Stem -> Stem.getPath(flipH = flipH, flipV = false)
+                AutoModes.StemLeft -> Stem.getPath(flipH = flipH, flipV = true)
+                AutoModes.TestAuto -> TestAuto.getPath(flipH = flipH, flipV = false)
+                AutoModes.TwoScore -> TwoScore.getPath(flipH = flipH, flipV = false)
+                AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = flipH)
+                AutoModes.Middle -> Middle.getPath(flipH = flipH, flipV = false)
             }
         }
     }

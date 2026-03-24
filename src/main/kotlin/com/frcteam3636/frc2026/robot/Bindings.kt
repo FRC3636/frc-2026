@@ -1,11 +1,21 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.frcteam3636.frc2026.subsystems.climber.Climber
+import com.frcteam3636.frc2026.subsystems.shooter.Target
+import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
+import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
-import com.frcteam3636.frc2026.subsystems.shooter.Shooter
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.shooter.shoot
+import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
+import com.frcteam3636.frc2026.utils.autos.alignToClimb
+import com.frcteam3636.frc2026.utils.math.meters
+import com.frcteam3636.frc2026.utils.math.seconds
+import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
 import edu.wpi.first.wpilibj2.command.Commands
@@ -13,9 +23,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 
-val controller = CommandXboxController(2)
 val joystickLeft = CommandJoystick(0)
 val joystickRight = CommandJoystick(1)
+val controller = CommandXboxController(2)
 
 @Suppress("unused")
 val joystickDev = CommandJoystick(3)
@@ -24,146 +34,112 @@ val joystickDev = CommandJoystick(3)
 val controllerDev = CommandXboxController(4)
 
 fun configureBindings() {
+
+    /* main bindings */
+
+    joystickLeft.button(1).whileTrue(
+        Commands.parallel(
+//            Intake.setPivotPosition(Intake.Position.Deployed),
+            Intake.intakeSequence()
+
+        )
+    )
+
+    joystickLeft.button(2).whileTrue(
+        Commands.sequence(
+            Intake.setVoltage(5.0.volts).withTimeout(1.seconds),
+            Intake.setVoltage(0.0.volts).withTimeout(1.seconds)
+        ).repeatedly()
+    )
+
+//    joystickLeft.button(3).whileTrue(
+//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+//    )
+
+//    joystickLeft.button(4).whileTrue(
+////        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+//        Climber.climb()
+//    )
+
+
+
+
+//    joystickRight.button(9).whileTrue(
+//        Climber.setPosition(0.183.meters).ignoringDisable(true)
+//    )
+
+    joystickRight.button(3).onTrue(
+        setShooterTarget(Target.TUNING)
+    )
+
+    joystickRight.button(4).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+    )
+
+    joystickRight.button(11).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB)
+    )
+
+    joystickRight.button(12).whileTrue(
+        Commands.parallel(
+            Indexer.outdex(),
+            Intake.outtake()
+        )
+    )
+
+    joystickRight.button(2).whileTrue(alignToClimb())
+
+    // shoot sequence
+    joystickRight.button(1).whileTrue(
+        shoot()
+    )
+
+    /*  default commands   */
+
     Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks (
         joystickLeft.hid,
         joystickRight.hid
     )
-    Shooter.Turret.defaultCommand = Shooter.Turret.turnToTargetTurretAngle()
-     Shooter.Hood.defaultCommand = Shooter.Hood.turnToTargetHoodAngle()
-    // (The button with the yellow tape on it)
+
+    Turret.defaultCommand = Turret.turnToTargetTurretAngle()
+    Hood.defaultCommand = Hood.turnToTargetHoodAngle()
+
+//    Climber.defaultCommand = Climber.goToTargetHeight()
+
+    /* zeroing commands */
+
     joystickLeft.button(8).onTrue(Commands.runOnce({
         println("Zeroing gyro.")
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
-    joystickLeft.button(1).whileTrue(
-        Intake.intake()
-    )
-
-    joystickRight.button(2).onTrue(
-        Commands.runOnce({
-            Shooter.shooterTarget = Shooter.Target.VECTOR_AIM_AT_HUB
-        })
-    )
-
-    joystickRight.button(3).onTrue(
-        Commands.runOnce({
-            Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB
-        })
-    )
-
-    joystickRight.button(4).onTrue(
-        Commands.runOnce({
-            Shooter.shooterTarget = Shooter.Target.TUNING
-        })
-    )
-
-    joystickRight.button(5).onTrue(
-        Commands.runOnce({
-            Shooter.shooterTarget = Shooter.Target.TUNING
-        })
-    )
-
-    joystickRight.button(6).onTrue(
-        Commands.runOnce({
-            Shooter.shooterTarget = Shooter.Target.STOWED
-        })
-    )
-
-    joystickRight.button(1).whileTrue(
-        Commands.sequence(
-            Commands.parallel(
-                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
-                Shooter.Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle)
-            ),
-            Commands.parallel(
-                Commands.parallel(
-                    Feeder.feed(),
-                    Indexer.index()
-                ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-                Shooter.Flywheel.runAtTarget(),
-            ),
-        )
-    )
-    joystickRight.button(8).onTrue(Commands.runOnce({
-        println("Zeroing Turret Encoder")
-        Shooter.Turret.zeroTurretEncoder()
+    joystickLeft.button(14).onTrue(Commands.runOnce({
+        println("Zeroing gyro.")
+        Drivetrain.zeroGyro(isReversed = true)
     }).ignoringDisable(true))
 
-    controller.leftBumper().onTrue(
-        Commands.runOnce(SignalLogger::start)
-            .andThen(StatusLogger::start))
-    controller.rightBumper().onTrue(
-        Commands.runOnce(SignalLogger::stop)
-            .andThen(StatusLogger::stop)
-    )
+    joystickRight.button(8).onTrue(
+        Commands.parallel(
+            Turret.zeroTurretEncoder().ignoringDisable(true),
+            Commands.runOnce({
+                println("Zeroing turret.")
+            })
+        ).ignoringDisable(true)
 
-    controller.b().whileTrue(
-        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kForward)
-    )
-    controller.a().whileTrue(
-        Shooter.Flywheel.sysIdQuasistatic(SysIdRoutine.Direction.kReverse)
-    )
-    controller.x().whileTrue(
-        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kForward)
-    )
-    controller.y().whileTrue(
-        Shooter.Flywheel.sysIdDynamic(SysIdRoutine.Direction.kReverse)
     )
 
 
+//    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
+//    joystickLeft.button(9).whileTrue(Drivetrain.calculateWheelRadius())
 
-//    controller.a().whileTrue(
-////        Shooter.Hood.turnToAngle(Shooter.Hood.angle + 5.degrees)
-////        Shooter.Hood.turnToAngle(0.degrees)
-//        Shooter.Flywheel.spinAtTargetSpeed(3000.rpm)
-//    )
 
-//    controller.x().whileTrue(
-////        Shooter.Hood.turnToAngle(15.degrees)
-//        Commands.parallel(
-//            Indexer.index(),
-//            Feeder.feed()
-//        )
-//    )
-
-//    controller.povUp().onTrue(Intake.setPivotPosition(Intake.Position.Stowed))
-//    controller.povDown().onTrue(Intake.setPivotPosition(Intake.Position.Deployed))
-
-//    controller.a().whileTrue(
-//        Commands.parallel(
-//            Commands.run({ Shooter.shooterTarget = Shooter.Target.AIM_AT_HUB }),
-//            Commands.sequence(
-//                Shooter.Flywheel.runAtTarget().until(Shooter.Flywheel.atDesiredFlywheelVelocity),
-//    //            Hood.turnToTargetHoodAngle().until(Shooter.Hood.atDesiredHoodAngle),
-//                Commands.parallel(
-//                    Commands.parallel(
-////                        Indexer.index(),
-//                        Feeder.feed(),
-//                    ).onlyWhile(Shooter.Flywheel.atDesiredStandingFlywheelVelocity).repeatedly(),
-//                    Shooter.Flywheel.runAtTarget()
-//                ),
-//            ),
-//        )
-//    )
-
-//    controller.x().whileTrue(
-//        Commands.parallel(
-//            Indexer.outdex(),
-//            Feeder.outtake()
-//        )
-//    )
-
-//    joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
-
-    // Angles robot for shooting, just in case the
-    // turret stops working.
-    // joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
+    /* dev bindings */
 
     if (Preferences.getBoolean("DeveloperMode", false)) {
         controllerDev.leftBumper().onTrue(
             Commands.runOnce(SignalLogger::start)
-                .andThen(StatusLogger::start))
+                .andThen(StatusLogger::start)
+        )
         controllerDev.rightBumper().onTrue(
             Commands.runOnce(SignalLogger::stop)
                 .andThen(StatusLogger::stop)

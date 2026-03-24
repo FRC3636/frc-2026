@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.subsystems.shooter
+package com.frcteam3636.frc2026.subsystems.shooter.hood
 
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.configs.CANcoderConfiguration
@@ -12,11 +12,11 @@ import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
+import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.Torque
 import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.DCMotorSim
 import org.team9432.annotation.Logged
@@ -37,6 +37,7 @@ interface HoodIO {
     fun setVoltage(voltage: Voltage)
     fun updateInputs(inputs: HoodInputs)
     fun setBrakeMode(enabled: Boolean)
+    fun zeroEncoder()
     val signals: Array<BaseStatusSignal>
         get() = emptyArray()
 }
@@ -96,8 +97,9 @@ class HoodIOReal: HoodIO {
     }
 
     override fun turnToAngle(angle: Angle) {
-        setPoint = angle
-        motor.setControl(positionControl.withPosition(angle))
+        val angleSetpoint = angle.clamp(MIN_HOOD_ANGLE, MAX_HOOD_ANGLE)
+        setPoint = angleSetpoint
+        motor.setControl(positionControl.withPosition(angleSetpoint))
     }
 
     override fun setVoltage(voltage: Voltage) {
@@ -106,7 +108,7 @@ class HoodIOReal: HoodIO {
     }
 
     override fun updateInputs(inputs: HoodInputs) {
-        inputs.hoodAngle = motor.position.value
+        inputs.hoodAngle = positionSignal.value
         inputs.hoodVelocity = velocitySignal.value
         inputs.hoodCurrent = currentSignal.value
         inputs.motorTemperature = temperatureSignal.value
@@ -126,6 +128,10 @@ class HoodIOReal: HoodIO {
         )
     }
 
+    override fun zeroEncoder() {
+        motor.setPosition(30.degrees)
+    }
+
     companion object Constants {
         private val ENCODER_DISCONTINUITY_POINT = 0.8
         private val MAGNET_OFFSET = 0.8349
@@ -135,8 +141,8 @@ class HoodIOReal: HoodIO {
         private val PROFILE_VELOCITY = 3.0.rotationsPerSecond
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0
-        private val MAX_HOOD_ANGLE = 50.degrees.inRadians()
-        private val MIN_HOOD_ANGLE = 0.degrees.inRadians()
+        private val MAX_HOOD_ANGLE = 22.degrees
+        private val MIN_HOOD_ANGLE = 0.degrees
     }
 }
 
@@ -166,5 +172,9 @@ class HoodIOSim: HoodIO {
     override fun setBrakeMode(enabled: Boolean) {
         breakMode = enabled
     }
+
+    override fun zeroEncoder() {
+    }
+
 
 }
