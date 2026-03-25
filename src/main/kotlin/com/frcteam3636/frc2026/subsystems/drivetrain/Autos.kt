@@ -116,7 +116,7 @@ object Middle : Auto {
             }),
             Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
             Commands.parallel(
-                setShooterTarget(Target.AIM_AT_HUB),
+                setShooterTarget(Target.AIM_AT_HUB_NO_PASS),
                 Flywheel.runAtTarget(),
                 Indexer.index(),
                 Feeder.feed(),
@@ -125,7 +125,7 @@ object Middle : Auto {
             Commands.waitSeconds(3.0),
             Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
             Commands.parallel(
-                setShooterTarget(Target.AIM_AT_HUB),
+                setShooterTarget(Target.AIM_AT_HUB_NO_PASS),
                 Flywheel.runAtTarget(),
                 Indexer.index(),
                 Feeder.feed(),
@@ -247,7 +247,7 @@ object Stem : Auto {
             Drivetrain.alignAndFlip(Targets.Cycle1.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Trench.target, flipH, flipV),
             Commands.parallel(
-                setShooterTarget(Target.AIM_AT_HUB),
+                setShooterTarget(Target.AIM_AT_HUB_NO_PASS),
                 Drivetrain.alignAndFlip(Targets.Safe.target, flipH, flipV),
             ),
             Commands.sequence(

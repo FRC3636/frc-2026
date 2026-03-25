@@ -1,19 +1,15 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.feeder.Feeder
-import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
-import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
@@ -73,11 +69,11 @@ fun configureBindings() {
     )
 
     joystickRight.button(4).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_SHOOT_ON_MOVE)
+        setShooterTarget(Target.AIM_AT_HUB_PASS)
     )
 
     joystickRight.button(11).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB)
+        setShooterTarget(Target.AIM_AT_HUB_NO_PASS)
     )
 
     joystickRight.button(12).whileTrue(
@@ -101,7 +97,7 @@ fun configureBindings() {
         joystickRight.hid
     )
 
-    Turret.defaultCommand = Turret.turnToTargetTurretAngle()
+    Turret.defaultCommand = Turret.turnToSetpoint()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
 //    Climber.defaultCommand = Climber.goToTargetHeight()

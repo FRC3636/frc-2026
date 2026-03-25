@@ -156,13 +156,6 @@ object Drivetrain : Subsystem {
                     )
             )
 
-    // someone please give me a better way to do this
-    //    val lastModulePositions = arrayOf(
-    //        SwerveModulePosition(),
-    //        SwerveModulePosition(),
-    //        SwerveModulePosition(),
-    //        SwerveModulePosition()
-    //    )
     val lastModulePositions = Array(4) { SwerveModulePosition() }
 
     private val absolutePoseIOs =
