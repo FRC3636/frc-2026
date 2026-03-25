@@ -2,13 +2,10 @@ package com.frcteam3636.frc2026.subsystems.shooter.turret
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
-import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.shooter.directionToHub
 import com.frcteam3636.frc2026.subsystems.shooter.shooterFieldPose
 import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
 import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
-import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
@@ -67,24 +64,11 @@ object Turret : Subsystem {
             io.turnToAngle(angle)
         }
 
-    private val maxAngle = 90.0.degrees
-    private val minAngle = (-85.0).degrees
-    fun turnToTargetTurretAngle(): Command =
+    fun turnToSetpoint(): Command =
         run {
-//            val angleSetpoint = if(shooterProfile.turretAngle < maxAngle && shooterProfile.turretAngle > minAngle) {
-//                shooterProfile.turretAngle
-//            } else if (shooterProfile.turretAngle > (maxAngle + minAngle).div(2.0) + 180.0.degrees){
-//                maxAngle
-//            } else {
-//                minAngle
-//            }
             io.turnToAngle(shooterProfile.turretAngle)
         }
 
-    fun turnToTargetHubAngle(): Command =
-        run {
-            setTargetAngle(directionToHub - Drivetrain.estimatedPose.rotation.measure)
-        }
 
     fun zeroTurretEncoder() : Command =
         runOnce {
