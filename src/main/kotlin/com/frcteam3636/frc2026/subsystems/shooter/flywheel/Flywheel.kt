@@ -47,7 +47,7 @@ object Flywheel: Subsystem {
 
     fun calculateFlywheelVelocity(distance: Distance): AngularVelocity {
         // https://www.desmos.com/calculator/504yoxmqbr
-        return (177.90563 * distance.inMeters() + 1869.14733).rpm
+        return (188.86324 * distance.inMeters() + 1866.16506).rpm
     }
     fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(calculateFlywheelVelocity(distance).inRPM()) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
 

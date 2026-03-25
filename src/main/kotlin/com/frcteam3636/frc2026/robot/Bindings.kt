@@ -1,15 +1,18 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
+import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
@@ -63,9 +66,6 @@ fun configureBindings() {
         Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
 //        Climber.climb()
     )
-
-
-
 
     joystickRight.button(9).whileTrue(
         Climber.setPosition(0.183.meters).ignoringDisable(true)

@@ -122,9 +122,9 @@ class TurretIOReal : TurretIO {
     }
 
     override fun updateInputs(inputs: TurretInputs) {
-        inputs.angle = positionSignal.value
-        inputs.motorCurrent = currentSignal.value
-        inputs.motorVelocity = velocitySignal.value
+        inputs.angle = motor.position.value
+        inputs.motorCurrent = motor.supplyCurrent.value
+        inputs.motorVelocity = motor.velocity.value
         inputs.motorTemperature = temperatureSignal.value
         inputs.brakeMode = brakeMode
         inputs.setPoint = setPoint
@@ -149,7 +149,7 @@ class TurretIOReal : TurretIO {
         val TURRET_MAX_ANGLE = 90.degrees
         val TURRET_MIN_ANGLE = (-100).degrees
 
-        private val PID_GAINS = PIDGains(80.0, 0.0, 1.2)
+        private val PID_GAINS = PIDGains(150.0, 0.0, 1.2)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 155.0 / 30.0
         private const val ROTOR_TO_SENSOR_GEAR_RATIO = 1.0
         private const val MAGNET_OFFSET = -0.19140625
