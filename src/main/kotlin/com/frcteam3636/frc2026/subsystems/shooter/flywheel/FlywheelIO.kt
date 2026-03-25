@@ -82,10 +82,12 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-//        val output = ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM())
-//        org.littletonrobotics.junction.Logger.recordOutput("Shooter/Flywheel/controller output", output.volts)
-//        motor.setVoltage(output)
-        motor.setControl(VelocityVoltage(targetVelocity))
+        val output = ffController.calculate(velocity.inRPM()) + pidController.calculate(motor.velocity.value.inRPM(), velocity.inRPM())
+        if (motor.velocity.value > velocity * 0.95) {
+            motor.setVoltage(output)
+        } else {
+            motor.setVoltage(12.0)
+        }
     }
 
     companion object Constants{

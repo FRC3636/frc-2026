@@ -135,6 +135,7 @@ class LimelightPoseProvider(
 
         // Megatag 1
         for (rawSample in megatag1Subscriber.readQueue()) {
+//            if (!RobotState.beforeFirstEnable) continue
 
             val measurement = LimelightMeasurement()
             val tagCount = rawSample.value[7].toInt()
