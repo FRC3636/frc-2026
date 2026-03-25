@@ -49,7 +49,7 @@ class ClimberIOReal : ClimberIO {
     internal companion object Constants {
         private val SPOOL_RADIUS = 0.25.inches // Half inch diameter hex shaft
         private val PID_GAINS = PIDGains(100.0, 0.0, 0.0)
-        private const val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
+        private const val MOTOR_TO_ENCODER_GEAR_RATIO = 20.0
     }
 
     private val motorConfig = TalonFXConfiguration()

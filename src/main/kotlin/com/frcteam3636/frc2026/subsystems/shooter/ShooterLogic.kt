@@ -116,8 +116,8 @@ object ShooterCalculator {
     fun movingLaunchVector(vector: Vector3d): Vector3d {
         val robotVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
         return Vector3d(
-            vector.x - (robotVelocity.vxMetersPerSecond),
-            vector.y - (robotVelocity.vyMetersPerSecond),
+            vector.x - robotVelocity.vxMetersPerSecond,
+            vector.y + robotVelocity.vyMetersPerSecond,
             vector.z    // robot vertical velocity should always be zero (climbing?)
         )
     }
@@ -262,8 +262,8 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterCalculator.vectorToShooterProfile(false, ShooterCalculator.stationaryHubLaunchVector) }
     ),
     AIM_AT_HUB_SHOOT_ON_MOVE (
-//        { ShooterCalculator.aimAtHubShootOnMove() }
-        { ShooterCalculator.vectorToShooterProfile(true, ShooterCalculator.stationaryHubLaunchVector) }
+        { ShooterCalculator.aimAtHubShootOnMove() }
+//        { ShooterCalculator.vectorToShooterProfile(true, ShooterCalculator.stationaryHubLaunchVector) }
     ),
     STATIONARY_TURRET (
         { ShooterProfile(0.0.degrees, Hood.calculateHoodAngle(shooterToHub.norm.meters), Flywheel.calculateFlywheelVelocity(shooterToHub.norm.meters)) }
