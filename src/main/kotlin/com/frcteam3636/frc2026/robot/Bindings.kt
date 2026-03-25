@@ -33,6 +33,13 @@ fun configureBindings() {
 
     /* main bindings */
 
+    joystickLeft.povUp().whileTrue(
+        Commands.parallel(
+            Feeder.outtake(),
+            Indexer.outdex()
+        )
+    )
+
     joystickLeft.button(1).whileTrue(
         Commands.parallel(
 //            Intake.setPivotPosition(Intake.Position.Deployed),
@@ -48,21 +55,21 @@ fun configureBindings() {
         ).repeatedly()
     )
 
-//    joystickLeft.button(3).whileTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-//    )
+    joystickLeft.button(3).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
+    )
 
-//    joystickLeft.button(4).whileTrue(
-////        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
+    joystickLeft.button(4).whileTrue(
+        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
 //        Climber.climb()
-//    )
+    )
 
 
 
 
-//    joystickRight.button(9).whileTrue(
-//        Climber.setPosition(0.183.meters).ignoringDisable(true)
-//    )
+    joystickRight.button(9).whileTrue(
+        Climber.setPosition(0.183.meters).ignoringDisable(true)
+    )
 
     joystickRight.button(3).onTrue(
         setShooterTarget(Target.TUNING)
