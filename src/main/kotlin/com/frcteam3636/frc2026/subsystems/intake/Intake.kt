@@ -58,14 +58,9 @@ object Intake : Subsystem {
 
     fun intakeSequence(): Command =
         Commands.parallel(
-            Commands.runEnd(
-                {
-                    io.setVoltage((-7).volts)
-                },
-                {
-                    io.setVoltage(0.volts)
-                }
-            ).withTimeout(0.5.seconds),
+            Commands.run({
+                io.setPivotAngle(Position.Deployed.angle)
+            }),
             Commands.runEnd(
                 {
                     io.setWheelMotorVoltage(6.volts)
