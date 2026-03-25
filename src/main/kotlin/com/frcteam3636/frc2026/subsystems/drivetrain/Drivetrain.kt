@@ -421,7 +421,11 @@ object Drivetrain : Subsystem {
 
     val measuredChassisSpeedsRelativeToField
 //        get() = kinematics.cornerStatesToChassisSpeeds(inputs.measuredStatesRelativeToField)
-        get() = ChassisSpeeds.fromRobotRelativeSpeeds(measuredChassisSpeeds, estimatedPose.rotation)
+        get() = if (DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Blue) {
+            ChassisSpeeds.fromRobotRelativeSpeeds(measuredChassisSpeeds, estimatedPose.rotation)
+        } else {
+            ChassisSpeeds.fromFieldRelativeSpeeds(measuredChassisSpeeds, estimatedPose.rotation + Rotation2d.k180deg)
+        }
 
     private var desiredChassisSpeeds
         get() = kinematics.cornerStatesToChassisSpeeds(desiredModuleStates)
