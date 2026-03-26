@@ -155,9 +155,12 @@ object Lebron : Auto {
                     ).reference
                 )
             }),
+            runOnce({
+//                setShooterTarget(Target.AIM_AT_HUB_NO_PASS)
+            }),
             Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
             Commands.race(
-                Intake.intake(),
+                Intake.intakeSequence(),
                 Commands.sequence(
                     Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
@@ -168,10 +171,13 @@ object Lebron : Auto {
                     Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
                 )
             ),
-            Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
             Commands.parallel(
-                shoot().withTimeout(4.seconds)
-            )
+                Intake.setPivotPosition(Intake.Position.Stowed),
+                Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
+                Commands.parallel(
+//                    shoot().withTimeout(4.seconds)
+                )
+            ),
         )
 
     enum class Targets(val target: APTargetWithTolerance) {

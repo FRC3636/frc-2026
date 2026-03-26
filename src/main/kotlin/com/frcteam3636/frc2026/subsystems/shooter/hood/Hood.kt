@@ -9,6 +9,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
 import com.frcteam3636.frc2026.utils.math.inMeters
 import edu.wpi.first.math.MathUtil.clamp
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.units.measure.Voltage
@@ -46,11 +47,18 @@ object Hood: Subsystem {
         Logger.recordOutput("Shooter/Hood/atDesiredHoodAngle", atDesiredHoodAngle)
     }
 
+    val hoodAngleTable = InterpolatingDoubleTreeMap().apply {
+        put(4.96,9.0)
+        put(3.235,8.0)
+        put(2.54,2.0)
+        put(3.14,3.0)
+    }
 
 
     fun calculateHoodAngle(distance: Distance): Angle {
         // https://www.desmos.com/calculator/504yoxmqbr
-        return (2.98673 * distance.inMeters() + -5.92629).degrees
+        return (2.7831 * distance.inMeters() + -4.00268).degrees
+//        return hoodAngleTable.get(distance.inMeters()).degrees
     }
 
     fun turnToTargetHoodAngle(): Command =

@@ -562,7 +562,7 @@ object Drivetrain : Subsystem {
     }
 
     val autoPilotConstraints: APConstraints =
-            APConstraints().withVelocity(4.0).withAcceleration(15.0).withJerk(5.0)
+            APConstraints().withVelocity(2.0).withAcceleration(15.0).withJerk(5.0)
 
     val autoPilotProfile: APProfile =
             APProfile(autoPilotConstraints)
