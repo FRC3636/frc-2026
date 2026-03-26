@@ -169,14 +169,12 @@ object Lebron : Auto {
                     Drivetrain.alignAndFlip(Targets.Target6.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target7.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
                 )
             ),
             Commands.parallel(
-                Intake.setPivotPosition(Intake.Position.Stowed),
-                Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
-                Commands.parallel(
-//                    shoot().withTimeout(4.seconds)
-                )
+                Drivetrain.alignAndFlip(Targets.Target10.target, flipH, flipV),
+                    shoot().withTimeout(4.seconds)
             ),
         )
 
@@ -188,9 +186,11 @@ object Lebron : Auto {
         Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(1.500.metersPerSecond)),
         Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(1.500.metersPerSecond)),
         Target7(APTargetWithTolerance(Pose2d(6.000.meters, 2.800.meters, Rotation2d(1.571.radians))).withVelocity(1.500.metersPerSecond)),
-        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.900.meters, Rotation2d(1.963.radians)))),
-        Target9(APTargetWithTolerance(Pose2d(3.200.meters, 1.100.meters, Rotation2d(2.322.radians))).withEntryAngle(Rotation2d(1.931.radians)) as APTargetWithTolerance)
+        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.800.meters, Rotation2d(-3.142.radians)))),
+        Target9(APTargetWithTolerance(Pose2d(3.100.meters, 0.800.meters, Rotation2d(3.142.radians)))),
+        Target10(APTargetWithTolerance(Pose2d(2.000.meters, 0.800.meters, Rotation2d(1.000.radians))))
     }
+
 
 }
 
