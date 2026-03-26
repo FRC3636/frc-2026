@@ -7,8 +7,6 @@ import com.frcteam3636.frc2026.AutoModes
 import com.frcteam3636.frc2026.Dashboard
 import com.frcteam3636.frc2026.Diagnostics
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
-import com.frcteam3636.frc2026.subsystems.drivetrain.TestAuto
-import com.frcteam3636.frc2026.subsystems.drivetrain.TwoScore
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
@@ -18,9 +16,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
 import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
-import com.frcteam3636.frc2026.subsystems.drivetrain.Middle
-import com.frcteam3636.frc2026.subsystems.drivetrain.Stem
-import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH

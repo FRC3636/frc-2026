@@ -585,7 +585,7 @@ object Drivetrain : Subsystem {
         var transformedTarget = target
         if (flipH) transformedTarget = flipTargetHorizontal(transformedTarget)
         if (flipV) transformedTarget = flipTargetVertical(transformedTarget)
-        return alignWithAutopilot(transformedTarget)
+        return alignWithAutopilot(transformedTarget as APTargetWithTolerance)
     }
 
     // TODO: Compensate for the error probably caused by the turret being stuck at the wrong angle.
@@ -608,7 +608,7 @@ object Drivetrain : Subsystem {
                 )
     }
 
-    fun alignWithAutopilot(target: APTarget): Command {
+    fun alignWithAutopilot(target: APTargetWithTolerance): Command {
         return run {
             val velocityVector = measuredChassisSpeedsRelativeToField.translation2dPerSecond.toVector()
             val vectorToTarget =
@@ -622,9 +622,9 @@ object Drivetrain : Subsystem {
                         }
                     }
 
-//            autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
+            autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
 
-            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
+            val output = autoPilot.calculate(estimatedPose, adjustedChassisSpeeds, target)
 
             val rotationOutput =
                     autoPilotRotationPID.calculate(
