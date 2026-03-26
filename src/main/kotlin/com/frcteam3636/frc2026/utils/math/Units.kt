@@ -43,6 +43,7 @@ inline val Number.rotationsPerSecondPerSecond: AngularAcceleration get() = Rotat
 inline val Number.rpm: AngularVelocity get() = RPM.of(this.toDouble())
 inline val Number.radiansPerSecond: AngularVelocity get() = RadiansPerSecond.of(this.toDouble())
 inline val Number.degreesPerSecond: AngularVelocity get() = DegreesPerSecond.of(this.toDouble())
+inline val Number.degreesPerSecondPerSecond: AngularAcceleration get() = DegreesPerSecondPerSecond.of(this.toDouble())
 
 inline val Number.hertz: Frequency get() = Hertz.of(this.toDouble())
 inline val Number.millihertz: Frequency get() = Millihertz.of(this.toDouble())

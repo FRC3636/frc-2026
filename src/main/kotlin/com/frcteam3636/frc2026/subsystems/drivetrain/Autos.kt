@@ -156,7 +156,7 @@ object Lebron : Auto {
                 )
             }),
             runOnce({
-//                setShooterTarget(Target.AIM_AT_HUB_NO_PASS)
+                setShooterTarget(Target.STATIONARY_TURRET)
             }),
             Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
             Commands.race(
@@ -186,11 +186,10 @@ object Lebron : Auto {
         Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(1.500.metersPerSecond)),
         Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(1.500.metersPerSecond)),
         Target7(APTargetWithTolerance(Pose2d(6.000.meters, 2.800.meters, Rotation2d(1.571.radians))).withVelocity(1.500.metersPerSecond)),
-        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.800.meters, Rotation2d(-3.142.radians)))),
-        Target9(APTargetWithTolerance(Pose2d(3.100.meters, 0.800.meters, Rotation2d(3.142.radians)))),
-        Target10(APTargetWithTolerance(Pose2d(2.000.meters, 0.800.meters, Rotation2d(1.000.radians))))
+        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.500.meters, Rotation2d(-3.142.radians)))),
+        Target9(APTargetWithTolerance(Pose2d(3.000.meters, 0.500.meters, Rotation2d(3.142.radians)))),
+        Target10(APTargetWithTolerance(Pose2d(2.500.meters, 1.700.meters, Rotation2d(0.785.radians))))
     }
-
 
 }
 

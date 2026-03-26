@@ -13,6 +13,8 @@ import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
 import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
+import com.frcteam3636.frc2026.utils.math.degreesPerSecond
+import com.frcteam3636.frc2026.utils.math.degreesPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
@@ -51,9 +53,9 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(128.0, 0.0, 0.0)
-        val PROFILE_CRUISE_VELOCITY = 20.0.rotationsPerSecond
-        val PROFILE_ACCELERATION = 20.rotationsPerSecondPerSecond
+        val PID_GAINS = PIDGains(60.0, 0.0, 0.5)
+        val PROFILE_CRUISE_VELOCITY = 320.0.degreesPerSecond
+        val PROFILE_ACCELERATION = 400.degreesPerSecondPerSecond
         val PROFILE_JERK = 20.0
         val ENCODER_TO_PIVOT_GEAR_RATIO = 32.0 / 12.0
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0

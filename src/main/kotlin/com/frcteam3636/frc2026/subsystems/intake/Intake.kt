@@ -15,11 +15,10 @@ import kotlin.math.abs
 
 object Intake : Subsystem {
 
-    var intakeDown = false
-
     enum class Position(val angle: Angle) {
-        Deployed(60.degrees),
-        Stowed(120.degrees),
+        Deployed(75.degrees),
+        Stowed(95.degrees),
+        Back(170.degrees),
     }
 
     private val io: IntakeIO =
@@ -41,11 +40,6 @@ object Intake : Subsystem {
             io.setPivotAngle(position.angle)
         }
 
-    fun setPercent(percent: Double): Command = Commands.runEnd(
-        {io.setPivotSpeed(percent)},
-        {io.setPivotSpeed(0.0)}
-    )
-
     fun setPivotVoltage(voltage: Voltage): Command = Commands.runEnd(
         {io.setPivotVoltage(voltage)},
         {io.setPivotVoltage(0.volts)}
@@ -54,26 +48,25 @@ object Intake : Subsystem {
     fun intakeSequence(): Command =
         Commands.parallel(
             Commands.runEnd(
-                {
-                    io.setPivotAngle(Position.Deployed.angle)
-                },
-                {
-                    io.setPivotAngle(Position.Stowed.angle)
-                }
+                { io.setPivotAngle(Position.Deployed.angle) },
+                { io.setPivotAngle(Position.Stowed.angle) }
             ),
+//            Commands.run({ io.setPivotAngle(Position.Deployed.angle) }),
+            intake()
+        )
+
+    fun manipulateSequence(): Command =
+        Commands.parallel(
             Commands.runEnd(
-                {
-                    io.setWheelMotorVoltage(6.volts)
-                },
-                {
-                    io.setWheelMotorVoltage(0.volts)
-                }
-            )
+                { io.setPivotAngle(Position.Back.angle) },
+                { io.setPivotAngle(Position.Stowed.angle) }
+            ),
+            intake()
         )
 
     fun intake(): Command =
             runEnd(
-                { io.setWheelMotorVoltage(5.0.volts) },
+                { io.setWheelMotorVoltage(4.0.volts) },
                 { io.setWheelMotorVoltage(0.volts) }
             )
 
@@ -81,16 +74,6 @@ object Intake : Subsystem {
         { io.setWheelMotorVoltage((-5.0).volts) },
         { io.setWheelMotorVoltage(0.volts) },
     )
-
-    fun pivot(): Command = startEnd(
-        { io.setPivotAngle(Position.Deployed.angle) },
-        { io.setPivotAngle(Position.Stowed.angle) }
-    ).onlyWhile { intakeDown }
-
-//    val IntakeSimulation
-//        get() = if (io is IntakeIOSim) { io.intakeSimulation }
-//        else throw Throwable("Cannot access intake simulation out of sim")
-
 
     override fun periodic() {
         io.updateInputs(inputs)
