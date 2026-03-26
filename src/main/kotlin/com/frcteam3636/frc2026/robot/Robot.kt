@@ -190,13 +190,9 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
-                AutoModes.Stem -> Stem.getPath(flipH = flipH, flipV = false)
-                AutoModes.StemLeft -> Stem.getPath(flipH = flipH, flipV = true)
-                AutoModes.TestAuto -> TestAuto.getPath(flipH = flipH, flipV = false)
-                AutoModes.TwoScore -> TwoScore.getPath(flipH = flipH, flipV = false)
-                AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = flipH)
-                AutoModes.Middle -> Middle.getPath(flipH = flipH, flipV = false)
+                AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = false)
                 AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = false)
+                AutoModes.LebronRight -> Lebron.getPath(flipH = flipH, flipV = true)
             }
         }
     }
