@@ -201,10 +201,10 @@ val targetPassTranslation: Translation2d
 
         if (alliance == Alliance.Blue){
             if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopRedAllianceZone)) {
-                return Translation2d(4.meters, (FIELD_HEIGHT_METERS / 4 ).meters)
+                return Translation2d(4.meters, (FIELD_WIDTH_METERS / 4 ).meters)
             }
             else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomRedAllianceZone)){
-                return Translation2d(4.meters, (FIELD_HEIGHT_METERS * 3/4).meters)
+                return Translation2d(4.meters, (FIELD_WIDTH_METERS * 3/4).meters)
             }
             else {
                 return hubTranslation.toTranslation2d()
