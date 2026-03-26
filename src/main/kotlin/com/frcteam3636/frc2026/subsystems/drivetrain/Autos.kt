@@ -135,7 +135,7 @@ object Middle : Auto {
     }
 
     enum class Targets(val target: APTargetWithTolerance) {
-        StartPos(APTargetWithTolerance(Pose2d(3.60, 4.00, Rotation2d.kZero))),
+        StartPos(APTargetWithTolerance(Pose2d(3.60, 4.00, Rotation2d(0.00.radians)))),
         Target1(APTargetWithTolerance(Pose2d(2.200.meters, 4.100.meters, Rotation2d(0.000.radians)))),
         Target2(APTargetWithTolerance(Pose2d(0.400.meters, 0.700.meters, Rotation2d(0.000.radians)))),
         Target3(APTargetWithTolerance(Pose2d(1.200.meters, 1.400.meters, Rotation2d(0.785.radians))))

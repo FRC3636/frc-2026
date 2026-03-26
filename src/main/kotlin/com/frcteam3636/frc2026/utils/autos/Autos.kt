@@ -61,7 +61,7 @@ fun flipTargetVertical(target: APTarget): APTarget {
         Pose2d(
             Translation2d(
                 target.reference.translation.x, FIELD_WIDTH_METERS - target.reference.translation.y.meters.inMeters()
-            ), -target.reference.rotation
+            ), Rotation2d(-target.reference.rotation.radians)
         )
     )
 }
@@ -83,14 +83,14 @@ fun flipPath(
     if (!(flipH || flipV)) {
         return path
     }
-    for (i in 0..path.size) {
+    for (i in 0..< path.size) {
         path[i] = flipTarget(path[i])
     }
     return path
 }
 
-internal val CLIMB_RIGHT_OFFSET = Translation2d(0.9864.meters, 2.837.meters)
-internal val LEFT_OFFSET = 4.68.meters - 2.837.meters;
+internal val CLIMB_RIGHT_OFFSET = Translation2d(0.95.meters, 2.837.meters)
+internal val LEFT_OFFSET = 4.68.meters
 
 private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
     ClimbBlueRight(
@@ -115,7 +115,7 @@ private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
         APTargetWithTolerance(
             Pose2d(
                 CLIMB_RIGHT_OFFSET.measureX,
-                CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET,
+                LEFT_OFFSET,
                 Rotation2d(0.000.radians)
             )
         )
@@ -124,7 +124,7 @@ private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
         APTargetWithTolerance(
             Pose2d(
                 CLIMB_RIGHT_OFFSET.measureX + 0.7.meters,
-                CLIMB_RIGHT_OFFSET.measureY + LEFT_OFFSET,
+                LEFT_OFFSET,
                 Rotation2d(0.000.radians)
             )
         )
@@ -144,18 +144,15 @@ fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequence(
 fun isRedAlliance() = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
 
 fun alignToClimb(): Command {
-    var red_alliance = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
     var side = Drivetrain.field_side
     var path = when (side) {
-        Drivetrain.FieldSide.Left -> alignToClimbLeft(red_alliance)
-        Drivetrain.FieldSide.Right -> alignToClimbRight(red_alliance)
+        Drivetrain.FieldSide.Left -> alignToClimbLeft(isRedAlliance())
+        Drivetrain.FieldSide.Right -> alignToClimbRight(isRedAlliance())
     }
 
     return Commands.sequence(
-        Commands.parallel(
-            Climber.setTargetPosition(Climber.Position.GROUND_L1),
-            path,
-            Climber.setTargetPosition(Climber.Position.STOWED)
-        ),
+        Climber.setTargetPosition(Climber.Position.GROUND_L1),
+        path,
+        Climber.setTargetPosition(Climber.Position.STOWED)
     )
 }
