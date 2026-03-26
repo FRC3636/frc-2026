@@ -1,6 +1,7 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs
 import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
@@ -10,6 +11,7 @@ import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.PIDGains
+import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
@@ -17,7 +19,9 @@ import com.frcteam3636.frc2026.utils.math.inVolts
 import com.frcteam3636.frc2026.utils.math.pidGains
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.rotationsPerSecondPerSecond
+import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.Units.Amps
+import edu.wpi.first.units.Units.Volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
 import org.littletonrobotics.junction.Logger
@@ -31,12 +35,14 @@ open class IntakeInputs {
     var pivotAngle = 0.degrees
     var pivotSetpoint = 0.degrees
     var intakePivotMotorCurrent = Amps.zero()!!
+    var intakePivotMotorVoltage = Volts.zero()!!
+    var intakePivotMotorSupplyVoltage = 0.0.volts
     var rightPivotMotorCurrent = Amps.zero()!!
 }
 
 interface IntakeIO {
     fun setSpeed(percent: Double)
-    fun setVoltage(voltage: Voltage)
+    fun setPivotVoltage(voltage: Voltage)
     fun setPivotSpeed(pivot: Double)
     fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
@@ -45,7 +51,7 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(100.0, 0.0, 20.0)
+        val PID_GAINS = PIDGains(128.0, 0.0, 0.0)
         val PROFILE_CRUISE_VELOCITY = 20.0.rotationsPerSecond
         val PROFILE_ACCELERATION = 20.rotationsPerSecondPerSecond
         val PROFILE_JERK = 20.0
@@ -91,10 +97,6 @@ class IntakeIOReal : IntakeIO {
                     AbsoluteSensorDiscontinuityPoint = DISCONTINUITY_POINT
                     MagnetOffset = MAGNET_OFFSET
                 }
-//                ExternalFeedbackConfigs().apply {
-//                    SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
-//                    RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
-//                }
             })
         }
     }
@@ -107,7 +109,8 @@ class IntakeIOReal : IntakeIO {
         intakePivotMotor.set(pivot)
     }
 
-    override fun setVoltage(voltage: Voltage) {
+    override fun setPivotVoltage(voltage: Voltage) {
+        Logger.recordOutput("Intake/Pivot Attempted Voltage", voltage)
         intakePivotMotor.setVoltage(voltage.inVolts())
     }
 
@@ -129,6 +132,8 @@ class IntakeIOReal : IntakeIO {
         inputs.intakeMotorCurrent = intakeMotor.supplyCurrent.value
 
         inputs.intakePivotMotorCurrent = intakePivotMotor.supplyCurrent.value
+        inputs.intakePivotMotorVoltage = intakePivotMotor.motorVoltage.value
+        inputs.intakePivotMotorSupplyVoltage = intakeMotor.supplyVoltage.value
 //        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
         inputs.pivotAngle = intakePivotMotor.position.value
         inputs.pivotSetpoint = setpoint

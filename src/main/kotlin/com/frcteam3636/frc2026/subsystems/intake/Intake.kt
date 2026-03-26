@@ -1,12 +1,8 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.frcteam3636.frc2026.robot.Robot
-import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
-import com.frcteam3636.frc2026.utils.math.radians
-import com.frcteam3636.frc2026.utils.math.rotations
-import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Voltage
@@ -22,8 +18,8 @@ object Intake : Subsystem {
     var intakeDown = false
 
     enum class Position(val angle: Angle) {
-        Deployed(7.degrees),
-        Stowed(40.degrees),
+        Deployed(60.degrees),
+        Stowed(120.degrees),
     }
 
     private val io: IntakeIO =
@@ -42,7 +38,6 @@ object Intake : Subsystem {
 
     fun setPivotPosition(position: Position): Command =
         run {
-            Logger.recordOutput("Intake/Pivot/Active Setpoint", position.angle)
             io.setPivotAngle(position.angle)
         }
 
@@ -51,16 +46,21 @@ object Intake : Subsystem {
         {io.setPivotSpeed(0.0)}
     )
 
-    fun setVoltage(volts: Voltage): Command = Commands.runEnd(
-        {io.setVoltage(volts)},
-        {io.setVoltage(0.volts)}
+    fun setPivotVoltage(voltage: Voltage): Command = Commands.runEnd(
+        {io.setPivotVoltage(voltage)},
+        {io.setPivotVoltage(0.volts)}
     )
 
     fun intakeSequence(): Command =
         Commands.parallel(
-            Commands.run({
-                io.setPivotAngle(Position.Deployed.angle)
-            }),
+            Commands.runEnd(
+                {
+                    io.setPivotAngle(Position.Deployed.angle)
+                },
+                {
+                    io.setPivotAngle(Position.Stowed.angle)
+                }
+            ),
             Commands.runEnd(
                 {
                     io.setWheelMotorVoltage(6.volts)

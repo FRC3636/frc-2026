@@ -22,8 +22,8 @@ import kotlin.jvm.optionals.getOrNull
 
 object Climber : Subsystem {
     enum class Position(val height: Distance) {
-        STOWED(0.meters),
-        GROUND_L1(0.183.meters),
+        STOWED(0.181.meters),
+        GROUND_L1(0.0.meters),
         // ... Might be more complicated than just set heights, we'll shee.
     }
 

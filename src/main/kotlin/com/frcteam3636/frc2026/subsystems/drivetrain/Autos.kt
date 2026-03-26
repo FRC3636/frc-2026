@@ -1,5 +1,6 @@
 package com.frcteam3636.frc2026.subsystems.drivetrain
 
+import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
@@ -170,7 +171,7 @@ object Lebron : Auto {
             Commands.parallel(
                 Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
                 shoot().withTimeout(4.seconds)
-            )
+            ),
         )
 
     enum class Targets(val target: APTarget) {
@@ -182,7 +183,9 @@ object Lebron : Auto {
         Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(2.000.metersPerSecond)),
         Target7(APTargetWithTolerance(Pose2d(5.794.meters, 2.721.meters, Rotation2d(0.780.radians))).withVelocity(2.000.metersPerSecond)),
         Target8(APTargetWithTolerance(Pose2d(3.278.meters, 2.500.meters, Rotation2d(0.893.radians)))),
-        Target9(APTargetWithTolerance(Pose2d(3.400.meters, 0.700.meters, Rotation2d(2.322.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(1.931.radians)))
+        Target9(APTargetWithTolerance(Pose2d(3.400.meters, 0.700.meters, Rotation2d(2.322.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(1.931.radians))),
+        ClimbApproach(APTargetWithTolerance(Pose2d(0.65.meters, 4.57.meters, Rotation2d(0.0.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(1.931.radians))),
+        Climb(APTargetWithTolerance(Pose2d(1.05.meters, 4.57.meters, Rotation2d(0.0.radians))).withVelocity(2.000.metersPerSecond).withEntryAngle(Rotation2d(1.931.radians)))
     }
 
 }

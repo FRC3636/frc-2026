@@ -34,4 +34,5 @@ enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
     StemLeft("Stem Left"),
     Middle("Middle"),
     Climb("Climb"),
+    Lebron("Lebron"),
 }

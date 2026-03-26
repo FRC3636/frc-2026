@@ -13,7 +13,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.alignToClimb
 import com.frcteam3636.frc2026.utils.math.meters
-import com.frcteam3636.frc2026.utils.math.seconds
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
@@ -44,28 +43,38 @@ fun configureBindings() {
     )
 
     joystickLeft.button(1).whileTrue(
-        Commands.parallel(
+//        Commands.parallel(
 //            Intake.setPivotPosition(Intake.Position.Deployed),
             Intake.intakeSequence()
+//            Intake.intake()
 
-        )
+//        )
+
+//        Intake.setPivotPosition(Intake.Position.Deployed)
     )
 
     joystickLeft.button(2).whileTrue(
-        Commands.sequence(
-            Intake.setVoltage(5.0.volts).withTimeout(1.seconds),
-            Intake.setVoltage(0.0.volts).withTimeout(1.seconds)
-        ).repeatedly()
+//        Commands.sequence(
+//            Intake.setPivotVoltage(12.0.volts).withTimeout(1.seconds),
+//            Intake.setPivotVoltage(0.0.volts).withTimeout(1.seconds)
+//        ).repeatedly()
+        Intake.setPivotVoltage(9.0.volts)
     )
 
-    joystickLeft.button(3).whileTrue(
+    joystickLeft.button(3).onTrue(
         Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
     )
 
-    joystickLeft.button(4).whileTrue(
+    joystickLeft.button(4).onTrue(
         Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
 //        Climber.climb()
     )
+    joystickLeft.button(5).whileTrue(
+        Climber.homeRoutine()
+    )
+
+//    joystickLeft.button(6).onTrue(
+//    )
 
     joystickRight.button(9).whileTrue(
         Climber.setPosition(0.183.meters).ignoringDisable(true)
@@ -107,7 +116,7 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToSetpoint()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-//    Climber.defaultCommand = Climber.goToTargetHeight()
+    Climber.defaultCommand = Climber.goToTargetHeight()
 
     /* zeroing commands */
 

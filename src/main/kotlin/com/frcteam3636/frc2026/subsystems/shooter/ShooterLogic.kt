@@ -10,6 +10,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.FIELD_HEIGHT_METERS
+import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.units.measure.Angle
@@ -211,10 +212,10 @@ val targetPassTranslation: Translation2d
         }
         else {
             if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopBlueAllianceZone)) {
-                return Translation2d(12.6.meters, (FIELD_HEIGHT_METERS / 4 ).meters)
+                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS / 4 ).meters)
             }
             else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomBlueAllianceZone)){
-                return Translation2d(12.6.meters, (FIELD_HEIGHT_METERS * 3/4).meters)
+                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS * 3/4).meters)
             }
             else {
                 return hubTranslation.toTranslation2d()

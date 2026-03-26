@@ -17,6 +17,7 @@ import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
+import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
 import com.frcteam3636.frc2026.subsystems.drivetrain.Middle
 import com.frcteam3636.frc2026.subsystems.drivetrain.Stem
 import com.frcteam3636.frc2026.utils.math.meters
@@ -195,6 +196,7 @@ object Robot : LoggedRobot() {
                 AutoModes.TwoScore -> TwoScore.getPath(flipH = flipH, flipV = false)
                 AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = flipH)
                 AutoModes.Middle -> Middle.getPath(flipH = flipH, flipV = false)
+                AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = false)
             }
         }
     }
