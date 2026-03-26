@@ -187,7 +187,7 @@ object Robot : LoggedRobot() {
                 AutoModes.None -> Commands.none()
                 AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = false)
                 AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = false)
-                AutoModes.LebronRight -> Lebron.getPath(flipH = flipH, flipV = true)
+                AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = true)
             }
         }
     }
