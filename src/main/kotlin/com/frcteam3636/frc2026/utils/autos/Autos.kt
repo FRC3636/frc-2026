@@ -83,7 +83,7 @@ fun flipPath(
     if (!(flipH || flipV)) {
         return path
     }
-    for (i in 0..< path.size) {
+    for (i in 0..<path.size) {
         path[i] = flipTarget(path[i])
     }
     return path
@@ -106,6 +106,24 @@ private enum class ClimbAlignTargets(val target: APTargetWithTolerance) {
         APTargetWithTolerance(
             Pose2d(
                 CLIMB_RIGHT_OFFSET.measureX + 0.7.meters,
+                CLIMB_RIGHT_OFFSET.measureY - 0.7.meters,
+                Rotation2d(-3.142.radians)
+            )
+        )
+    ),
+    ClimbBlueRunupSide(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX,
+                CLIMB_RIGHT_OFFSET.measureY - 0.7.meters,
+                Rotation2d(-3.142.radians)
+            )
+        )
+    ),
+    ClimbBlueRunupBehind(
+        APTargetWithTolerance(
+            Pose2d(
+                CLIMB_RIGHT_OFFSET.measureX - 0.5.meters,
                 CLIMB_RIGHT_OFFSET.measureY,
                 Rotation2d(-3.142.radians)
             )
@@ -138,6 +156,8 @@ fun alignToClimbLeft(red_alliance: Boolean): Command = Commands.sequence(
 
 fun alignToClimbRight(red_alliance: Boolean): Command = Commands.sequence(
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupRight.target, flipH = red_alliance, flipV = red_alliance),
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupSide.target, flipH = red_alliance, flipV = red_alliance),
+    Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRunupBehind.target, flipH = red_alliance, flipV = red_alliance),
     Drivetrain.alignAndFlip(ClimbAlignTargets.ClimbBlueRight.target, flipH = red_alliance, flipV = red_alliance)
 )
 

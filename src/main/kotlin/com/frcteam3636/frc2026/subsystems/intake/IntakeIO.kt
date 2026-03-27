@@ -53,7 +53,7 @@ interface IntakeIO {
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(60.0, 0.0, 0.5)
+        val PID_GAINS = PIDGains(85.0, 0.0, 0.5)
         val PROFILE_CRUISE_VELOCITY = 320.0.degreesPerSecond
         val PROFILE_ACCELERATION = 400.degreesPerSecondPerSecond
         val PROFILE_JERK = 20.0

@@ -24,7 +24,7 @@ object Climber : Subsystem {
     enum class Position(val height: Distance) {
         STOWED(0.181.meters),
         GROUND_L1(0.0.meters),
-        // ... Might be more complicated than just set heights, we'll shee.
+        // ... Might be more complicated than just set heights, we'll see.
     }
 
     private val io: ClimberIO = when (Robot.model) {

@@ -138,10 +138,6 @@ fun configureBindings() {
     )
 
 
-//    joystickLeft.button(9).whileTrue(Climber.homeRoutine())
-//    joystickLeft.button(9).whileTrue(Drivetrain.calculateWheelRadius())
-
-
     /* dev bindings */
 
     if (Preferences.getBoolean("DeveloperMode", false)) {

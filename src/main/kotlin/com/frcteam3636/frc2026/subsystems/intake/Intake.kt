@@ -17,8 +17,8 @@ object Intake : Subsystem {
 
     enum class Position(val angle: Angle) {
         Deployed(75.degrees),
-        Stowed(95.degrees),
-        Back(170.degrees),
+        Stowed(110.degrees),
+        Back(150.degrees),
     }
 
     private val io: IntakeIO =

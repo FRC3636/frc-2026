@@ -624,7 +624,7 @@ object Drivetrain : Subsystem {
 
             autoPilot = Autopilot(autoPilotProfile.withErrorXY(target.tolerance))
 
-            val output = autoPilot.calculate(estimatedPose, adjustedChassisSpeeds, target)
+            val output = autoPilot.calculate(estimatedPose, measuredChassisSpeeds, target)
 
             val rotationOutput =
                     autoPilotRotationPID.calculate(
