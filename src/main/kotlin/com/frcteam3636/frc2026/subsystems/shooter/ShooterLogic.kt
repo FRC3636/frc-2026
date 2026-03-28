@@ -30,6 +30,23 @@ import kotlin.math.sin
 // Heavy inspiration taken from https://github.com/Mechanical-Advantage/RobotCode2026Public/blob/alpha-bot-turret/src/main/java/org/littletonrobotics/frc2026/subsystems/launcher/LaunchCalculator.java
 
 object ShooterCalculator {
+    fun getProfileNoShootOnMove(target: Translation2d): ShooterProfile {
+        val estimatedPose = Drivetrain.estimatedPose
+
+        val distance = target.getDistance(estimatedPose.translation)
+        val hoodAngle = Hood.calculateHoodAngle(distance.meters)
+        val flywheelVelocity = Flywheel.calculateFlywheelVelocity(distance.meters)
+
+        val turretAngleFieldRelative = (target - estimatedPose.translation).angle   // angle from lookahead pose to target
+        val turretAngleRobotRelative = turretAngleFieldRelative.minus(estimatedPose.rotation) // convert to zero-forward
+        val normalizedTurretAngleRobotRelative = turretAngleRobotRelative.radians.IEEErem(TAU).radians // Rotation2d.radians is cooked
+
+        return ShooterProfile(
+            normalizedTurretAngleRobotRelative,
+            hoodAngle,
+            flywheelVelocity
+        )
+    }
 
     fun getProfile(target: Translation2d): ShooterProfile {
 
@@ -103,6 +120,10 @@ object ShooterCalculator {
         return getProfile(targetPassTranslation)
     }
 
+    fun getProfileNoSotmWithPassing(): ShooterProfile {
+        return getProfile(targetPassTranslation)
+    }
+
 }
 private val PHASE_DELAY = 0.03.seconds
 private val SHOOTER_HEIGHT = 0.4318.meters
@@ -157,7 +178,12 @@ data class ShooterProfile(
 )
 
 enum class Target(val profile: () -> ShooterProfile) {
-
+    AIM_AT_HUB_NO_SOTM (
+        { ShooterCalculator.getProfileNoShootOnMove(hubTranslation.toTranslation2d()) }
+    ),
+    AIM_AT_HUB_PASS_NO_SOTM (
+        { ShooterCalculator.getProfileNoSotmWithPassing() }
+    ),
     AIM_AT_HUB_NO_PASS (
         { ShooterCalculator.getProfile(hubTranslation.toTranslation2d()) }
     ),
