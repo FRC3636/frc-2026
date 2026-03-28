@@ -83,11 +83,11 @@ fun configureBindings() {
     )
 
     joystickRight.button(4).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_PASS)
+        setShooterTarget(Target.AIM_AT_HUB_PASS_NO_SOTM)
     )
 
     joystickRight.button(11).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_NO_PASS)
+        setShooterTarget(Target.AIM_AT_HUB_NO_SOTM)
     )
 
     joystickRight.button(12).whileTrue(
