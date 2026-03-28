@@ -31,7 +31,7 @@ import kotlin.math.sin
 
 object ShooterCalculator {
     fun getProfileNoShootOnMove(target: Translation2d): ShooterProfile {
-        val estimatedPose = Drivetrain.estimatedPose
+        val estimatedPose = Drivetrain.estimatedPose.transformBy(robotToTurret)
 
         val distance = target.getDistance(estimatedPose.translation)
         val hoodAngle = Hood.calculateHoodAngle(distance.meters)
