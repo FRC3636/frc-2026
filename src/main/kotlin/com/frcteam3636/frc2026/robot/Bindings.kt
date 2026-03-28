@@ -78,7 +78,7 @@ fun configureBindings() {
 //    )
 
     joystickRight.button(3).onTrue(
-        setShooterTarget(Target.TUNING)
+        setShooterTarget(Target.STATIONARY_TURRET)
     )
 
     joystickRight.button(4).onTrue(

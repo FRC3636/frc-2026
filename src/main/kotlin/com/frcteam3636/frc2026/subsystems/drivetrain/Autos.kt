@@ -37,7 +37,7 @@ object Lebron : Auto {
                 )
             }),
             runOnce({
-                setShooterTarget(Target.AIM_AT_HUB_NO_PASS)
+                setShooterTarget(Target.STATIONARY_TURRET)
             }),
             Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
             Commands.race(

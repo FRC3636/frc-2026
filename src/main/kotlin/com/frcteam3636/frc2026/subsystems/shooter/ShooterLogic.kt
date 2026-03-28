@@ -71,21 +71,21 @@ object ShooterCalculator {
         val turretOffset = SHOOTER_OFFSET
 
         // I'm too tired to understand the math rn, the commented code is possibly correct
-//        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond +
-//                fieldRelativeVelocity.omegaRadiansPerSecond *
-//                (turretOffset.y * cos(robotAngle) - turretOffset.x * sin(robotAngle))
-//
-//        val turretVelY = fieldRelativeVelocity.vyMetersPerSecond +
-//                fieldRelativeVelocity.omegaRadiansPerSecond *
-//                (turretOffset.x * cos(robotAngle) - turretOffset.y * sin(robotAngle))
-
-        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond -
+        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond +
                 fieldRelativeVelocity.omegaRadiansPerSecond *
-                (turretOffset.x * sin(robotAngle) + turretOffset.y * cos(robotAngle))
+                (turretOffset.y * cos(robotAngle) - turretOffset.x * sin(robotAngle))
 
         val turretVelY = fieldRelativeVelocity.vyMetersPerSecond +
                 fieldRelativeVelocity.omegaRadiansPerSecond *
                 (turretOffset.x * cos(robotAngle) - turretOffset.y * sin(robotAngle))
+
+//        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond -
+//                fieldRelativeVelocity.omegaRadiansPerSecond *
+//                (turretOffset.x * sin(robotAngle) + turretOffset.y * cos(robotAngle))
+//
+//        val turretVelY = fieldRelativeVelocity.vyMetersPerSecond +
+//                fieldRelativeVelocity.omegaRadiansPerSecond *
+//                (turretOffset.x * cos(robotAngle) - turretOffset.y * sin(robotAngle))
 
         // Iteratively account for imparted velocity by robot (turret) to offset
         for (i in 0..20) {
@@ -191,11 +191,10 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterCalculator.getProfileWithPassing() }
     ),
     STATIONARY_TURRET (
-        { ShooterProfile(0.0.degrees, 9.degrees, 2400.rpm) }
+        { ShooterProfile(0.0.degrees, 5.degrees, 2600.rpm) },
     ),
     TUNING (
         { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
-//        { ShooterProfile(0.0.degrees, 5.degrees, 2600.rpm) },
     ),
 }
 
