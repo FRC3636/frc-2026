@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
+import kotlin.math.log
 import kotlin.math.sqrt
 
 object Flywheel: Subsystem {
@@ -47,7 +48,7 @@ object Flywheel: Subsystem {
 
     fun calculateFlywheelVelocity(distance: Distance): AngularVelocity {
         // https://www.desmos.com/calculator/5agwk23qdb
-        return (284.02445 * distance.inMeters() + 1610.78737).rpm
+        return (261.36364 * distance.inMeters() + 1418.18182).rpm
     }
     fun getSimFuelVelocity(distance: Distance): LinearVelocity = (sqrt(calculateFlywheelVelocity(distance).inRPM()) / Constants.ANGULAR_TO_LINEAR_RATIO).metersPerSecond
 

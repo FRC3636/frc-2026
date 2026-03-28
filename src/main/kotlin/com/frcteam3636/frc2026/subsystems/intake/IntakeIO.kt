@@ -7,6 +7,7 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.SensorDirectionValue
 import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
@@ -15,6 +16,7 @@ import com.frcteam3636.frc2026.utils.math.amps
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.degreesPerSecond
 import com.frcteam3636.frc2026.utils.math.degreesPerSecondPerSecond
+import com.frcteam3636.frc2026.utils.math.inRadians
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecond
 import com.frcteam3636.frc2026.utils.math.inRotationsPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.inVolts
@@ -29,6 +31,7 @@ import edu.wpi.first.units.measure.Voltage
 import org.littletonrobotics.junction.Logger
 import org.team9432.annotation.Logged
 import kotlin.apply
+import kotlin.math.sin
 
 @Logged
 open class IntakeInputs {
@@ -49,11 +52,12 @@ interface IntakeIO {
     fun setWheelMotorVoltage(voltage: Voltage)
     fun setPivotAngle(angle: Angle)
     fun updateInputs(inputs: IntakeInputs)
+    fun zeroEncoder()
 }
 
 class IntakeIOReal : IntakeIO {
     companion object Constants {
-        val PID_GAINS = PIDGains(85.0, 0.0, 0.5)
+        val PID_GAINS = PIDGains(120.0, 0.0, 0.5)
         val PROFILE_CRUISE_VELOCITY = 320.0.degreesPerSecond
         val PROFILE_ACCELERATION = 400.degreesPerSecondPerSecond
         val PROFILE_JERK = 20.0
@@ -61,8 +65,9 @@ class IntakeIOReal : IntakeIO {
         val MOTOR_TO_ENCODER_GEAR_RATIO = 4.0
         val DISCONTINUITY_POINT = 0.999
         val MAGNET_OFFSET = 0.130859375
+        val GRAVITY_COMPENSATION_GAIN = 1.0
 
-        val PIVOT_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
+        val PIVOT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
         val WHEEL_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
     }
 
@@ -92,16 +97,23 @@ class IntakeIOReal : IntakeIO {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = WHEEL_MOTOR_DIRECTION })
     }
 
-    init {
-        CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
-            configurator.apply(CANcoderConfiguration().apply {
-                MagnetSensor.apply {
-                    AbsoluteSensorDiscontinuityPoint = DISCONTINUITY_POINT
-                    MagnetOffset = MAGNET_OFFSET
-                }
-            })
-        }
+    private val encoder =  CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
+        configurator.apply(CANcoderConfiguration().apply {
+            MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive
+        })
+        setPosition(0.degrees)
     }
+
+//    init {
+//        CANcoder(CTREDeviceId.IntakePivotEncoder).apply {
+//            configurator.apply(CANcoderConfiguration().apply {
+//                MagnetSensor.apply {
+//                    AbsoluteSensorDiscontinuityPoint = DISCONTINUITY_POINT
+//                    MagnetOffset = MAGNET_OFFSET
+//                }
+//            })
+//        }
+//    }
 
     override fun setSpeed(percent: Double) {
         intakeMotor.set(percent)
@@ -116,6 +128,10 @@ class IntakeIOReal : IntakeIO {
         intakePivotMotor.setVoltage(voltage.inVolts())
     }
 
+    override fun zeroEncoder() {
+        encoder.setPosition(0.degrees)
+    }
+
     override fun setWheelMotorVoltage(voltage: Voltage) {
         intakeMotor.setVoltage(voltage.inVolts())
     }
@@ -124,7 +140,10 @@ class IntakeIOReal : IntakeIO {
 
     override fun setPivotAngle(angle: Angle) {
         Logger.recordOutput("Intake/Pivot Setpoint", angle)
-        intakePivotMotor.setControl(positionControl.withPosition(angle))
+        intakePivotMotor.setControl(
+            positionControl.withPosition(angle)
+//                .withFeedForward(sin(encoder.position.value.inRadians()) * GRAVITY_COMPENSATION_GAIN)
+        )
     }
 
     var setpoint = 0.degrees

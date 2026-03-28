@@ -129,7 +129,7 @@ class HoodIOReal: HoodIO {
     }
 
     override fun zeroEncoder() {
-        motor.setPosition(30.degrees)
+        motor.setPosition(5.degrees)
     }
 
     companion object Constants {
@@ -137,7 +137,7 @@ class HoodIOReal: HoodIO {
         private val MAGNET_OFFSET = 0.8349
         private val PID_GAINS = PIDGains(110.0, 0.0, 0.0)
         private const val SENSOR_TO_MECHANISM_GEAR_RATIO = 10.0
-        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 10.0
+        private const val ROTOR_TO_SENSOR_GEAR_RATIO = 10.0 // should be 1.0
         private val PROFILE_VELOCITY = 3.0.rotationsPerSecond
         private val PROFILE_ACCELERATION = 2.0.rotationsPerSecondPerSecond
         private val PROFILE_JERK = 0.0

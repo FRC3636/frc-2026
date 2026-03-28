@@ -16,9 +16,9 @@ import kotlin.math.abs
 object Intake : Subsystem {
 
     enum class Position(val angle: Angle) {
-        Deployed(75.degrees),
-        Stowed(110.degrees),
-        Back(150.degrees),
+        Deployed(110.degrees),
+        Stowed(75.degrees),
+        Back(10.degrees),
     }
 
     private val io: IntakeIO =
@@ -39,6 +39,13 @@ object Intake : Subsystem {
         run {
             io.setPivotAngle(position.angle)
         }
+
+    fun zeroPivot(): Command = Commands.runOnce(
+        {
+            println("Zeroing Pivot!!!")
+            io.zeroEncoder()
+        }
+    )
 
     fun setPivotVoltage(voltage: Voltage): Command = Commands.runEnd(
         {io.setPivotVoltage(voltage)},

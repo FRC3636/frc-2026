@@ -1,7 +1,6 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
@@ -9,10 +8,9 @@ import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
 import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.utils.autos.alignToClimb
-import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.volts
 import com.revrobotics.util.StatusLogger
 import edu.wpi.first.wpilibj.Preferences
@@ -35,22 +33,16 @@ fun configureBindings() {
 
     /* main bindings */
 
-
-    controller.a().whileTrue(
-        Intake.intakeSequence()
-    )
-
-    controller.b().whileTrue(
-        Intake.manipulateSequence()
-    )
-
-
     joystickLeft.button(1).whileTrue(
             Intake.intakeSequence()
     )
 
     joystickLeft.button(2).whileTrue(
-        Intake.setPivotVoltage(9.0.volts)
+        Intake.manipulateSequence()
+    )
+
+    joystickLeft.button(3).onTrue(
+        Intake.setPivotPosition(Position.Back)
     )
 
 //    joystickLeft.button(3).onTrue(
@@ -70,6 +62,13 @@ fun configureBindings() {
             Feeder.outtake(),
             Indexer.outdex()
         )
+    )
+
+    joystickLeft.button(11).whileTrue(
+        Intake.zeroPivot().ignoringDisable(true)
+    )
+    joystickLeft.button(12).onTrue(
+        Hood.zeroEncoder()
     )
 
 

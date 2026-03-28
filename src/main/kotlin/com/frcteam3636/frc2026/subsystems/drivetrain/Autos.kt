@@ -43,7 +43,7 @@ object Lebron : Auto {
             Commands.race(
                 Intake.intakeSequence(),
                 Commands.sequence(
-                    Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target5.target, flipH, flipV),
@@ -55,13 +55,20 @@ object Lebron : Auto {
                 )
             ),
             shoot().withTimeout(5.seconds),
-            alignToClimb(),
-            Climber.climb(),
+            Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
+            Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
+            Commands.race(
+                Intake.intakeSequence(),
+                Commands.sequence(
+                    Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+                    Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
+                )
+            )
         )
 
     enum class Targets(val target: APTargetWithTolerance) {
-        Start(APTargetWithTolerance(Pose2d(4.364.meters, 0.657.meters, Rotation2d(3.142.radians)))),
-        Target2(APTargetWithTolerance(Pose2d(6.001.meters, 0.845.meters, Rotation2d(-2.749.radians))).withVelocity(2.000.metersPerSecond)),
+        Start(APTargetWithTolerance(Pose2d(4.364.meters, 0.500.meters, Rotation2d(3.142.radians)))),
         Target3(APTargetWithTolerance(Pose2d(7.621.meters, 1.425.meters, Rotation2d(-2.015.radians))).withVelocity(1.500.metersPerSecond)),
         Target4(APTargetWithTolerance(Pose2d(8.086.meters, 2.653.meters, Rotation2d(-1.571.radians))).withVelocity(2.000.metersPerSecond)),
         Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(1.500.metersPerSecond)),
@@ -71,6 +78,7 @@ object Lebron : Auto {
         Target9(APTargetWithTolerance(Pose2d(3.000.meters, 0.500.meters, Rotation2d(3.142.radians)))),
         Target10(APTargetWithTolerance(Pose2d(2.500.meters, 1.700.meters, Rotation2d(0.785.radians))))
     }
+
 
 }
 

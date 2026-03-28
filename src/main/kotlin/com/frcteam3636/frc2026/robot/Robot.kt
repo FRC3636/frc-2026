@@ -180,14 +180,20 @@ object Robot : LoggedRobot() {
 
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
-        val flipH = DriverStation.getAlliance().getOrNull() == DriverStation.Alliance.Red
+        val alliance = DriverStation.getAlliance().getOrNull()
+        val flipH = alliance == DriverStation.Alliance.Red
+        val flipToSide = { side: Drivetrain.FieldSide -> if (alliance == DriverStation.Alliance.Blue) {
+            side == Drivetrain.FieldSide.Left
+        } else {
+            side == Drivetrain.FieldSide.Right
+        }}
         if (lastSelectedAuto != selectedAuto) {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
                 AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = false)
-                AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = false)
-                AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = true)
+                AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Right))
+                AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Left))
             }
         }
     }
