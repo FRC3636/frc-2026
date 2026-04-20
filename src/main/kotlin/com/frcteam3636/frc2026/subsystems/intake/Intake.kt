@@ -1,6 +1,8 @@
 package com.frcteam3636.frc2026.subsystems.intake
 
 import com.frcteam3636.frc2026.robot.Robot
+import com.frcteam3636.frc2026.subsystems.feeder.Feeder
+import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.volts
@@ -58,8 +60,11 @@ object Intake : Subsystem {
                 { io.setPivotAngle(Position.Deployed.angle) },
                 { io.setPivotAngle(Position.Stowed.angle) }
             ),
-//            Commands.run({ io.setPivotAngle(Position.Deployed.angle) }),
-            intake()
+            intake(),
+            Commands.parallel(
+                Indexer.slowIndex(),
+//                Feeder.slowFeed()
+            ).until { Feeder.inputs.ballDetected }
         )
 
     fun manipulateSequence(): Command =

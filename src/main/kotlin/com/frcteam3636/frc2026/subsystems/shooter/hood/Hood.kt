@@ -2,13 +2,12 @@ package com.frcteam3636.frc2026.subsystems.shooter.hood
 
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
-import com.frcteam3636.frc2026.utils.math.degrees
-import com.frcteam3636.frc2026.utils.math.inDegrees
-import com.frcteam3636.frc2026.utils.math.volts
 import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
+import com.frcteam3636.frc2026.utils.math.degrees
+import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.inMeters
-import edu.wpi.first.math.MathUtil.clamp
+import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.Distance
@@ -20,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
-import kotlin.math.log
 
 object Hood: Subsystem {
     private var io = when (Robot.model) {
@@ -72,7 +70,8 @@ object Hood: Subsystem {
             io.turnToAngle(angle)
         }
     fun zeroEncoder(): Command =
-        run {
+        runOnce {
+            println("Zeroing hood encoder!")
             io.zeroEncoder()
         }
 

@@ -1,14 +1,13 @@
 package com.frcteam3636.frc2026.robot
 
 import com.ctre.phoenix6.SignalLogger
-import com.frcteam3636.frc2026.subsystems.shooter.Target
-import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
-import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
-import com.frcteam3636.frc2026.subsystems.intake.Intake.Position
+import com.frcteam3636.frc2026.subsystems.shooter.Target
+import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
+import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
 import com.frcteam3636.frc2026.subsystems.shooter.shoot
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.math.volts
@@ -34,7 +33,7 @@ fun configureBindings() {
     /* main bindings */
 
     joystickLeft.button(1).whileTrue(
-            Intake.intakeSequence()
+        Intake.intakeSequence()
     )
 
     joystickLeft.button(2).whileTrue(
@@ -42,20 +41,8 @@ fun configureBindings() {
     )
 
     joystickLeft.button(3).onTrue(
-        Intake.setPivotPosition(Position.Back)
+        Intake.setPivotVoltage(0.volts)
     )
-
-//    joystickLeft.button(3).onTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.STOWED })
-//    )
-//
-//    joystickLeft.button(4).onTrue(
-//        Commands.runOnce({ Climber.targetPosition = Climber.Position.GROUND_L1 })
-////        Climber.climb()
-//    )
-//    joystickLeft.button(5).whileTrue(
-//        Climber.homeRoutine()
-//    )
 
     joystickLeft.povUp().whileTrue(
         Commands.parallel(
@@ -64,42 +51,22 @@ fun configureBindings() {
         )
     )
 
-    joystickLeft.button(11).whileTrue(
-        Intake.zeroPivot().ignoringDisable(true)
-    )
-    joystickLeft.button(12).onTrue(
-        Hood.zeroEncoder()
-    )
 
-
-
-//    joystickRight.button(9).whileTrue(
-//        Climber.setPosition(0.183.meters).ignoringDisable(true)
-//    )
-
-    joystickRight.button(3).onTrue(
-        setShooterTarget(Target.STATIONARY_TURRET)
-    )
-
-    joystickRight.button(4).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_PASS_NO_SOTM)
-    )
-
-    joystickRight.button(11).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_NO_SOTM)
-    )
-
-    joystickRight.button(12).whileTrue(
-        Commands.parallel(
-            Indexer.outdex(),
-            Intake.outtake()
-        )
-    )
-
-//    joystickRight.button(2).whileTrue(alignToClimb())
 
     joystickRight.button(1).whileTrue(
         shoot()
+    )
+
+    joystickRight.button(2).whileTrue(
+        setShooterTarget(Target.STATIONARY_TURRET)
+    )
+
+    joystickRight.button(3).onTrue(
+        setShooterTarget(Target.TUNING)
+    )
+
+    joystickRight.button(4).onTrue(
+        setShooterTarget(Target.AIM_AT_HUB_PASS)
     )
 
     /*  default commands   */
@@ -112,28 +79,22 @@ fun configureBindings() {
     Turret.defaultCommand = Turret.turnToSetpoint()
     Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
-//    Climber.defaultCommand = Climber.goToTargetHeight()
-
     /* zeroing commands */
 
     joystickLeft.button(8).onTrue(Commands.runOnce({
-        println("Zeroing gyro.")
         Drivetrain.zeroGyro()
     }).ignoringDisable(true))
 
-    joystickLeft.button(14).onTrue(Commands.runOnce({
-        println("Zeroing gyro.")
-        Drivetrain.zeroGyro(isReversed = true)
-    }).ignoringDisable(true))
-
     joystickRight.button(8).onTrue(
-        Commands.parallel(
-            Turret.zeroTurretEncoder().ignoringDisable(true),
+        Commands.sequence(
             Commands.runOnce({
-                println("Zeroing turret.")
-            })
-        ).ignoringDisable(true)
-
+                println("Pre-match zeroing.")
+                Drivetrain.zeroGyro()
+            }).ignoringDisable(true),
+            Intake.zeroPivot().ignoringDisable(true),
+            Turret.zeroTurretEncoder().ignoringDisable(true),
+            Hood.zeroEncoder().ignoringDisable(true),
+        )
     )
 
 

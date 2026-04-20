@@ -12,7 +12,6 @@ import com.frcteam3636.frc2026.CANcoder
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
-import edu.wpi.first.math.MathUtil.clamp
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
 import edu.wpi.first.units.Units.*

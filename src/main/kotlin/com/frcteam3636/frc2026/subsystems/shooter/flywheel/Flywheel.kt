@@ -3,7 +3,6 @@ package com.frcteam3636.frc2026.subsystems.shooter.flywheel
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
-import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.units.measure.Distance
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction
 import org.littletonrobotics.junction.Logger
 import kotlin.math.abs
-import kotlin.math.log
 import kotlin.math.sqrt
 
 object Flywheel: Subsystem {

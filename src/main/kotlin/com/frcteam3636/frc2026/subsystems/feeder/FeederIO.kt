@@ -1,9 +1,12 @@
 package com.frcteam3636.frc2026.subsystems.feeder
 
 import com.ctre.phoenix6.BaseStatusSignal
+import com.ctre.phoenix6.configs.CANrangeConfiguration
 import com.ctre.phoenix6.configs.TalonFXConfiguration
+import com.ctre.phoenix6.hardware.CANrange
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
+import com.ctre.phoenix6.signals.UpdateModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.amps
@@ -19,6 +22,7 @@ import org.team9432.annotation.Logged
 open class FeederInputs {
     var feederVelocity = 0.0.rotationsPerSecond
     var feederCurrent = 0.0.amps
+    var ballDetected = false
 }
 
 interface FeederIO {
@@ -29,6 +33,17 @@ interface FeederIO {
 class FeederIOReal : FeederIO {
     private val feederMotor = TalonFX(CTREDeviceId.FeederMotor)
     private val feederMotorConfig = TalonFXConfiguration()
+
+    private val canRange = CANrange(CTREDeviceId.CanRange.num).apply {
+        configurator.apply(
+            CANrangeConfiguration().apply {
+                ProximityParams.ProximityThreshold = 0.1
+                ProximityParams.ProximityHysteresis = 0.01
+                ToFParams.UpdateMode = UpdateModeValue.ShortRangeUserFreq
+                ToFParams.UpdateFrequency = 50.0
+            }
+        )
+    }
 
     init {
         feederMotorConfig.apply {
@@ -57,6 +72,7 @@ class FeederIOReal : FeederIO {
     override fun updateInputs(inputs: FeederInputs) {
         inputs.feederVelocity = feederMotor.velocity.value
         inputs.feederCurrent = feederMotor.supplyCurrent.value
+        inputs.ballDetected = canRange.isDetected.value
     }
 }
 

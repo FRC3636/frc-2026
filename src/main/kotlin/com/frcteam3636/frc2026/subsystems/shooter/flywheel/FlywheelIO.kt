@@ -6,19 +6,16 @@ import com.ctre.phoenix6.controls.VelocityVoltage
 import com.ctre.phoenix6.signals.InvertedValue
 import com.ctre.phoenix6.signals.NeutralModeValue
 import com.frcteam3636.frc2026.CTREDeviceId
-import edu.wpi.first.units.measure.Voltage
-import org.team9432.annotation.Logged
 import com.frcteam3636.frc2026.TalonFX
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.filter.MedianFilter
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.system.plant.LinearSystemId
-import edu.wpi.first.units.Units.Amps
-import edu.wpi.first.units.Units.RPM
-import edu.wpi.first.units.Units.Rotations
+import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
-import java.util.logging.Logger
+import org.team9432.annotation.Logged
 
 @Logged
 open class FlywheelInputs {

@@ -121,7 +121,7 @@ object ShooterCalculator {
     }
 
     fun getProfileNoSotmWithPassing(): ShooterProfile {
-        return getProfile(targetPassTranslation)
+        return getProfileNoShootOnMove(targetPassTranslation)
     }
 
 }
@@ -166,9 +166,9 @@ fun setShooterTarget(target: Target): Command =
         Logger.recordOutput("Shooter/Profile/Flywheel (RPM)", shooterProfile.angularVelocity.inRPM())
     })
 
-// used for populating interpolation tables
-val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 40.0)
-val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 3000.0)
+// used for tuning regressions
+val hoodTunable = LoggedNetworkNumber("/Tuning/HoodTestAngle", 5.0)
+val flywheelTunable = LoggedNetworkNumber("/Tuning/FlywheelSpeed", 1500.0)
 val turretTunable = LoggedNetworkNumber("/Tuning/TurretAngle", 0.0)
 
 data class ShooterProfile(
@@ -191,7 +191,7 @@ enum class Target(val profile: () -> ShooterProfile) {
         { ShooterCalculator.getProfileWithPassing() }
     ),
     STATIONARY_TURRET (
-        { ShooterProfile(0.0.degrees, 5.degrees, 2600.rpm) },
+        { ShooterProfile(0.0.degrees, 5.degrees, 2000.rpm) },
     ),
     TUNING (
         { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }

@@ -546,7 +546,9 @@ object Drivetrain : Subsystem {
     }
 
     fun zeroGyro(isReversed: Boolean = false, offset: Rotation2d = Rotation2d.kZero) {
-        // Tell the gyro that the robot is facing the other alliance.
+        println("Zeroing gyro")
+
+        // Flip the heading if needed
         var zeroPos =
                 when (DriverStation.getAlliance().getOrNull()) {
                     DriverStation.Alliance.Red -> Rotation2d.k180deg
@@ -558,7 +560,6 @@ object Drivetrain : Subsystem {
         }
 
         estimatedPose = Pose2d(estimatedPose.translation, zeroPos + offset)
-        //        io.setGyro(zeroPos)
     }
 
     val autoPilotConstraints: APConstraints =

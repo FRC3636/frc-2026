@@ -20,20 +20,17 @@ object Indexer : Subsystem {
     }
 
     fun index(): Command = Commands.startEnd(
-        {
-            io.setSpeed(1.0)
-        },
-        {
-            io.setSpeed(0.0)
-        }
+        { io.setSpeed(1.0) },
+        { io.setSpeed(0.0) }
+    )
+
+    fun slowIndex(): Command = Commands.startEnd(
+        { io.setSpeed(0.2) },
+        { io.setSpeed(0.0) }
     )
 
     fun outdex(): Command = Commands.startEnd(
-        {
-            io.setSpeed(-1.0)
-        },
-        {
-            io.setSpeed(0.0)
-        }
+        { io.setSpeed(-1.0) },
+        { io.setSpeed(0.0) }
     )
 }

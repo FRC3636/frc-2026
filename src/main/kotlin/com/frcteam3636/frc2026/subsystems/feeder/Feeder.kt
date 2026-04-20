@@ -17,22 +17,19 @@ object Feeder : Subsystem {
         Logger.processInputs("Feeder", inputs)
     }
 
+    fun slowFeed(): Command = startEnd(
+        { io.setSpeed(0.2) },
+        { io.setSpeed(0.0) }
+    )
+
     fun feed(): Command = startEnd(
-        {
-            io.setSpeed(1.0)
-        },
-        {
-            io.setSpeed(0.0)
-        }
+        { io.setSpeed(1.0) },
+        { io.setSpeed(0.0) }
     )
 
     fun outtake(): Command = startEnd(
-        {
-            io.setSpeed(-0.25)
-        },
-        {
-            io.setSpeed(0.0)
-        }
+        { io.setSpeed(-0.25) },
+        { io.setSpeed(0.0) }
     )
 
 }
