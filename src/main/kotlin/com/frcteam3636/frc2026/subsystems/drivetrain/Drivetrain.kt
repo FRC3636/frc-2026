@@ -9,7 +9,6 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.JOYSTI
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE_POSITIONS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
-import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.latestCameraResults
 import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
 import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
@@ -39,8 +38,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import org.littletonrobotics.junction.Logger
 import org.photonvision.PhotonCamera
-import org.photonvision.targeting.PhotonPipelineResult
-import org.photonvision.targeting.PhotonTrackedTarget
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
@@ -194,30 +191,24 @@ object Drivetrain : Subsystem {
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     val fuelDetector = PhotonCamera("color camera")
-    var cameraDetections: List<PhotonTrackedTarget?>? = ArrayList<PhotonTrackedTarget?>()
-    var latestCameraResults: List<PhotonPipelineResult> = ArrayList<PhotonPipelineResult>()
+    val cameraDetections
+        get() = fuelDetector.allUnreadResults.last().targets
 
     val fuelYaws: Array<Double>
         get() {
-            if(latestCameraResults.isEmpty()){
-                return Array<Double>(1, {0.0})
+            val detections = cameraDetections
+            val yaws = Array(detections.size) { 0.0 }
+            for (i in 0 until detections.size) {
+                yaws[i] = detections[i].yaw
             }
-                val detections = latestCameraResults.last().targets
-                val yaws = Array(detections.size) { 0.0 }
-                for (i in 0 until detections.size) {
-                    yaws[i] = detections[i].yaw
-                }
-                return yaws
-            }
+            return yaws
+        }
 
     val fuelPitches: Array<Double>
         get() {
-            if(latestCameraResults.isEmpty()){
-                return Array<Double>(1) {0.0}
-            }
-            val detections = latestCameraResults.last().targets
-            val pitches = Array<Double>(detections.size) { 0.0 }
-            for(i in 0 until detections.size) {
+            val detections = cameraDetections
+            val pitches = Array(detections.size) { 0.0 }
+            for (i in 0 until detections.size) {
                 pitches[i] = detections[i].pitch
             }
             return pitches
@@ -241,11 +232,11 @@ object Drivetrain : Subsystem {
                 Logger.recordOutput("photonvision/Largest Cluster Distance", distance)
                 val targetHorizontalAngle = largestCluster.average()
                 Logger.recordOutput("photonvision/Largest Cluster Yaw", targetHorizontalAngle)
-                val targetPose = Pose2d(
-                    estimatedPose.translation + Translation2d(distance.inMeters(), Rotation2d(targetHorizontalAngle.degrees)),
-                    Rotation2d.k180deg,
-                )
-                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
+//                val targetPose = Pose2d(
+//                    estimatedPose.translation + Translation2d(distance.inMeters(), Rotation2d(targetHorizontalAngle.degrees)),
+//                    Rotation2d.k180deg,
+//                )
+//                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
 //                alignWithAutopilot(APTarget(targetPose))
             }
         }
@@ -255,7 +246,6 @@ object Drivetrain : Subsystem {
 //        io.updateInputs(inputs)
 //        Logger.processInputs("Drivetrain", inputs)
         Logger.recordOutput("Drivetrain/happiness", true)
-        latestCameraResults = fuelDetector.allUnreadResults
 //        Logger.recordOutput("photonvision/color camera/fuel transform", fuelTransforms[0])
 //        if (Robot.model != Robot.Model.SIMULATION) {
 //            try {
