@@ -66,7 +66,7 @@ fun configureBindings() {
     )
 
     joystickRight.button(4).onTrue(
-        setShooterTarget(Target.AIM_AT_HUB_PASS)
+        setShooterTarget(Target.PASS)
     )
 
     /*  default commands   */

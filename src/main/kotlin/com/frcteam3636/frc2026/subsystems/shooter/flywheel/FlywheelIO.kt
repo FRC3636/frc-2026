@@ -79,7 +79,7 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-        if (motor.velocity.value > velocity * .85) {
+        if (motor.velocity.value > velocity * .9) {
             motor.setControl(VelocityVoltage(targetVelocity))
         } else {
             motor.setVoltage(12.0)

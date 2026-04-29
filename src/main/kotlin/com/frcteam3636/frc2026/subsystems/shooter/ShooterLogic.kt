@@ -9,7 +9,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.utils.autos.FIELD_HEIGHT_METERS
 import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.geometry.*
@@ -24,22 +23,20 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.IEEErem
-import kotlin.math.cos
-import kotlin.math.sin
 
 // Heavy inspiration taken from https://github.com/Mechanical-Advantage/RobotCode2026Public/blob/alpha-bot-turret/src/main/java/org/littletonrobotics/frc2026/subsystems/launcher/LaunchCalculator.java
 
 object ShooterCalculator {
-    fun getProfileNoShootOnMove(target: Translation2d): ShooterProfile {
-        val estimatedPose = Drivetrain.estimatedPose.transformBy(robotToTurret)
+    fun getProfile(target: Translation2d, robotPose: Pose2d = Drivetrain.estimatedPose): ShooterProfile {
+        val turretPose = robotPose.transformBy(robotToTurret)
+        val distance = target.getDistance(turretPose.translation)
 
-        val distance = target.getDistance(estimatedPose.translation)
         val hoodAngle = Hood.calculateHoodAngle(distance.meters)
         val flywheelVelocity = Flywheel.calculateFlywheelVelocity(distance.meters)
 
-        val turretAngleFieldRelative = (target - estimatedPose.translation).angle   // angle from lookahead pose to target
-        val turretAngleRobotRelative = turretAngleFieldRelative.minus(estimatedPose.rotation) // convert to zero-forward
-        val normalizedTurretAngleRobotRelative = turretAngleRobotRelative.radians.IEEErem(TAU).radians // Rotation2d.radians is cooked
+        val turretAngleFieldRelative = (target - turretPose.translation).angle   // angle from pose to target
+        val turretAngleRobotRelative = turretAngleFieldRelative.minus(turretPose.rotation) // convert to zero-forward
+        val normalizedTurretAngleRobotRelative = turretAngleRobotRelative.getRadians().IEEErem(TAU).radians
 
         return ShooterProfile(
             normalizedTurretAngleRobotRelative,
@@ -48,86 +45,46 @@ object ShooterCalculator {
         )
     }
 
-    fun getProfile(target: Translation2d): ShooterProfile {
+    fun getProfileSOTM(target: Translation2d): ShooterProfile {
 
-        val estimatedPose = Drivetrain.estimatedPose
-        val robotRelativeVelocity = Drivetrain.measuredChassisSpeeds
-        val fieldRelativeVelocity = Drivetrain.measuredChassisSpeedsRelativeToField
+        var lookaheadPose = Drivetrain.estimatedPose
+        var lookaheadTurretPosition = lookaheadPose.transformBy(robotToTurret)
+        var lookaheadDistance = target.getDistance(lookaheadTurretPosition.translation)
+        var timeOfFlight = timeOfFlight(lookaheadDistance)
 
-        val delayedPose = estimatedPose.exp(
-            Twist2d(
-                robotRelativeVelocity.vxMetersPerSecond * PHASE_DELAY.inSeconds(),
-                robotRelativeVelocity.vyMetersPerSecond * PHASE_DELAY.inSeconds(),
-                robotRelativeVelocity.omegaRadiansPerSecond * PHASE_DELAY.inSeconds()
+        for (i in 0..14) {
+            // Assuming constant velocity and constant angular velocity
+            // maybe should be lookahead pose?
+            lookaheadPose = Drivetrain.estimatedPose.exp(
+                Twist2d(
+                    Drivetrain.measuredChassisSpeeds.vxMetersPerSecond * timeOfFlight,
+                    Drivetrain.measuredChassisSpeeds.vyMetersPerSecond * timeOfFlight,
+                    Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * 0.3 * timeOfFlight
+                )
             )
-        )
 
-        val turretPosition = delayedPose.transformBy(robotToTurret)
-
-        var lookaheadDistance = target.getDistance(turretPosition.translation)
-        var lookaheadPose = turretPosition
-
-        val robotAngle = estimatedPose.rotation.radians
-        val turretOffset = SHOOTER_OFFSET
-
-        // I'm too tired to understand the math rn, the commented code is possibly correct
-        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond +
-                fieldRelativeVelocity.omegaRadiansPerSecond *
-                (turretOffset.y * cos(robotAngle) - turretOffset.x * sin(robotAngle))
-
-        val turretVelY = fieldRelativeVelocity.vyMetersPerSecond +
-                fieldRelativeVelocity.omegaRadiansPerSecond *
-                (turretOffset.x * cos(robotAngle) - turretOffset.y * sin(robotAngle))
-
-//        val turretVelX = fieldRelativeVelocity.vxMetersPerSecond -
-//                fieldRelativeVelocity.omegaRadiansPerSecond *
-//                (turretOffset.x * sin(robotAngle) + turretOffset.y * cos(robotAngle))
-//
-//        val turretVelY = fieldRelativeVelocity.vyMetersPerSecond +
-//                fieldRelativeVelocity.omegaRadiansPerSecond *
-//                (turretOffset.x * cos(robotAngle) - turretOffset.y * sin(robotAngle))
-
-        // Iteratively account for imparted velocity by robot (turret) to offset
-        for (i in 0..20) {
-            val tof = timeOfFlight(lookaheadDistance)
-            val offsetX = turretVelX * tof
-            val offsetY = turretVelY * tof
-            lookaheadPose = Pose2d(
-                turretPosition.translation + Translation2d(offsetX, offsetY),
-                turretPosition.rotation
-            )
-            lookaheadDistance = target.getDistance(lookaheadPose.translation)
+            lookaheadTurretPosition = lookaheadPose.transformBy(robotToTurret)
+            lookaheadDistance = target.getDistance(lookaheadTurretPosition.translation)
+            timeOfFlight = timeOfFlight(lookaheadDistance)
         }
 
-        val hoodAngle = Hood.calculateHoodAngle(lookaheadDistance.meters)
-        val flywheelVelocity = Flywheel.calculateFlywheelVelocity(lookaheadDistance.meters)
-
-        val turretAngleFieldRelative = (target - lookaheadPose.translation).angle   // angle from lookahead pose to target
-        val turretAngleRobotRelative = turretAngleFieldRelative.minus(delayedPose.rotation) // convert to zero-forward
-        val normalizedTurretAngleRobotRelative = turretAngleRobotRelative.radians.IEEErem(TAU).radians // Rotation2d.radians is cooked
-
         Logger.recordOutput("LaunchCalculator/LookaheadPose", lookaheadPose)
+        Logger.recordOutput("LaunchCalculator/LookaheadTurretPosition", lookaheadTurretPosition)
         Logger.recordOutput("LaunchCalculator/TurretToTargetDistance", lookaheadDistance)
+        Logger.recordOutput("LaunchCalculator/TimeOfFlight", timeOfFlight)
 
-        return ShooterProfile(
-            normalizedTurretAngleRobotRelative,
-            hoodAngle,
-            flywheelVelocity
-        )
+        return getProfile(target, lookaheadPose)
     }
 
     fun getProfileWithPassing(): ShooterProfile {
         return getProfile(targetPassTranslation)
     }
 
-    fun getProfileNoSotmWithPassing(): ShooterProfile {
-        return getProfileNoShootOnMove(targetPassTranslation)
+    fun getProfileSOTMWithPassing(): ShooterProfile {
+        return getProfileSOTM(targetPassTranslation)
     }
 
 }
-private val PHASE_DELAY = 0.03.seconds
-private val SHOOTER_HEIGHT = 0.4318.meters
-private val GRAVITY = 9.81.metersPerSecondPerSecond
 
 // TODO() Tune ts
 private fun timeOfFlight(distance: Double): Double = 0.043856 * distance + 0.930047
@@ -142,10 +99,10 @@ fun shoot() : Command =
         )
     )
 
-val robotToTurret = Transform2d(SHOOTER_OFFSET, Rotation2d.kZero)
-
 var shooterTarget: Target = Target.STATIONARY_TURRET
 var shooterProfile: ShooterProfile = shooterTarget.profile()
+
+val robotToTurret = Transform2d(SHOOTER_OFFSET, Rotation2d.kZero)
 
 val shooterFieldPose: Pose2d
     get() = Pose2d(
@@ -179,16 +136,16 @@ data class ShooterProfile(
 
 enum class Target(val profile: () -> ShooterProfile) {
     AIM_AT_HUB_NO_SOTM (
-        { ShooterCalculator.getProfileNoShootOnMove(hubTranslation.toTranslation2d()) }
-    ),
-    AIM_AT_HUB_PASS_NO_SOTM (
-        { ShooterCalculator.getProfileNoSotmWithPassing() }
-    ),
-    AIM_AT_HUB_NO_PASS (
         { ShooterCalculator.getProfile(hubTranslation.toTranslation2d()) }
     ),
-    AIM_AT_HUB_PASS (
+    PASS_NO_SOTM (
         { ShooterCalculator.getProfileWithPassing() }
+    ),
+    AIM_AT_HUB (
+        { ShooterCalculator.getProfileSOTM(hubTranslation.toTranslation2d()) }
+    ),
+    PASS (
+        { ShooterCalculator.getProfileSOTMWithPassing() }
     ),
     STATIONARY_TURRET (
         { ShooterProfile(0.0.degrees, 5.degrees, 2000.rpm) },

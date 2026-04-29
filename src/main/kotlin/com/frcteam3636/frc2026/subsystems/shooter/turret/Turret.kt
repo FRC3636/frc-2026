@@ -7,6 +7,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.shooterProfile
 import com.frcteam3636.frc2026.subsystems.shooter.shooterTarget
 import com.frcteam3636.frc2026.subsystems.shooter.shooterToHub
 import com.frcteam3636.frc2026.utils.math.inDegrees
+import com.frcteam3636.frc2026.utils.math.meters
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
@@ -92,5 +93,6 @@ object Turret : Subsystem {
 }
 object Constants {
     val SHOOTER_OFFSET = Translation2d(.184, -.184)
-    val TURRET_TOLERANCE = 3.0
+    val SHOOTER_HEIGHT = 0.4318.meters
+    const val TURRET_TOLERANCE = 3.0
 }
