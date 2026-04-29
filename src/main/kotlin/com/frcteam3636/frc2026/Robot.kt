@@ -205,7 +205,7 @@ object Robot : LoggedRobot() {
             Drivetrain.zeroGyro()
         }))
 
-        controller.rightBumper().whileTrue(
+        controller.rightTrigger().whileTrue(
             Drivetrain.driveToLargestFuelCluster()
         )
 
