@@ -77,7 +77,7 @@ fun configureBindings() {
     )
 
     Turret.defaultCommand = Turret.turnToSetpoint()
-    Hood.defaultCommand = Hood.turnToTargetHoodAngle()
+//    Hood.defaultCommand = Hood.turnToTargetHoodAngle()
 
     /* zeroing commands */
 

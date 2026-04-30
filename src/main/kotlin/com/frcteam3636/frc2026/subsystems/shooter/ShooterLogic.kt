@@ -59,7 +59,7 @@ object ShooterCalculator {
                 Twist2d(
                     Drivetrain.measuredChassisSpeeds.vxMetersPerSecond * timeOfFlight,
                     Drivetrain.measuredChassisSpeeds.vyMetersPerSecond * timeOfFlight,
-                    Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * 0.3 * timeOfFlight
+                    Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * 0.1 * timeOfFlight
                 )
             )
 
