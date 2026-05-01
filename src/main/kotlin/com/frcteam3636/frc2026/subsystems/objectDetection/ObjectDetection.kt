@@ -56,12 +56,17 @@ object ObjectDetection : Subsystem {
 
     fun driveToLargestFuelCluster() : Command = Commands.run({
         if(fuelYaws.isNotEmpty()){
-
             val groupedYaws = fuelYaws.
-            groupBy { floor(it / 9.0)}
+                groupBy { floor(it / 9.0)}
 
             val largestCluster = groupedYaws.maxBy { it.value.size }.value
-            val smallestPitch = largestCluster.minBy { it }
+            val groupedPitches = ArrayList<Double>(largestCluster.size)
+
+            for(i in largestCluster.indices){
+                groupedPitches[i] = fuelPitches[i]
+            }
+
+            val smallestPitch = groupedPitches.minBy { it }
             val distance = (Constant.CAMERA_OFFSET.z.meters - Constant.FUEL_RADIUS/ tan(smallestPitch.degrees.inRadians() + Constant.CAMERA_PITCH.inRadians()))
             Logger.recordOutput("photonvision/Largest Fuel Cluster Distance", distance)
 
