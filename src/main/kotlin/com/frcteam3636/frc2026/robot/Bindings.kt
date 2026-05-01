@@ -5,6 +5,7 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
+import com.frcteam3636.frc2026.subsystems.objectDetection.ObjectDetection
 import com.frcteam3636.frc2026.subsystems.shooter.Target
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.setShooterTarget
@@ -42,6 +43,10 @@ fun configureBindings() {
 
     joystickLeft.button(3).onTrue(
         Intake.setPivotVoltage(0.volts)
+    )
+
+    joystickLeft.button(4).onTrue(
+        ObjectDetection.driveToLargestFuelCluster()
     )
 
     joystickLeft.povUp().whileTrue(

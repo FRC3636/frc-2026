@@ -16,6 +16,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
 import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
+import com.frcteam3636.frc2026.subsystems.objectDetection.ObjectDetection
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -171,6 +172,7 @@ object Robot : LoggedRobot() {
         Indexer.register()
         Intake.register()
         Turret.register()
+        ObjectDetection.register()
 //        Climber.register()
     }
 
