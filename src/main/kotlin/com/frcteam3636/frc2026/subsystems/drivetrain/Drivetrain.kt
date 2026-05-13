@@ -3,6 +3,7 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.REVMotorControllerId
 import com.frcteam3636.frc2026.Robot
+import com.frcteam3636.frc2026.Robot.odometryLock
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.JOYSTICK_DEADBAND
@@ -191,12 +192,16 @@ object Drivetrain : Subsystem {
     val moduleDeltas = Array(4) { SwerveModulePosition() }
 
     val fuelDetector = PhotonCamera("color camera")
-    val cameraDetections
-        get() = fuelDetector.allUnreadResults.last().targets
+    var cameraDetections = fuelDetector.allUnreadResults.last().targets
+
+
 
     val fuelYaws: Array<Double>
         get() {
             val detections = cameraDetections
+            if(detections.isEmpty()){
+                return Array<Double>(1) {0.0}
+            }
             val yaws = Array(detections.size) { 0.0 }
             for (i in 0 until detections.size) {
                 yaws[i] = detections[i].yaw
@@ -207,12 +212,16 @@ object Drivetrain : Subsystem {
     val fuelPitches: Array<Double>
         get() {
             val detections = cameraDetections
+            if(detections.isEmpty()){
+                return Array<Double>(1) {0.0}
+            }
             val pitches = Array(detections.size) { 0.0 }
             for (i in 0 until detections.size) {
                 pitches[i] = detections[i].pitch
             }
             return pitches
         }
+
 
     fun driveToLargestFuelCluster(): Command =
         run {
@@ -232,21 +241,21 @@ object Drivetrain : Subsystem {
                 Logger.recordOutput("photonvision/Largest Cluster Distance", distance)
                 val targetHorizontalAngle = largestCluster.average()
                 Logger.recordOutput("photonvision/Largest Cluster Yaw", targetHorizontalAngle)
-//                val targetPose = Pose2d(
-//                    estimatedPose.translation + Translation2d(distance.inMeters(), Rotation2d(targetHorizontalAngle.degrees)),
-//                    Rotation2d.k180deg,
-//                )
-//                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
-//                alignWithAutopilot(APTarget(targetPose))
+                val targetPose = Pose2d(
+                    estimatedPose.translation + Translation2d(distance.inMeters(), Rotation2d(targetHorizontalAngle.degrees)),
+                    Rotation2d.k180deg,
+                )
+                Logger.recordOutput("photonvision/Target Fuel Pose", targetPose)
+                alignWithAutopilot(APTarget(targetPose))
             }
         }
 
     override fun periodic() {
-//        odometryLock.lock()
-//        io.updateInputs(inputs)
-//        Logger.processInputs("Drivetrain", inputs)
+        odometryLock.lock()
+        io.updateInputs(inputs)
+        Logger.processInputs("Drivetrain", inputs)
         Logger.recordOutput("Drivetrain/happiness", true)
-//        Logger.recordOutput("photonvision/color camera/fuel transform", fuelTransforms[0])
+        cameraDetections = fuelDetector.allUnreadResults.last().targets
 //        if (Robot.model != Robot.Model.SIMULATION) {
 //            try {
 //                odometryLock.lock()
@@ -287,14 +296,14 @@ object Drivetrain : Subsystem {
 //                odometryLock.unlock()
 //            }
 //        }
-        //        else {
-//            io.updateInputs(inputs)
-//            Logger.processInputs("Drivetrain", inputs)
-//            rawGyroRotation = inputs.gyroRotation
-//            poseEstimator.update(
-//                rawGyroRotation,
-//                inputs.measuredPositions.toTypedArray()
-//            )
+//                else {
+            io.updateInputs(inputs)
+            Logger.processInputs("Drivetrain", inputs)
+            rawGyroRotation = inputs.gyroRotation
+            poseEstimator.update(
+                rawGyroRotation,
+                inputs.measuredPositions.toTypedArray()
+            )
 //        }
 
         Logger.recordOutput("Drivetrain/Raw Gyro Rotation", rawGyroRotation)
@@ -621,9 +630,9 @@ object Drivetrain : Subsystem {
     @Suppress("unused")
     internal object Constants {
 
-        val INTAKE_CAMERA_OFFSET = Translation2d((-25.5).inches, 0.0.inches)
-        val INTAKE_CAMERA_HEIGHT = .25.meters
-        val INTAKE_CAMERA_PITCH = (-20).degrees
+        val INTAKE_CAMERA_OFFSET = Translation2d((-25.5).inches, 0.04.meters)
+        val INTAKE_CAMERA_HEIGHT = .08.meters
+        val INTAKE_CAMERA_PITCH = (-10).degrees
         val FUEL_RADIUS = .075.meters
 
         // Translation/rotation coefficient for teleoperated driver controls

@@ -28,6 +28,7 @@ import org.photonvision.simulation.SimCameraProperties
 import org.team9432.annotation.Logged
 import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -105,35 +106,35 @@ class LimelightPoseProvider(
     val gyroConnected: Boolean
         get() = gyroConnectionGetter()
 
-//    init {
-//        thread(isDaemon = true, name = name) { // TODO: do we need to keep this in a thread?
-//            while (true) {
-//                val temp = updateCurrentMeasurements()
-//                try {
-//                    lock.lock()
-//                    if (measurements.isEmpty())
-//                        observedTags.clear()
-//                    for (measurement in temp) {
-//                        measurements.add(measurement.poseMeasurement!!)
-//                        for (tag in measurement.observedTags) {
-//                            observedTags.add(tag)
-//                        }
-//                    }
-//                    // We assume the camera has disconnected if there are no new updates for several ticks.
-//                    val hb = hbSubscriber.get()
-//                    connected = hb > lastSeenHb || loopsSinceLastSeen < CONNECTED_TIMEOUT
-//                    if (hb == lastSeenHb)
-//                        loopsSinceLastSeen++
-//                    else
-//                        loopsSinceLastSeen = 0
-//                    lastSeenHb = hb
-//                } finally {
-//                    lock.unlock()
-//                }
-//                Thread.sleep(Robot.period.seconds.inMilliseconds().toLong())
-//            }
-//        }
-//    }
+    init {
+        thread(isDaemon = true, name = name) { // TODO: do we need to keep this in a thread?
+            while (true) {
+                val temp = updateCurrentMeasurements()
+                try {
+                    lock.lock()
+                    if (measurements.isEmpty())
+                        observedTags.clear()
+                    for (measurement in temp) {
+                        measurements.add(measurement.poseMeasurement!!)
+                        for (tag in measurement.observedTags) {
+                            observedTags.add(tag)
+                        }
+                    }
+                    // We assume the camera has disconnected if there are no new updates for several ticks.
+                    val hb = hbSubscriber.get()
+                    connected = hb > lastSeenHeartBeat || loopsSinceLastSeen < CONNECTED_TIMEOUT
+                    if (hb == lastSeenHeartBeat)
+                        loopsSinceLastSeen++
+                    else
+                        loopsSinceLastSeen = 0
+                    lastSeenHeartBeat = hb
+                } finally {
+                    lock.unlock()
+                }
+                Thread.sleep(Robot.period.seconds.inMilliseconds().toLong())
+            }
+        }
+    }
 
     private fun updateCurrentMeasurements(): MutableList<LimelightMeasurement> {
         val measurements: MutableList<LimelightMeasurement> = mutableListOf()
