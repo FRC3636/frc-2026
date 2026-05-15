@@ -11,6 +11,9 @@ import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSE
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
+import com.frcteam3636.frc2026.utils.shooting.hubTranslation
+import com.frcteam3636.frc2026.utils.shooting.targetPassTranslation
+import com.frcteam3636.frc2026.utils.shooting.translatePose
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
@@ -23,6 +26,7 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.IEEErem
+import kotlin.math.PI
 
 // Heavy inspiration taken from https://github.com/Mechanical-Advantage/RobotCode2026Public/blob/alpha-bot-turret/src/main/java/org/littletonrobotics/frc2026/subsystems/launcher/LaunchCalculator.java
 
@@ -53,14 +57,17 @@ object ShooterCalculator {
         var timeOfFlight = timeOfFlight(lookaheadDistance)
 
         for (i in 0..14) {
-            // Assuming constant velocity and constant angular velocity
-            // maybe should be lookahead pose?
-            lookaheadPose = Drivetrain.estimatedPose.exp(
-                Twist2d(
-                    Drivetrain.measuredChassisSpeeds.vxMetersPerSecond * timeOfFlight,
-                    Drivetrain.measuredChassisSpeeds.vyMetersPerSecond * timeOfFlight,
-                    Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * 0.1 * timeOfFlight
-                )
+            // Assuming constant velocity and constant acceleration
+
+            lookaheadPose = translatePose(
+                Drivetrain.estimatedPose,
+                Drivetrain.measuredChassisSpeeds.vxMetersPerSecond,
+                Drivetrain.measuredChassisSpeeds.vyMetersPerSecond,
+                Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * (PI / 180), // Made this the degrees to radians factor temporarily to test if the * 0.1 was not random
+                0.0, // Ansel, please commit your changes so I can test this
+                0.0,
+                0.0,
+                timeOfFlight
             )
 
             lookaheadTurretPosition = lookaheadPose.transformBy(robotToTurret)
@@ -153,68 +160,4 @@ enum class Target(val profile: () -> ShooterProfile) {
     TUNING (
         { ShooterProfile(turretTunable.get().degrees, hoodTunable.get().degrees, flywheelTunable.get().rpm) }
     ),
-}
-
-val hubTranslation
-    get() = when (Robot.model) {
-        // simulation defaults to red alliance
-        Model.SIMULATION -> Translation3d(
-            4.62534.meters,
-            (8.07 / 2).meters,
-            1.83.meters,
-        )
-        Model.COMPETITION -> when (DriverStation.getAlliance().orElse(Alliance.Blue)) {
-            Alliance.Blue -> Translation3d(
-                4.62534.meters,
-                (8.07 / 2).meters,
-                1.83.meters,
-            )
-            Alliance.Red -> Translation3d(
-                (16.54 - 4.62534).meters,
-                (8.07 / 2).meters,
-                1.83.meters,
-            )
-        }
-    }
-
-val targetPassTranslation: Translation2d
-    get() {
-        val alliance = DriverStation.getAlliance().getOrNull()
-        val pose = Drivetrain.estimatedPose.translation
-
-        if (alliance == Alliance.Blue){
-            if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopRedAllianceZone)) {
-                return Translation2d(4.meters, (FIELD_WIDTH_METERS / 4 ).meters)
-            }
-            else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomRedAllianceZone)){
-                return Translation2d(4.meters, (FIELD_WIDTH_METERS * 3/4).meters)
-            }
-            else {
-                return hubTranslation.toTranslation2d()
-            }
-        }
-        else {
-            if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopBlueAllianceZone)) {
-                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS / 4 ).meters)
-            }
-            else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomBlueAllianceZone)){
-                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS * 3/4).meters)
-            }
-            else {
-                return hubTranslation.toTranslation2d()
-            }
-        }
-    }
-
-enum class Zones(val startX : Distance, val endX : Distance, val startY: Distance, val endY : Distance) {
-    TopBlueAllianceZone(0.meters, 4.03.meters, 0.meters, 4.meters),
-    BottomBlueAllianceZone(0.meters, 4.03.meters, 4.meters, 8.meters),
-    TopRedAllianceZone(11.22.meters, 16.20.meters, 0.meters, 4.meters),
-    BottomRedAllianceZone(11.22.meters, 16.20.meters, 4.meters, 8.meters),
-    TopNeutralZone(4.03.meters, 12.22.meters, 0.meters, 4.meters),
-    BottomNeutralZone(4.03.meters, 12.22.meters, 4.meters, 8.meters),
-}
-
-fun Translation2d.inZone(target: Zones): Boolean {
-    return this.x.meters in target.startX..<target.endX && this.y.meters in target.startY..<target.endY
 }
