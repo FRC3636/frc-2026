@@ -64,7 +64,7 @@ object Intake : Subsystem {
             Commands.parallel(
                 Indexer.slowIndex(),
 //                Feeder.slowFeed()
-            ).until { Feeder.inputs.ballDetected }
+            ) // .until { Feeder.inputs.ballDetected }
         )
 
     fun manipulateSequence(): Command =
@@ -78,7 +78,7 @@ object Intake : Subsystem {
 
     fun intake(): Command =
             runEnd(
-                { io.setWheelMotorVoltage(4.0.volts) },
+                { io.setWheelMotorVoltage(10.0.volts) },
                 { io.setWheelMotorVoltage(0.volts) }
             )
 

@@ -779,51 +779,39 @@ object Drivetrain : Subsystem {
         val BACK_LEFT_MAGNET_OFFSET = BACK_LEFT_CONSTANTS.EncoderOffset
 
         val MODULE_POSITIONS =
-                PerCorner(
-                        frontLeft =
-                                Corner(
-                                        Pose2d(
-                                                Translation2d(
-                                                        FRONT_LEFT_CONSTANTS.LocationX,
-                                                        FRONT_LEFT_CONSTANTS.LocationY
-                                                ),
-                                                Rotation2d.kZero
-                                        ),
-                                        FRONT_LEFT_MAGNET_OFFSET
-                                ),
-                        frontRight =
-                                Corner(
-                                        Pose2d(
-                                                Translation2d(
-                                                        FRONT_RIGHT_CONSTANTS.LocationX,
-                                                        FRONT_RIGHT_CONSTANTS.LocationY
-                                                ),
-                                                Rotation2d.fromDegrees(180.0)
-                                        ),
-                                        FRONT_RIGHT_MAGNET_OFFSET
-                                ),
-                        backLeft =
-                                Corner(
-                                        Pose2d(
-                                                Translation2d(
-                                                        BACK_LEFT_CONSTANTS.LocationX,
-                                                        BACK_LEFT_CONSTANTS.LocationY
-                                                ),
-                                                Rotation2d.kZero
-                                        ),
-                                        BACK_LEFT_MAGNET_OFFSET
-                                ),
-                        backRight =
-                                Corner(
-                                        Pose2d(
-                                                Translation2d(
-                                                        BACK_RIGHT_CONSTANTS.LocationX,
-                                                        BACK_RIGHT_CONSTANTS.LocationY
-                                                ),
-                                                Rotation2d.fromDegrees(180.0)
-                                        ),
-                                        BACK_RIGHT_MAGNET_OFFSET
-                                ),
+            PerCorner(
+                frontLeft =
+                    Corner(
+                        Pose2d(
+                            Translation2d(FRONT_LEFT_CONSTANTS.LocationX, FRONT_LEFT_CONSTANTS.LocationY),
+                            Rotation2d.kZero
+                        ),
+                        FRONT_LEFT_MAGNET_OFFSET
+                    ),
+                frontRight =
+                    Corner(
+                        Pose2d(
+                            Translation2d(FRONT_RIGHT_CONSTANTS.LocationX, FRONT_RIGHT_CONSTANTS.LocationY),
+                            Rotation2d.fromDegrees(180.0)
+                        ),
+                        FRONT_RIGHT_MAGNET_OFFSET
+                    ),
+                backLeft =
+                    Corner(
+                        Pose2d(
+                            Translation2d(BACK_LEFT_CONSTANTS.LocationX, BACK_LEFT_CONSTANTS.LocationY),
+                            Rotation2d.kZero
+                        ),
+                        BACK_LEFT_MAGNET_OFFSET
+                    ),
+                backRight =
+                    Corner(
+                        Pose2d(
+                            Translation2d(BACK_RIGHT_CONSTANTS.LocationX, BACK_RIGHT_CONSTANTS.LocationY),
+                            Rotation2d.fromDegrees(180.0)
+                        ),
+                        BACK_RIGHT_MAGNET_OFFSET
+                    ),
                 )
 
         val DRIVE_BASE_RADIUS =
@@ -837,32 +825,32 @@ object Drivetrain : Subsystem {
 
         // CAN IDs
         val MODULE_CAN_IDS =
-                PerCorner(
-                        frontLeft =
-                                Triple(
-                                        CTREDeviceId.FrontLeftDrivingMotor,
-                                        CTREDeviceId.FrontLeftTurningMotor,
-                                        CTREDeviceId.FrontLeftTurningEncoder
-                                ),
-                        frontRight =
-                                Triple(
-                                        CTREDeviceId.FrontRightDrivingMotor,
-                                        CTREDeviceId.FrontRightTurningMotor,
-                                        CTREDeviceId.FrontRightTurningEncoder
-                                ),
-                        backLeft =
-                                Triple(
-                                        CTREDeviceId.BackLeftDrivingMotor,
-                                        CTREDeviceId.BackLeftTurningMotor,
-                                        CTREDeviceId.BackLeftTurningEncoder
-                                ),
-                        backRight =
-                                Triple(
-                                        CTREDeviceId.BackRightDrivingMotor,
-                                        CTREDeviceId.BackRightTurningMotor,
-                                        CTREDeviceId.BackRightTurningEncoder
-                                ),
-                )
+            PerCorner(
+                frontLeft =
+                    Triple(
+                        CTREDeviceId.FrontLeftDrivingMotor,
+                        CTREDeviceId.FrontLeftTurningMotor,
+                        CTREDeviceId.FrontLeftTurningEncoder
+                    ),
+                frontRight =
+                    Triple(
+                        CTREDeviceId.FrontRightDrivingMotor,
+                        CTREDeviceId.FrontRightTurningMotor,
+                        CTREDeviceId.FrontRightTurningEncoder
+                    ),
+                backLeft =
+                    Triple(
+                        CTREDeviceId.BackLeftDrivingMotor,
+                        CTREDeviceId.BackLeftTurningMotor,
+                        CTREDeviceId.BackLeftTurningEncoder
+                    ),
+                backRight =
+                    Triple(
+                        CTREDeviceId.BackRightDrivingMotor,
+                        CTREDeviceId.BackRightTurningMotor,
+                        CTREDeviceId.BackRightTurningEncoder
+                    ),
+            )
 
         /**
          * A position with the modules radiating outwards from the center of the robot, preventing
