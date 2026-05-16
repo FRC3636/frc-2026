@@ -21,6 +21,7 @@ import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
 import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
 import com.frcteam3636.frc2026.utils.math.*
+import com.frcteam3636.frc2026.utils.shooting.hubTranslation
 import com.frcteam3636.frc2026.utils.swerve.*
 import com.frcteam3636.frc2026.utils.translation2d
 import com.therekrab.autopilot.APConstraints
@@ -376,34 +377,12 @@ object Drivetrain : Subsystem {
             Logger.recordOutput("Drivetrain/Desired States", *stateArr)
         }
 
-    // This is literally copied straight from the Shooter code on a different branch,
-    // and should probably be moved to some kind of common file before it gets merged
-    // to main.
-    private val toHub: Translation2d
-        get() {
-            return DriverStation.getAlliance()
-                    .orElse(DriverStation.Alliance.Blue)
-                    .hubTranslation
-                    .toTranslation2d() - estimatedPose.translation
-        }
-
-    // As well as this
-    val DriverStation.Alliance.hubTranslation
-        get() =
-                when (this) {
-                    DriverStation.Alliance.Blue ->
-                            Translation3d(
-                                    4.62534.meters,
-                                    (8.07 / 2).meters,
-                                    1.83.meters,
-                            )
-                    else ->
-                            Translation3d(
-                                    (16.54 - 4.62534).meters,
-                                    (8.07 / 2).meters,
-                                    1.83.meters,
-                            )
-                }
+    val acceleration
+        get() = Vector3d(
+            inputs.gyroAccelerationX,
+            inputs.gyroAccelerationY,
+            inputs.gyroAccelerationZ
+        )
 
     /**
      * The current speed of chassis relative to the ground, assuming that the wheels have perfect
@@ -592,7 +571,7 @@ object Drivetrain : Subsystem {
     // TODO: Compensate for the error probably caused by the turret being stuck at the wrong angle.
     // TODO: This might be done by passing it in for offset.
     fun alignToHub(offset: Angle = 0.0.radians): Command = run {
-        val target = toHub.angle.measure + offset - estimatedPose.rotation.radians.radians
+        val target = (hubTranslation.toTranslation2d() - estimatedPose.translation).angle.measure + offset - estimatedPose.rotation.radians.radians
 
         val rotationOutput =
                 autoPilotRotationPID.calculate(

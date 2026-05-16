@@ -64,9 +64,9 @@ object ShooterCalculator {
                 Drivetrain.measuredChassisSpeeds.vxMetersPerSecond,
                 Drivetrain.measuredChassisSpeeds.vyMetersPerSecond,
                 Drivetrain.measuredChassisSpeeds.omegaRadiansPerSecond * (PI / 180), // Made this the degrees to radians factor temporarily to test if the * 0.1 was not random
-                0.0, // Ansel, please commit your changes so I can test this
-                0.0,
-                0.0,
+                Drivetrain.acceleration.x,
+                Drivetrain.acceleration.y,
+                0.0, // I love it when my accelerometer doesn't have a function to get rotational acceleration
                 timeOfFlight
             )
 

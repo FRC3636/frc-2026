@@ -3,12 +3,15 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 import com.ctre.phoenix6.BaseStatusSignal
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2026.robot.Robot
+import com.frcteam3636.frc2026.utils.math.Vector3d
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.degreesPerSecond
+import com.frcteam3636.frc2026.utils.math.inMetersPerSecondPerSecond
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.units.measure.AngularAcceleration
 import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import java.util.*
@@ -26,6 +29,8 @@ interface Gyro {
      * The rotational velocity of the robot on its yaw axis.
      */
     val velocity: AngularVelocity
+
+    val acceleration: Vector3d
 
     /** Whether the gyro is connected. */
     val connected: Boolean
@@ -45,6 +50,9 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     private val pitchSignal = pigeon.pitch
     private val rollSignal = pigeon.roll
     private val angularVelocitySignal = pigeon.angularVelocityZWorld
+    private val accelerationSignalX = pigeon.accelerationX
+    private val accelerationSignalY = pigeon.accelerationY
+    private val accelerationSignalZ = pigeon.accelerationZ
     private var yawTimestampQueue: Queue<Double>
     private var yawPositionQueue: Queue<Double>
 
@@ -57,7 +65,10 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
             100.0,
             pitchSignal,
             rollSignal,
-            angularVelocitySignal
+            angularVelocitySignal,
+            accelerationSignalX,
+            accelerationSignalY,
+            accelerationSignalZ,
         )
         pigeon.optimizeBusUtilization(0.0)
         yawTimestampQueue = PhoenixOdometryThread.makeTimestampQueue()
@@ -76,6 +87,13 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 
     override val velocity: AngularVelocity
         get() = angularVelocitySignal.value
+
+    override val acceleration: Vector3d
+        get() = Vector3d(
+            accelerationSignalX.value.inMetersPerSecondPerSecond(),
+            accelerationSignalX.value.inMetersPerSecondPerSecond(),
+            accelerationSignalX.value.inMetersPerSecondPerSecond()
+        )
 
     override val connected
         get() = yawSignal.status.isOK
@@ -99,6 +117,7 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
 class GyroSim(private val modules: PerCorner<SwerveModule>) : Gyro {
     override var rotation: Rotation2d = Rotation2d.kZero
     override var velocity: AngularVelocity = 0.radiansPerSecond
+    override var acceleration: Vector3d = Vector3d(0.0, 0.0, 0.0)
     override val connected = true
     override var odometryYawPositions: DoubleArray = doubleArrayOf()
     override var odometryYawTimestamps: DoubleArray = doubleArrayOf()
@@ -135,6 +154,8 @@ class GyroMapleSim(gyroSimulation: GyroSimulation) : Gyro {
     override var rotation: Rotation2d = gyroSimulation.gyroReading
 
     override var velocity: AngularVelocity = gyroSimulation.measuredAngularVelocity
+
+    override var acceleration: Vector3d = Vector3d(0.0, 0.0, 0.0)
 
     override var odometryYawPositions: DoubleArray = doubleArrayOf()
 

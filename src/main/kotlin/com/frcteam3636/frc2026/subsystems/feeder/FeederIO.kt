@@ -34,7 +34,7 @@ class FeederIOReal : FeederIO {
     private val feederMotor = TalonFX(CTREDeviceId.FeederMotor)
     private val feederMotorConfig = TalonFXConfiguration()
 
-    private val canRange = CANrange(CTREDeviceId.CanRange.num).apply {
+    private var canRange = CANrange(CTREDeviceId.CanRange.num).apply {
         configurator.apply(
             CANrangeConfiguration().apply {
                 ProximityParams.ProximityThreshold = 0.1

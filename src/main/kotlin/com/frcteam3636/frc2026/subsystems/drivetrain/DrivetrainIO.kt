@@ -36,6 +36,9 @@ open class DrivetrainInputs {
     var measuredStatesRelativeToField = PerCorner.generate { SwerveModuleState() }
     var gyroRotation = Rotation2d.kZero!!
     var gyroVelocity = 0.degreesPerSecond
+    var gyroAccelerationX = 0.0
+    var gyroAccelerationY = 0.0
+    var gyroAccelerationZ = 0.0
     var gyroConnected = true
     var measuredStates = PerCorner.generate { SwerveModuleState() }
     var measuredPositions = PerCorner.generate { SwerveModulePosition() }
@@ -61,6 +64,9 @@ abstract class DrivetrainIO {
 
         inputs.gyroRotation = gyro.rotation
         inputs.gyroVelocity = gyro.velocity
+        inputs.gyroAccelerationX = gyro.acceleration.x
+        inputs.gyroAccelerationX = gyro.acceleration.y
+        inputs.gyroAccelerationX = gyro.acceleration.z
         inputs.gyroConnected = gyro.connected
         inputs.moduleTemperatures = modules.map { it.temperatures }
     }
