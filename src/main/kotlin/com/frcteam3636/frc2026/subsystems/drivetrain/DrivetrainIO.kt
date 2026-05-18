@@ -65,8 +65,8 @@ abstract class DrivetrainIO {
         inputs.gyroRotation = gyro.rotation
         inputs.gyroVelocity = gyro.velocity
         inputs.gyroAccelerationX = gyro.acceleration.x
-        inputs.gyroAccelerationX = gyro.acceleration.y
-        inputs.gyroAccelerationX = gyro.acceleration.z
+        inputs.gyroAccelerationY = gyro.acceleration.y
+        inputs.gyroAccelerationZ = gyro.acceleration.z
         inputs.gyroConnected = gyro.connected
         inputs.moduleTemperatures = modules.map { it.temperatures }
     }

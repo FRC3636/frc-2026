@@ -1,7 +1,5 @@
 package com.frcteam3636.frc2026.subsystems.shooter
 
-import com.frcteam3636.frc2026.robot.Robot
-import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
 import com.frcteam3636.frc2026.subsystems.feeder.Feeder
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
@@ -9,22 +7,20 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
 import com.frcteam3636.frc2026.utils.shooting.hubTranslation
 import com.frcteam3636.frc2026.utils.shooting.targetPassTranslation
 import com.frcteam3636.frc2026.utils.shooting.translatePose
-import edu.wpi.first.math.geometry.*
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Transform2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.units.measure.AngularVelocity
-import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.IEEErem
 import kotlin.math.PI
 
