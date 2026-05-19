@@ -91,8 +91,8 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     override val acceleration: Vector3d
         get() = Vector3d(
             accelerationSignalX.value.inMetersPerSecondPerSecond(),
-            accelerationSignalX.value.inMetersPerSecondPerSecond(),
-            accelerationSignalX.value.inMetersPerSecondPerSecond()
+            accelerationSignalY.value.inMetersPerSecondPerSecond(),
+            accelerationSignalZ.value.inMetersPerSecondPerSecond()
         )
 
     override val connected
