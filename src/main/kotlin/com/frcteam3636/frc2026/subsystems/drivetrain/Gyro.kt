@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.AngularAcceleration
 import edu.wpi.first.units.measure.AngularVelocity
 import org.ironmaple.simulation.drivesims.GyroSimulation
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.sign
 
 
@@ -89,11 +90,20 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
         get() = angularVelocitySignal.value
 
     override val acceleration: Vector3d
-        get() = Vector3d(
-            accelerationSignalX.value.inMetersPerSecondPerSecond(),
-            accelerationSignalX.value.inMetersPerSecondPerSecond(),
-            accelerationSignalX.value.inMetersPerSecondPerSecond()
-        )
+        get() {
+            return Vector3d(
+                lowPassFilter(accelerationSignalX.value.inMetersPerSecondPerSecond()),
+                lowPassFilter(accelerationSignalY.value.inMetersPerSecondPerSecond()),
+                lowPassFilter(accelerationSignalZ.value.inMetersPerSecondPerSecond())
+            )
+        }
+
+    fun lowPassFilter(data: Double): Double {
+        if (abs(data) <= 0.45 || abs(data) > 12) {
+            return 0.0
+        }
+        return data
+    }
 
     override val connected
         get() = yawSignal.status.isOK
@@ -103,7 +113,10 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
             yawSignal,
             pitchSignal,
             rollSignal,
-            angularVelocitySignal
+            angularVelocitySignal,
+            accelerationSignalX,
+            accelerationSignalY,
+            accelerationSignalZ
         )
 
     override fun periodic() {
