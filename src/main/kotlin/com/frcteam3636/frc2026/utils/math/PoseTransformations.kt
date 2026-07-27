@@ -1,4 +1,4 @@
-package com.frcteam3636.frc2026.utils.autos
+package com.frcteam3636.frc2026.utils.math
 
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d

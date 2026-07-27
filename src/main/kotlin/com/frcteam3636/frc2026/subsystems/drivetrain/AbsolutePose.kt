@@ -5,7 +5,6 @@ package com.frcteam3636.frc2026.subsystems.drivetrain
 //import org.photonvision.PhotonCamera
 //import org.photonvision.PhotonPoseEstimator
 import com.frcteam3636.frc2026.robot.Robot
-import com.frcteam3636.frc2026.robot.RobotState
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.Matrix
 import edu.wpi.first.math.VecBuilder
@@ -115,16 +114,16 @@ class LimelightPoseProvider(
         NetworkTableInstance.getDefault().flush()
 
         if (isLL4) {
-            if (RobotState.beforeFirstEnable) {
+            if (Robot.beforeFirstEnable) {
                 imuModePublisher.accept(0) // seed IMU
             }
 
-            if (!RobotState.beforeFirstEnable && !wasIMUChanged) {
+            if (!Robot.beforeFirstEnable && !wasIMUChanged) {
                 imuModePublisher.accept(0.toLong()) // use robot gyro to seed IMU
                 wasIMUChanged = true
             }
 
-            if (Robot.isDisabled && !isThrottled && !RobotState.beforeFirstEnable) {
+            if (Robot.isDisabled && !isThrottled && Robot.beforeFirstEnable) {
                 throttlePublisher.accept(100.toLong())
                 isThrottled = true
             } else if (Robot.isEnabled && isThrottled) {
@@ -162,7 +161,7 @@ class LimelightPoseProvider(
 
         // Megatag 2
         for (rawSample in megatag2Subscriber.readQueue()) {
-            if (rawSample.value.size == 0 || RobotState.beforeFirstEnable || !gyroConnected) continue
+            if (rawSample.value.size == 0 || Robot.beforeFirstEnable || !gyroConnected) continue
 
             val measurement = LimelightMeasurement()
             val highSpeed = abs(gyroVelocity.inDegreesPerSecond()) > 360.0

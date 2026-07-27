@@ -6,7 +6,6 @@ import com.frcteam3636.frc2026.CTREDeviceId
 import com.frcteam3636.frc2026.robot.Robot
 import com.frcteam3636.frc2026.robot.Robot.Model
 import com.frcteam3636.frc2026.robot.Robot.odometryLock
-import com.frcteam3636.frc2026.robot.RobotState
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.BRAKE_POSITION
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.DRIVE_BASE_RADIUS
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.FREE_SPEED
@@ -15,8 +14,7 @@ import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.MODULE
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.ROTATION_SENSITIVITY
 import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain.Constants.TRANSLATION_SENSITIVITY
 import com.frcteam3636.frc2026.utils.autos.APTargetWithTolerance
-import com.frcteam3636.frc2026.utils.autos.FIELD_HEIGHT_METERS
-import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
+import com.frcteam3636.frc2026.utils.math.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.autos.flipTargetHorizontal
 import com.frcteam3636.frc2026.utils.autos.flipTargetVertical
 import com.frcteam3636.frc2026.utils.fieldRelativeTranslation2d
@@ -314,7 +312,7 @@ object Drivetrain : Subsystem {
                     } else if (abs(
                                     measurement.pose.rotation.degrees -
                                             estimatedPose.rotation.degrees
-                            ) > 5 && !RobotState.beforeFirstEnable
+                            ) > 5 && !Robot.beforeFirstEnable
                     ) {
                         rejectedPoses.add(measurement.pose)
                         continue

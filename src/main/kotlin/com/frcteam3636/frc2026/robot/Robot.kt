@@ -56,7 +56,6 @@ import kotlin.jvm.optionals.getOrNull
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-
     private var autoCommand: Command? = null
     private var lastSelectedAuto = AutoModes.None
 
@@ -65,6 +64,8 @@ object Robot : LoggedRobot() {
 
     val statusSignals = StatusSignalCollection()
     val odometryLock = ReentrantLock()
+
+    var beforeFirstEnable = true
 
     /** A model of robot, depending on where we're deployed to. */
     enum class Model {
@@ -221,8 +222,8 @@ object Robot : LoggedRobot() {
 
     override fun autonomousInit() {
 //        val selectedAuto = Dashboard.autoChooser.selected
-        if (!RobotState.beforeFirstEnable)
-            RobotState.beforeFirstEnable = false
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
         CommandScheduler.getInstance().schedule(autoCommand)
     }
 
@@ -232,8 +233,8 @@ object Robot : LoggedRobot() {
     }
 
     override fun teleopInit() {
-        if (!RobotState.beforeFirstEnable)
-            RobotState.beforeFirstEnable = false
+        if (beforeFirstEnable)
+            beforeFirstEnable = false
     }
 
     override fun testInit() {

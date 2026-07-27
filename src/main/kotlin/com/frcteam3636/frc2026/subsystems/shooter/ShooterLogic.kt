@@ -9,7 +9,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
+import com.frcteam3636.frc2026.utils.math.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.geometry.*
 import edu.wpi.first.units.measure.Angle
