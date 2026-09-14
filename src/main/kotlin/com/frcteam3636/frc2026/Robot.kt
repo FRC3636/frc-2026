@@ -192,28 +192,28 @@ object Robot : LoggedRobot() {
 
     /** Configure which commands each joystick button triggers. */
     private fun configureBindings() {
-//        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
-        Drivetrain.defaultCommand = Drivetrain.driveWithController(controller)
+        Drivetrain.defaultCommand = Drivetrain.driveWithJoysticks(joystickLeft.hid, joystickRight.hid)
+//        Drivetrain.defaultCommand = Drivetrain.driveWithController(controller)
         // (The button with the yellow tape on it)
         joystickLeft.button(8).onTrue(Commands.runOnce({
             println("Zeroing gyro.")
             Drivetrain.zeroGyro()
         }).ignoringDisable(true))
+//
+//        controller.b().onTrue(Commands.runOnce( {
+//            println("Zeroing gyro.")
+//            Drivetrain.zeroGyro()
+//        }))
+//
+//        controller.rightBumper().whileTrue(
+//            Drivetrain.driveToLargestFuelCluster()
+//        )
 
-        controller.b().onTrue(Commands.runOnce( {
-            println("Zeroing gyro.")
-            Drivetrain.zeroGyro()
-        }))
-
-        controller.rightBumper().whileTrue(
-            Drivetrain.driveToLargestFuelCluster()
-        )
-
-        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
+//        joystickRight.button(1).whileTrue(Drivetrain.alignWithAutopilot(Drivetrain.Constants.ALIGN_TARGET))
 
         // Angles robot for shooting, just in case the
         // turret stops working.
-        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
+//        joystickRight.button(12).whileTrue(Drivetrain.alignToHub())
 
 
         if (Preferences.getBoolean("DeveloperMode", false)) {

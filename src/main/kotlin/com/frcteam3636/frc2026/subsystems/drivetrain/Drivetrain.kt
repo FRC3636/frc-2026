@@ -274,13 +274,13 @@ object Drivetrain : Subsystem {
 //                odometryLock.unlock()
 //            }
 //        } else {
-//            io.updateInputs(inputs)
-//            Logger.processInputs("Drivetrain", inputs)
-//            rawGyroRotation = inputs.gyroRotation
-//            poseEstimator.update(
-//                rawGyroRotation,
-//                inputs.measuredPositions.toTypedArray()
-//            )
+        io.updateInputs(inputs)
+        Logger.processInputs("Drivetrain", inputs)
+        rawGyroRotation = inputs.gyroRotation
+        poseEstimator.update(
+            rawGyroRotation,
+            inputs.measuredPositions.toTypedArray()
+        )
 //        }
 
         Logger.recordOutput("Drivetrain/Raw Gyro Rotation", rawGyroRotation)

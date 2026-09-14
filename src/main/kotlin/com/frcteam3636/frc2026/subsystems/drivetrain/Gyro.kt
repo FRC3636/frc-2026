@@ -5,6 +5,7 @@ import com.ctre.phoenix6.hardware.Pigeon2
 import com.frcteam3636.frc2026.Robot
 import com.frcteam3636.frc2026.utils.math.degrees
 import com.frcteam3636.frc2026.utils.math.degreesPerSecond
+import com.frcteam3636.frc2026.utils.math.inDegrees
 import com.frcteam3636.frc2026.utils.math.radiansPerSecond
 import com.frcteam3636.frc2026.utils.swerve.PerCorner
 import edu.wpi.first.math.geometry.Rotation2d
@@ -37,7 +38,6 @@ interface Gyro {
 
     fun periodic() {}
 }
-
 
 class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
     private val yawSignal = pigeon.yaw
@@ -88,10 +88,48 @@ class GyroPigeon(private val pigeon: Pigeon2) : Gyro {
         )
 
     override fun periodic() {
-        odometryYawTimestamps = yawTimestampQueue.toDoubleArray()
-        odometryYawPositions = yawPositionQueue.toDoubleArray()
+//        odometryYawTimestamps = yawTimestampQueue.toDoubleArray()
+//        odometryYawPositions = yawPositionQueue.toDoubleArray()
         yawTimestampQueue.clear()
         yawPositionQueue.clear()
+    }
+}
+
+class GyroPigeonOld(private val pigeon: Pigeon2) : Gyro {
+    private val yawSignal              = pigeon.yaw
+    private val pitchSignal            = pigeon.pitch
+    private val rollSignal             = pigeon.roll
+    private val angularVelocitySignal  = pigeon.angularVelocityZWorld
+
+    init {
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            yawSignal,
+            pitchSignal,
+            rollSignal,
+            angularVelocitySignal,
+        )
+        pigeon.optimizeBusUtilization()
+    }
+
+    override var rotation: Rotation2d
+        get() = Rotation2d.fromDegrees(yawSignal.valueAsDouble)
+        set(goal) { pigeon.setYaw(goal.measure) }
+
+    override val velocity: AngularVelocity
+        get() = angularVelocitySignal.value
+
+    override val connected: Boolean
+        get() = yawSignal.status.isOK
+
+    override val signals: Array<BaseStatusSignal>
+        get() = arrayOf(yawSignal, pitchSignal, rollSignal, angularVelocitySignal)
+
+    override var odometryYawPositions: DoubleArray = doubleArrayOf()
+    override var odometryYawTimestamps: DoubleArray = doubleArrayOf()
+
+    override fun periodic() {
+        BaseStatusSignal.refreshAll(*signals)
     }
 }
 
