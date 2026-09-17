@@ -43,10 +43,15 @@ abstract class DrivetrainIO {
 
 
     open fun updateInputs(inputs: DrivetrainInputs) {
-        gyro.periodic()
+//        gyro.periodic()
+        // causes error, not sure why, should be fixed
+        // all that's in here is updating some timestamp thing
+        // -- Carson
         modules.forEach(SwerveModule::periodic)
 
         inputs.gyroRotation = gyro.rotation
+        Logger.recordOutput("Gyro rotation", gyro.rotation)
+        System.out.println(gyro.rotation.degrees)
         inputs.gyroVelocity = gyro.velocity
         inputs.gyroConnected = gyro.connected
         inputs.measuredStates = modules.map { it.state }

@@ -243,9 +243,8 @@ object Drivetrain : Subsystem {
 
     override fun periodic() {
 //        odometryLock.lock()
-//        io.updateInputs(inputs)
-//        Logger.processInputs("Drivetrain", inputs)
-        Logger.recordOutput("Drivetrain/happiness", true)
+        io.updateInputs(inputs)
+        Logger.processInputs("Drivetrain", inputs)
 //        Logger.recordOutput("photonvision/color camera/fuel transform", fuelTransforms[0])
 //        if (Robot.model != Robot.Model.SIMULATION) {
 //            try {
@@ -436,7 +435,7 @@ object Drivetrain : Subsystem {
                 calculateInputCurve(translationInput.x) * FREE_SPEED.inMetersPerSecond() * TRANSLATION_SENSITIVITY,
                 calculateInputCurve(translationInput.y) * FREE_SPEED.inMetersPerSecond() * TRANSLATION_SENSITIVITY,
                 rotationInput.y * TAU * ROTATION_SENSITIVITY,
-                estimatedPose.rotation
+                inputs.gyroRotation
             )
         }
     }
