@@ -9,6 +9,7 @@ import com.frcteam3636.frc2026.subsystems.shooter.flywheel.Flywheel
 import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Constants.SHOOTER_OFFSET
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
+import com.frcteam3636.frc2026.utils.autos.FIELD_HEIGHT_METERS
 import com.frcteam3636.frc2026.utils.autos.FIELD_WIDTH_METERS
 import com.frcteam3636.frc2026.utils.math.*
 import edu.wpi.first.math.geometry.*
@@ -177,44 +178,41 @@ val hubTranslation
         }
     }
 
-val targetPassTranslation: Translation2d
-    get() {
-        val alliance = DriverStation.getAlliance().getOrNull()
-        val pose = Drivetrain.estimatedPose.translation
-
-        if (alliance == Alliance.Blue){
-            if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopRedAllianceZone)) {
-                return Translation2d(4.meters, (FIELD_WIDTH_METERS / 4 ).meters)
-            }
-            else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomRedAllianceZone)){
-                return Translation2d(4.meters, (FIELD_WIDTH_METERS * 3/4).meters)
-            }
-            else {
-                return hubTranslation.toTranslation2d()
-            }
-        }
-        else {
-            if (pose.inZone(Zones.TopNeutralZone) || pose.inZone(Zones.TopBlueAllianceZone)) {
-                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS / 4 ).meters)
-            }
-            else if (pose.inZone(Zones.BottomNeutralZone) || pose.inZone(Zones.BottomBlueAllianceZone)){
-                return Translation2d(12.6.meters, (FIELD_WIDTH_METERS * 3/4).meters)
-            }
-            else {
-                return hubTranslation.toTranslation2d()
-            }
-        }
+val targetPassTranslation: Translation2d get() {
+    val alliance = DriverStation.getAlliance().getOrNull()
+    val pose = Drivetrain.estimatedPose.translation
+    val topOpposingZone = when {
+        alliance == Alliance.Blue -> Zones.TopRedAllianceZone
+        else -> Zones.TopBlueAllianceZone
+    }
+    val bottomOpposingZone = when {
+        alliance == Alliance.Blue -> Zones.BottomRedAllianceZone
+        else -> Zones.BottomBlueAllianceZone
     }
 
-enum class Zones(val startX : Distance, val endX : Distance, val startY: Distance, val endY : Distance) {
-    TopBlueAllianceZone(0.meters, 4.03.meters, 0.meters, 4.meters),
-    BottomBlueAllianceZone(0.meters, 4.03.meters, 4.meters, 8.meters),
-    TopRedAllianceZone(11.22.meters, 16.20.meters, 0.meters, 4.meters),
-    BottomRedAllianceZone(11.22.meters, 16.20.meters, 4.meters, 8.meters),
-    TopNeutralZone(4.03.meters, 12.22.meters, 0.meters, 4.meters),
-    BottomNeutralZone(4.03.meters, 12.22.meters, 4.meters, 8.meters),
+    return when {
+        pose.inAnyZone(Zones.TopNeutralZone, topOpposingZone) ->
+            Translation2d(hubTranslation.measureX, 2.meters)
+
+        pose.inAnyZone(Zones.BottomNeutralZone, bottomOpposingZone) ->
+            Translation2d(hubTranslation.measureX, FIELD_WIDTH_METERS.meters - 2.meters)
+
+        else -> hubTranslation.toTranslation2d()
+    }
+}
+
+enum class Zones(val startX: Distance, val endX: Distance, val startY: Distance, val endY: Distance) {
+    TopBlueAllianceZone(0.meters, 4.03.meters, 0.meters, 4.026.meters),
+    BottomBlueAllianceZone(0.meters, 4.03.meters, 4.026.meters, 8.052.meters),
+    TopRedAllianceZone(12.51.meters, 16.54.meters, 0.meters, 4.026.meters),
+    BottomRedAllianceZone(12.51.meters, 16.54.meters, 4.026.meters, 8.052.meters),
+    TopNeutralZone(4.03.meters, 12.51.meters, 0.meters, 4.026.meters),
+    BottomNeutralZone(4.03.meters, 12.51.meters, 4.026.meters, 8.052.meters),
 }
 
 fun Translation2d.inZone(target: Zones): Boolean {
     return this.x.meters in target.startX..<target.endX && this.y.meters in target.startY..<target.endY
 }
+
+private fun Translation2d.inAnyZone(vararg zones: Zones): Boolean =
+    zones.any { inZone(it) }
