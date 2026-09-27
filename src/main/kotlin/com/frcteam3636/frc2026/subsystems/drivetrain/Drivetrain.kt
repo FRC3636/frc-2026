@@ -563,22 +563,17 @@ object Drivetrain : Subsystem {
     }
 
     val autoPilotConstraints: APConstraints =
-            APConstraints().withVelocity(2.0).withAcceleration(15.0).withJerk(5.0)
+            APConstraints().withVelocity(7.0).withAcceleration(10.0).withJerk(5.0)
 
     val autoPilotProfile: APProfile =
             APProfile(autoPilotConstraints)
                     .withErrorXY(30.centimeters)
-                    .withErrorTheta(2.degrees)
-                    .withBeelineRadius(80.centimeters)
+                    .withErrorTheta(10.degrees)
+                    .withBeelineRadius(20.centimeters)
 
     var autoPilot = Autopilot(autoPilotProfile)
 
-    val autoPilotRotationPID =
-            if (Robot.model == Model.COMPETITION) {
-                PIDController(PIDGains(3.0, 0.0, 0.05)).apply { enableContinuousInput(0.0, TAU) }
-            } else {
-                PIDController(PIDGains(4.0, 0.0, 0.15)).apply { enableContinuousInput(0.0, TAU) }
-            }
+    val autoPilotRotationPID = PIDController(PIDGains(2.0, 0.0, 0.05)).apply { enableContinuousInput(0.0, TAU) }
 
     private var rawGyroRotation = Rotation2d.kZero
 

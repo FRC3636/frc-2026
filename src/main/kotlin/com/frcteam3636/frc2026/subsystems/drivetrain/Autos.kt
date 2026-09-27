@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Commands.runOnce
+import kotlin.math.PI
 
 interface Auto {
     fun getPath(flipH: Boolean, flipV: Boolean): Command
@@ -41,7 +42,7 @@ object Lebron : Auto {
             }),
             Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
             Commands.race(
-                Intake.intakeSequence(),
+              //  Intake.intakeSequence(),
                 Commands.sequence(
                     Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
@@ -54,11 +55,16 @@ object Lebron : Auto {
                     Drivetrain.alignAndFlip(Targets.Target10.target, flipH, flipV),
                 )
             ),
-            shoot().withTimeout(5.seconds),
+            setShooterTarget(Target.PASS_NO_SOTM),
+            Commands.parallel(
+                Commands.run({Drivetrain.stop()}),
+                shoot(),
+            ).withTimeout(3.seconds),
+            setShooterTarget(Target.STATIONARY_TURRET),
             Drivetrain.alignAndFlip(Targets.Target9.target, flipH, flipV),
             Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
             Commands.race(
-                Intake.intakeSequence(),
+               // Intake.intakeSequence(),
                 Commands.sequence(
                     Drivetrain.alignAndFlip(Targets.Target8.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
@@ -69,11 +75,11 @@ object Lebron : Auto {
 
     enum class Targets(val target: APTargetWithTolerance) {
         Start(APTargetWithTolerance(Pose2d(4.364.meters, 0.500.meters, Rotation2d(3.142.radians)))),
-        Target3(APTargetWithTolerance(Pose2d(7.621.meters, 1.425.meters, Rotation2d(-2.015.radians))).withVelocity(1.500.metersPerSecond)),
-        Target4(APTargetWithTolerance(Pose2d(8.086.meters, 2.653.meters, Rotation2d(-1.571.radians))).withVelocity(2.000.metersPerSecond)),
-        Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(1.500.metersPerSecond)),
-        Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(1.500.metersPerSecond)),
-        Target7(APTargetWithTolerance(Pose2d(6.000.meters, 2.800.meters, Rotation2d(1.571.radians))).withVelocity(1.500.metersPerSecond)),
+        Target3(APTargetWithTolerance(Pose2d(7.621.meters, 1.425.meters, Rotation2d(-2.015.radians))).withVelocity(1.00.metersPerSecond)),
+        Target4(APTargetWithTolerance(Pose2d(8.086.meters, 2.653.meters, Rotation2d(-1.571.radians))).withVelocity(1.000.metersPerSecond)),
+        Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(0.5.metersPerSecond)),
+        Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians)))),
+        Target7(APTargetWithTolerance(Pose2d(6.000.meters, 2.800.meters, Rotation2d(1.571.radians)))),
         Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.500.meters, Rotation2d(-3.142.radians)))),
         Target9(APTargetWithTolerance(Pose2d(3.000.meters, 0.500.meters, Rotation2d(3.142.radians)))),
         Target10(APTargetWithTolerance(Pose2d(2.500.meters, 1.700.meters, Rotation2d(0.785.radians))))

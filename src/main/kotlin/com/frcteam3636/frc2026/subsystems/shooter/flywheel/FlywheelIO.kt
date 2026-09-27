@@ -54,9 +54,6 @@ class FlywheelIOReal : FlywheelIO {
         })
     }
 
-    private val ffController = SimpleMotorFeedforward(FEED_FORWARD_GAINS)
-    private val pidController = PIDController(PID_GAINS)
-
     private var targetVelocity: AngularVelocity = 0.0.rpm
     // mitigate noise in flywheel data
     private val velocityFilter = MedianFilter(10)
@@ -79,7 +76,7 @@ class FlywheelIOReal : FlywheelIO {
 
     override fun setVelocity(velocity: AngularVelocity){
         targetVelocity = velocity.inRPM().coerceIn(0.0..6000.0).rpm
-        if (motor.velocity.value > velocity * .9) {
+        if (motor.velocity.value > velocity * .96) {
             motor.setControl(VelocityVoltage(targetVelocity))
         } else {
             motor.setVoltage(12.0)
@@ -89,8 +86,8 @@ class FlywheelIOReal : FlywheelIO {
     companion object Constants{
         // (0.7,0.0, 0.0072)
         //(0.24428, 0.1294696826973281, 0.03)
-        val PID_GAINS = PIDGains(1.3,0.0, 0.0072)
-        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.1294696826973281, 0.03)
+        val PID_GAINS = PIDGains(1.0,0.0,0.0)
+        val FEED_FORWARD_GAINS = MotorFFGains(0.24428, 0.136, 0.03)
     }
 }
 
