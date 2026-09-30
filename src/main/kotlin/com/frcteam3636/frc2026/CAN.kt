@@ -5,6 +5,20 @@ import com.ctre.phoenix6.hardware.CANcoder
 import com.ctre.phoenix6.hardware.Pigeon2
 import com.ctre.phoenix6.hardware.TalonFX
 
+/*
+ * 4. CAN
+ *
+ * CAN is an acronym that stands for Controller Area Network, although we rarely use the acronym in its non-abbreviated
+ * form. Most things are on the canivoreBus, but sometimes things can be on the rioCANBus (for which there is a variable
+ * in the Robot class). Every component on a CAN bus has a numerical ID, which is set with another software which is
+ * used for configuring many parts of the robot. The enum CTREDeviceID groups the ID and bus and gives them a human-
+ * readable name.
+ *
+ * In the Subsystems, we will use this enum. Now that you've learned about it, we can go on to see how to actually build
+ * a Subsystem! Not all the subsystems are fully documented in this tutorial, so make sure to go to the Intake, which is
+ * in the subsystems/intake folder. Make sure not to go to IntakeIO first!
+ */
+
 private val canivoreBus = CANBus("*")
 
 enum class CTREDeviceId(val num: Int, val bus: CANBus) {

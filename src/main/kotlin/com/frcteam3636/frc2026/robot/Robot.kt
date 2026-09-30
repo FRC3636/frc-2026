@@ -44,7 +44,18 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.jvm.optionals.getOrNull
 
+/*
+ * 3. Robot
+ *
+ * Welcome to the Robot class! Here, we can see that Robot inherits a
+ * LoggedRobot class. LoggedRobot is not a part of WPILib, but rather part of
+ * the larger AdvantageKit system that we use for logging.
+ *
+ * You can ignore the comment below.
+ */
+
 /**
+ *
  * The VM is configured to automatically run this object (which basically functions as a singleton
  * class), and to call the functions corresponding to each mode, as described in the TimedRobot
  * documentation. This is written as an object rather than a class since there should only ever be a
@@ -56,17 +67,33 @@ import kotlin.jvm.optionals.getOrNull
  * renaming the object or package, it will get changed everywhere.)
  */
 object Robot : LoggedRobot() {
-
+    /** The current autonomous command, if one is running, otherwise null. **/
     private var autoCommand: Command? = null
+    /** Used by the auto selector. If the last selected auto is different from
+     * the current selected auto, the auto will be changed.
+     **/
     private var lastSelectedAuto = AutoModes.None
+
+    /*
+     * We'll learn more about how CAN buses work in the future.
+     */
 
     private val rioCANBus = CANBus("rio")
     private val canivore = CANBus("*")
 
+    /*
+     * Same for these.
+     */
+
     val statusSignals = StatusSignalCollection()
     val odometryLock = ReentrantLock()
 
-    /** A model of robot, depending on where we're deployed to. */
+    /**
+     * A model of robot, depending on where we're deployed to.
+     * Simulation is rairly used, it's for when we are testing the robot in a fully virtual environment.
+     * Competition is the most common, it's used whenever the robot is running physically. It doesn't have to be a
+     * real competition for the robot to be in competition mode.
+     **/
     enum class Model {
         SIMULATION, COMPETITION
     }
@@ -81,6 +108,9 @@ object Robot : LoggedRobot() {
         }
     }
 
+    /**
+     * This function runs when the robot starts up, or after code is pushed. It does not run when the robot is enabled.
+     */
     override fun robotInit() {
         // Report the use of the Kotlin Language for "FRC Usage Report" statistics
         HAL.report(
@@ -116,6 +146,9 @@ object Robot : LoggedRobot() {
         Threads.setCurrentThreadPriority(true, 1)
     }
 
+    /*
+     * No need to understand how exactly this is working. It's just setting up the logging system.
+     */
     /** Start logging or pull replay logs from a file */
     private fun configureAdvantageKit() {
         Logger.recordMetadata("Git SHA", GIT_SHA)
@@ -162,7 +195,10 @@ object Robot : LoggedRobot() {
         Logger.start() // Start logging! No more data receivers, replay sources, or metadata values may be added.
     }
 
-    /** Start robot subsystems so that their periodic tasks are run */
+    /**
+     * Start robot subsystems so that their periodic tasks are run. If a subsystem isn't registered here, it won't be
+     * setup properly, and probably won't work. So if a subsystem's periodic function isn't running, you should first
+     * check here! */
     private fun configureSubsystems() {
         Drivetrain.register()
         Feeder.register()
@@ -178,6 +214,11 @@ object Robot : LoggedRobot() {
     /** Expose commands for autonomous routines to use and display an auto picker in Shuffleboard. */
     private fun configureAutos() {}
 
+    /**
+     * Runs every ~20ms when the robot is disabled. All that is done in this function is the logic for selecting an
+     * auto. When a new auto is added, this is one of the places you have to add some code. A comment in this function
+     * shows exactly how to do that.
+     */
     override fun disabledPeriodic() {
         val selectedAuto = Dashboard.autoChooser.selected
         val alliance = DriverStation.getAlliance().getOrNull()
@@ -194,6 +235,7 @@ object Robot : LoggedRobot() {
                 AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = false)
                 AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Right))
                 AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Left))
+                //        ^^ name of auto ^^     always the same ^^    if left or right specific ^^
             }
         }
     }
@@ -210,6 +252,10 @@ object Robot : LoggedRobot() {
         Diagnostics.reportDSPeripheral(controller.hid, isController = true)
     }
 
+    /**
+     * Runs every ~20ms whenever the Robot is on (even if it's disabled). No code that could possibly move the robot
+     * should ever go in here!
+     */
     override fun robotPeriodic() {
         statusSignals.refreshAll()
 
@@ -219,6 +265,9 @@ object Robot : LoggedRobot() {
         CommandScheduler.getInstance().run()
     }
 
+    /**
+     * Runs once when the autonomous is started.
+     */
     override fun autonomousInit() {
 //        val selectedAuto = Dashboard.autoChooser.selected
         if (!RobotState.beforeFirstEnable)
@@ -231,6 +280,9 @@ object Robot : LoggedRobot() {
         Drivetrain.stop()
     }
 
+    /**
+     * Runs once when the teleoperated phase is started (this is the normal way to enable the robot).
+     */
     override fun teleopInit() {
         if (!RobotState.beforeFirstEnable)
             RobotState.beforeFirstEnable = false
@@ -254,3 +306,9 @@ object Robot : LoggedRobot() {
 //        Intake.periodic()
     }
 }
+
+/*
+ * That's the Robot! It's a decent amount of code, but in itself doesn't do that much. Before we can see how exactly to
+ * build a subsystem, let's look at how subsystems communicate with the physical motors on the robot. All of that is
+ * specified in the CAN.kt file (not the one in the utils folder!).
+ */
