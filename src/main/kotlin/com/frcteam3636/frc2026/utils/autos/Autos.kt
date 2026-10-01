@@ -16,7 +16,7 @@ import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
 
 class APTargetWithTolerance(pose: Pose2d) : APTarget(pose) {
-    var tolerance: Distance = 15.centimeters
+    var tolerance: Distance = 25.centimeters
 
     override fun clone(): APTargetWithTolerance {
         val target = APTargetWithTolerance(m_reference)

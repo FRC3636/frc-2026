@@ -36,18 +36,19 @@ fun configureBindings() {
         Intake.intakeSequence()
     )
 
-    joystickLeft.button(2).whileTrue(
-        Intake.manipulateSequence()
-    )
+//    joystickLeft.button(2).whileTrue(
+//        Intake.manipulateSequence()
+//    )
 
-    joystickLeft.button(3).onTrue(
-        Intake.setPivotVoltage(0.volts)
-    )
+//    joystickLeft.button(3).onTrue(
+//        Intake.setPivotVoltage(0.volts)
+//    )
 
-    joystickLeft.povUp().whileTrue(
+    joystickLeft.button(3).whileTrue(
         Commands.parallel(
             Feeder.outtake(),
-            Indexer.outdex()
+            Indexer.outdex(),
+            Intake.outtake()
         )
     )
 
@@ -91,7 +92,7 @@ fun configureBindings() {
                 println("Pre-match zeroing.")
                 Drivetrain.zeroGyro()
             }).ignoringDisable(true),
-            Intake.zeroPivot().ignoringDisable(true),
+//            Intake.zeroPivot().ignoringDisable(true),
             Turret.zeroTurretEncoder().ignoringDisable(true),
             Hood.zeroEncoder().ignoringDisable(true),
         )

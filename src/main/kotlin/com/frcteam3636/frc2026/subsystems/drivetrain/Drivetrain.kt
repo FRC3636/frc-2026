@@ -522,7 +522,7 @@ object Drivetrain : Subsystem {
     }
 
     private fun calculateInputCurve(input: Double): Double {
-        val exponent = 1.7
+        val exponent = 2.5
 
         return input.absoluteValue.pow(exponent).withSign(input)
     }
@@ -761,7 +761,7 @@ object Drivetrain : Subsystem {
         val BUMPER_WIDTH = 30.inches
         val BUMPER_LENGTH = 30.inches
 
-        const val JOYSTICK_DEADBAND = 0.075
+        const val JOYSTICK_DEADBAND = 0.25
 
         val FRONT_LEFT_CONSTANTS = TunerConstants.FrontLeft!!
         val FRONT_RIGHT_CONSTANTS = TunerConstants.FrontRight!!

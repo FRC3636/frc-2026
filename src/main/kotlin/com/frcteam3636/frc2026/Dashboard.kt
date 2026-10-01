@@ -28,7 +28,7 @@ object Dashboard {
 
 enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
     None("None"),
-    Climb("Climb"),
+    CenterStartDepotLeftShoot("CenterStartDepotLeftShoot"),
     Lebron("Lebron"),
     LebronLeft("LebronLeft"),
 }

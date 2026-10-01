@@ -14,6 +14,7 @@ import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
 import com.frcteam3636.frc2026.subsystems.climber.Climber
+import com.frcteam3636.frc2026.subsystems.drivetrain.CenterStartDepotLeftShoot
 import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
 import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
 import com.frcteam3636.version.BUILD_DATE
@@ -191,7 +192,7 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
-                AutoModes.Climb -> Climb.getPath(flipH = flipH, flipV = false)
+                AutoModes.CenterStartDepotLeftShoot -> CenterStartDepotLeftShoot.getPath(flipH = flipH, flipV = false)
                 AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Right))
                 AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Left))
             }

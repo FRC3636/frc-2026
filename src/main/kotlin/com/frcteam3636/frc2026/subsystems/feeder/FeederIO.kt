@@ -34,16 +34,16 @@ class FeederIOReal : FeederIO {
     private val feederMotor = TalonFX(CTREDeviceId.FeederMotor)
     private val feederMotorConfig = TalonFXConfiguration()
 
-    private val canRange = CANrange(CTREDeviceId.CanRange.num).apply {
-        configurator.apply(
-            CANrangeConfiguration().apply {
-                ProximityParams.ProximityThreshold = 0.1
-                ProximityParams.ProximityHysteresis = 0.01
-                ToFParams.UpdateMode = UpdateModeValue.ShortRangeUserFreq
-                ToFParams.UpdateFrequency = 50.0
-            }
-        )
-    }
+//    private val canRange = CANrange(CTREDeviceId.CanRange.num).apply {
+//        configurator.apply(
+//            CANrangeConfiguration().apply {
+//                ProximityParams.ProximityThreshold = 0.1
+//                ProximityParams.ProximityHysteresis = 0.01
+//                ToFParams.UpdateMode = UpdateModeValue.ShortRangeUserFreq
+//                ToFParams.UpdateFrequency = 50.0
+//            }
+//        )
+//    }
 
     init {
         feederMotorConfig.apply {
@@ -72,7 +72,7 @@ class FeederIOReal : FeederIO {
     override fun updateInputs(inputs: FeederInputs) {
         inputs.feederVelocity = feederMotor.velocity.value
         inputs.feederCurrent = feederMotor.supplyCurrent.value
-        inputs.ballDetected = canRange.isDetected.value
+//        inputs.ballDetected = canRange.isDetected.value
     }
 }
 

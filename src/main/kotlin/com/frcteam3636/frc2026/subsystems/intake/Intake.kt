@@ -56,10 +56,10 @@ object Intake : Subsystem {
 
     fun intakeSequence(): Command =
         Commands.parallel(
-            Commands.runEnd(
-                { io.setPivotAngle(Position.Deployed.angle) },
-                { io.setPivotAngle(Position.Stowed.angle) }
-            ),
+//            Commands.runEnd(
+//                { io.setPivotAngle(Position.Deployed.angle) },
+//                { io.setPivotAngle(Position.Stowed.angle) }
+//            ),
             intake(),
             Commands.parallel(
                 Indexer.slowIndex(),
@@ -78,7 +78,7 @@ object Intake : Subsystem {
 
     fun intake(): Command =
             runEnd(
-                { io.setWheelMotorVoltage(10.0.volts) },
+                { io.setWheelMotorVoltage(4.0.volts) },
                 { io.setWheelMotorVoltage(0.volts) }
             )
 
