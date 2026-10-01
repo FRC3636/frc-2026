@@ -42,6 +42,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Joystick
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.Subsystem
@@ -75,6 +76,8 @@ object Drivetrain : Subsystem {
     private var wheelRadiusModuleStates = DoubleArray(4)
     private var wheelRadiusLastAngle = Rotation2d.kZero
     private var wheelRadiusGyroDelta = 0.0
+
+    var field = Field2d()
 
     @Suppress("unused")
     fun calculateWheelRadius(): Command =
@@ -363,6 +366,8 @@ object Drivetrain : Subsystem {
                         .map { it.pose }
                         .toTypedArray()
         )
+
+        field.setRobotPose(estimatedPose)
     }
 
     /** The desired speeds and angles of the swerve modules. */

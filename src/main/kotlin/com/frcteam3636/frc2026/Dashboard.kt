@@ -1,7 +1,10 @@
 package com.frcteam3636.frc2026
 
+import com.frcteam3636.frc2026.subsystems.drivetrain.Drivetrain
+import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Preferences
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 
@@ -23,6 +26,7 @@ object Dashboard {
 
     fun initialize() {
         SmartDashboard.putData(autoChooser)
+        SmartDashboard.putData(Drivetrain.field)
     }
 }
 
