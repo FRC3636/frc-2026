@@ -13,7 +13,6 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
 import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
 import com.frcteam3636.version.BUILD_DATE
@@ -217,6 +216,8 @@ object Robot : LoggedRobot() {
         Diagnostics.send()
 
         CommandScheduler.getInstance().run()
+
+        Dashboard.periodic()
     }
 
     override fun autonomousInit() {
