@@ -68,7 +68,7 @@ class IntakeIOReal : IntakeIO {
         val GRAVITY_COMPENSATION_GAIN = 1.0
 
         val PIVOT_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
-        val WHEEL_MOTOR_DIRECTION = InvertedValue.CounterClockwise_Positive
+        val WHEEL_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
     }
 
     private val intakePivotMotor = TalonFX(CTREDeviceId.IntakePivotMotor).apply {
@@ -88,7 +88,7 @@ class IntakeIOReal : IntakeIO {
                 RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
             }
             MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Brake
+                NeutralMode = NeutralModeValue.Coast
                 Inverted = PIVOT_MOTOR_DIRECTION
             }
         })

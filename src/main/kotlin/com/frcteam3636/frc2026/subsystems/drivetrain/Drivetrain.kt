@@ -761,7 +761,7 @@ object Drivetrain : Subsystem {
         val BUMPER_WIDTH = 30.inches
         val BUMPER_LENGTH = 30.inches
 
-        const val JOYSTICK_DEADBAND = 0.25
+        const val JOYSTICK_DEADBAND = 0.3
 
         val FRONT_LEFT_CONSTANTS = TunerConstants.FrontLeft!!
         val FRONT_RIGHT_CONSTANTS = TunerConstants.FrontRight!!
