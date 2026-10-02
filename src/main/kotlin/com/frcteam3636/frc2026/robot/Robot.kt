@@ -58,7 +58,7 @@ import kotlin.jvm.optionals.getOrNull
  */
 object Robot : LoggedRobot() {
 
-    private var autoCommand: Command? = null
+    private var autoCommand: Command? = Commands.none()
     private var lastSelectedAuto = AutoModes.None
 
     private val rioCANBus = CANBus("rio")
@@ -180,7 +180,7 @@ object Robot : LoggedRobot() {
     private fun configureAutos() {}
 
     override fun disabledPeriodic() {
-        val selectedAuto = Dashboard.autoChooser.selected
+        val selectedAuto = Dashboard.autoChooser.selected ?: AutoModes.None
         val alliance = DriverStation.getAlliance().getOrNull()
         val flipH = alliance == DriverStation.Alliance.Red
         val flipToSide = { side: Drivetrain.FieldSide -> if (alliance == DriverStation.Alliance.Blue) {

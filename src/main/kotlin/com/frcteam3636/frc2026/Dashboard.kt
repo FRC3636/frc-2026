@@ -7,22 +7,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 
 object Dashboard {
     val autoChooser = SendableChooser<AutoModes>().apply {
+        setDefaultOption(AutoModes.None.autoName, AutoModes.None)
         for (autoMode in AutoModes.entries) {
-            if (autoMode == AutoModes.None)
-                setDefaultOption(autoMode.autoName, autoMode)
-            else if (Preferences.getBoolean(
-                    "developerMode",
-                    true
-                ) && autoMode.developerAuto && !DriverStation.isFMSAttached()
-            ) {
-                addOption(autoMode.autoName, autoMode)
-            } else if (!autoMode.developerAuto)
-                addOption(autoMode.autoName, autoMode)
+            if (autoMode == AutoModes.None) continue
+            if (DriverStation.isFMSAttached() && autoMode.developerAuto) continue
+            if (autoMode.developerAuto && !Preferences.getBoolean("DeveloperMode", false)) continue
+            addOption(autoMode.autoName, autoMode)
         }
     }
 
     fun initialize() {
-        SmartDashboard.putData(autoChooser)
+        SmartDashboard.putData("Auto Chooser", autoChooser)
     }
 }
 
