@@ -14,6 +14,7 @@ import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.seconds
+import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.units.measure.Time
@@ -41,7 +42,10 @@ object Lebron : Auto {
             runOnce({
                 setShooterTarget(Target.STATIONARY_TURRET)
             }),
-            Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
+            Commands.parallel(
+                Intake.setPivotVoltage(10.volts).withTimeout(0.1.seconds),
+                Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
+            ),
             Commands.race(
                 Intake.intakeSequence(),
                 Commands.sequence(
@@ -91,8 +95,11 @@ object CenterStartDepotLeftShoot : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command =
         Commands.sequence(
             resetOdom(Targets.Target1.target, flipH, flipV),
-            Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
             setShooterTarget(Target.STATIONARY_TURRET),
+            Commands.parallel(
+                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
+                Intake.setPivotVoltage(10.volts).withTimeout(0.1.seconds),
+            ),
             Commands.race(
                 Intake.intakeSequence(),
                 Commands.sequence(
