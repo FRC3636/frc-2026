@@ -13,10 +13,11 @@ import com.frcteam3636.frc2026.subsystems.shooter.hood.Hood
 import com.frcteam3636.frc2026.subsystems.indexer.Indexer
 import com.frcteam3636.frc2026.subsystems.intake.Intake
 import com.frcteam3636.frc2026.subsystems.shooter.turret.Turret
-import com.frcteam3636.frc2026.subsystems.climber.Climber
 import com.frcteam3636.frc2026.subsystems.drivetrain.CenterStartDepotLeftShoot
-import com.frcteam3636.frc2026.subsystems.drivetrain.Climb
+import com.frcteam3636.frc2026.subsystems.drivetrain.HPStationRightStart
+import com.frcteam3636.frc2026.subsystems.drivetrain.HPStationCenterStart
 import com.frcteam3636.frc2026.subsystems.drivetrain.Lebron
+import com.frcteam3636.frc2026.subsystems.drivetrain.Sad
 import com.frcteam3636.version.BUILD_DATE
 import com.frcteam3636.version.DIRTY
 import com.frcteam3636.version.GIT_BRANCH
@@ -192,8 +193,11 @@ object Robot : LoggedRobot() {
             lastSelectedAuto = selectedAuto
             autoCommand = when (selectedAuto) {
                 AutoModes.None -> Commands.none()
+                AutoModes.Sad -> Sad.getPath(flipH = flipH, flipV = false)
+                AutoModes.HPStationRightStart -> HPStationRightStart.getPath(flipH = flipH, flipV = false)
+                AutoModes.HPStationCenterStart -> HPStationCenterStart.getPath(flipH = flipH, flipV = false)
                 AutoModes.CenterStartDepotLeftShoot -> CenterStartDepotLeftShoot.getPath(flipH = flipH, flipV = false)
-                AutoModes.Lebron -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Right))
+                AutoModes.LebronRight -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Right))
                 AutoModes.LebronLeft -> Lebron.getPath(flipH = flipH, flipV = flipToSide(Drivetrain.FieldSide.Left))
             }
         }

@@ -71,28 +71,28 @@ class IntakeIOReal : IntakeIO {
         val WHEEL_MOTOR_DIRECTION = InvertedValue.Clockwise_Positive
     }
 
-    private val intakePivotMotor = TalonFX(CTREDeviceId.IntakePivotMotor).apply {
-        configurator.apply(TalonFXConfiguration().apply {
-            Slot0.apply {
-                pidGains = PID_GAINS
-            }
-            MotionMagic.apply {
-                MotionMagicCruiseVelocity = PROFILE_CRUISE_VELOCITY.inRotationsPerSecond()
-                MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
-                MotionMagicJerk = PROFILE_JERK
-            }
-            Feedback.apply {
-                FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
-                FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
-                SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
-                RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
-            }
-            MotorOutput.apply {
-                NeutralMode = NeutralModeValue.Coast
-                Inverted = PIVOT_MOTOR_DIRECTION
-            }
-        })
-    }
+//    private val intakePivotMotor = TalonFX(CTREDeviceId.IntakePivotMotor).apply {
+//        configurator.apply(TalonFXConfiguration().apply {
+//            Slot0.apply {
+//                pidGains = PID_GAINS
+//            }
+//            MotionMagic.apply {
+//                MotionMagicCruiseVelocity = PROFILE_CRUISE_VELOCITY.inRotationsPerSecond()
+//                MotionMagicAcceleration = PROFILE_ACCELERATION.inRotationsPerSecondPerSecond()
+//                MotionMagicJerk = PROFILE_JERK
+//            }
+//            Feedback.apply {
+//                FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder
+//                FeedbackRemoteSensorID = CTREDeviceId.IntakePivotEncoder.num
+//                SensorToMechanismRatio = ENCODER_TO_PIVOT_GEAR_RATIO
+//                RotorToSensorRatio = MOTOR_TO_ENCODER_GEAR_RATIO
+//            }
+//            MotorOutput.apply {
+//                NeutralMode = NeutralModeValue.Coast
+//                Inverted = PIVOT_MOTOR_DIRECTION
+//            }
+//        })
+//    }
     private val intakeMotor = TalonFX(CTREDeviceId.IntakeMotor).apply {
         configurator.apply(TalonFXConfiguration().apply { MotorOutput.Inverted = WHEEL_MOTOR_DIRECTION })
     }
@@ -119,14 +119,22 @@ class IntakeIOReal : IntakeIO {
         intakeMotor.set(percent)
     }
 
-    override fun setPivotSpeed(pivot: Double) {
-        intakePivotMotor.set(pivot)
+    override fun setPivotVoltage(voltage: Voltage) {
+        TODO("Not yet implemented")
     }
 
-    override fun setPivotVoltage(voltage: Voltage) {
-        Logger.recordOutput("Intake/Pivot Attempted Voltage", voltage)
-        intakePivotMotor.setVoltage(voltage.inVolts())
+    override fun setPivotSpeed(pivot: Double) {
+        TODO("Not yet implemented")
     }
+
+//    override fun setPivotSpeed(pivot: Double) {
+//        intakePivotMotor.set(pivot)
+//    }
+//
+//    override fun setPivotVoltage(voltage: Voltage) {
+//        Logger.recordOutput("Intake/Pivot Attempted Voltage", voltage)
+//        intakePivotMotor.setVoltage(voltage.inVolts())
+//    }
 
     override fun zeroEncoder() {
         encoder.setPosition(0.degrees)
@@ -136,15 +144,19 @@ class IntakeIOReal : IntakeIO {
         intakeMotor.setVoltage(voltage.inVolts())
     }
 
+    override fun setPivotAngle(angle: Angle) {
+        TODO("Not yet implemented")
+    }
+
     private val positionControl = MotionMagicVoltage(0.0)
 
-    override fun setPivotAngle(angle: Angle) {
-        Logger.recordOutput("Intake/Pivot Setpoint", angle)
-        intakePivotMotor.setControl(
-            positionControl.withPosition(angle)
-//                .withFeedForward(sin(encoder.position.value.inRadians()) * GRAVITY_COMPENSATION_GAIN)
-        )
-    }
+//    override fun setPivotAngle(angle: Angle) {
+//        Logger.recordOutput("Intake/Pivot Setpoint", angle)
+//        intakePivotMotor.setControl(
+//            positionControl.withPosition(angle)
+////                .withFeedForward(sin(encoder.position.value.inRadians()) * GRAVITY_COMPENSATION_GAIN)
+//        )
+//    }
 
     var setpoint = 0.degrees
 
@@ -152,11 +164,11 @@ class IntakeIOReal : IntakeIO {
         inputs.intakeMotorVelocity = intakeMotor.velocity.value
         inputs.intakeMotorCurrent = intakeMotor.supplyCurrent.value
 
-        inputs.intakePivotMotorCurrent = intakePivotMotor.supplyCurrent.value
-        inputs.intakePivotMotorVoltage = intakePivotMotor.motorVoltage.value
+//        inputs.intakePivotMotorCurrent = intakePivotMotor.supplyCurrent.value
+//        inputs.intakePivotMotorVoltage = intakePivotMotor.motorVoltage.value
         inputs.intakePivotMotorSupplyVoltage = intakeMotor.supplyVoltage.value
 //        inputs.rightPivotMotorCurrent = rightPivotMotor.supplyCurrent.value
-        inputs.pivotAngle = intakePivotMotor.position.value
+//        inputs.pivotAngle = intakePivotMotor.position.value
         inputs.pivotSetpoint = setpoint
     }
 }

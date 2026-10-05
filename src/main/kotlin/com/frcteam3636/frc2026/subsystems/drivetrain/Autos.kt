@@ -14,7 +14,6 @@ import com.frcteam3636.frc2026.utils.math.meters
 import com.frcteam3636.frc2026.utils.math.metersPerSecond
 import com.frcteam3636.frc2026.utils.math.radians
 import com.frcteam3636.frc2026.utils.math.seconds
-import com.frcteam3636.frc2026.utils.math.volts
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.units.measure.Time
@@ -30,22 +29,7 @@ interface Auto {
 object Lebron : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command =
         Commands.sequence(
-            runOnce({
-                Drivetrain.poseEstimator.resetPose(
-                    flipTarget(
-                        Targets.Start.target,
-                        flipV = flipV,
-                        flipH = flipH
-                    ).reference
-                )
-            }),
-            runOnce({
-                setShooterTarget(Target.STATIONARY_TURRET)
-            }),
-            Commands.parallel(
-                Intake.setPivotVoltage(10.volts).withTimeout(0.1.seconds),
-                Drivetrain.alignAndFlip(Targets.Start.target, flipH, flipV),
-            ),
+            resetOdom(Targets.Start.target, flipH = flipH, flipV = flipV),
             Commands.race(
                 Intake.intakeSequence(),
                 Commands.sequence(
@@ -83,7 +67,7 @@ object Lebron : Auto {
         Target5(APTargetWithTolerance(Pose2d(7.741.meters, 3.506.meters, Rotation2d(-0.785.radians))).withVelocity(0.5.metersPerSecond)),
         Target6(APTargetWithTolerance(Pose2d(6.725.meters, 3.677.meters, Rotation2d(0.000.radians))).withVelocity(0.5.metersPerSecond)),
         Target7(APTargetWithTolerance(Pose2d(6.000.meters, 2.800.meters, Rotation2d(1.571.radians))).withVelocity(0.5.metersPerSecond)),
-        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.500.meters, Rotation2d(-3.142.radians))).withVelocity(0.5.metersPerSecond)),
+        Target8(APTargetWithTolerance(Pose2d(6.000.meters, 0.600.meters, Rotation2d(-3.142.radians))).withVelocity(0.5.metersPerSecond)),
         Target9(APTargetWithTolerance(Pose2d(3.000.meters, 0.500.meters, Rotation2d(3.142.radians)))),
         Target10(APTargetWithTolerance(Pose2d(2.500.meters, 1.700.meters, Rotation2d(0.785.radians))))
     }
@@ -91,24 +75,50 @@ object Lebron : Auto {
 
 }
 
+object Sad : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command = Commands.sequence(
+        resetOdom(Targets.Target1.target, flipH, flipV),
+        Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+        setShooterTarget(Target.PASS_NO_SOTM),
+        Commands.parallel(
+            Commands.run({Drivetrain.stop()}),
+            shoot(),
+        ).withTimeout(5.seconds),
+        setShooterTarget(Target.STATIONARY_TURRET),
+    )
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Target1(APTargetWithTolerance(Pose2d(3.623.meters, 4.043.meters, Rotation2d(0.000.radians)))),
+        Target2(APTargetWithTolerance(Pose2d(1.676.meters, 4.060.meters, Rotation2d(0.000.radians))))
+    }
+}
+
 object CenterStartDepotLeftShoot : Auto {
     override fun getPath(flipH: Boolean, flipV: Boolean): Command =
         Commands.sequence(
             resetOdom(Targets.Target1.target, flipH, flipV),
             setShooterTarget(Target.STATIONARY_TURRET),
+
+            Drivetrain.alignAndFlip(Targets.FirstShoot.target, flipH, flipV),
+            setShooterTarget(Target.PASS_NO_SOTM),
             Commands.parallel(
-                Drivetrain.alignAndFlip(Targets.Target1.target, flipH, flipV),
-                Intake.setPivotVoltage(10.volts).withTimeout(0.1.seconds),
-            ),
+                Commands.run({Drivetrain.stop()}),
+                shoot(),
+            ).withTimeout(3.seconds),
+            setShooterTarget(Target.STATIONARY_TURRET),
+
             Commands.race(
-                Intake.intakeSequence(),
+                Commands.parallel(
+//                    Intake.setPivotVoltage(10.volts).withTimeout(0.1.seconds),
+                    Intake.intakeSequence(),
+                ),
                 Commands.sequence(
                     Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
                     Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
                 )
             ),
             Drivetrain.alignAndFlip(Targets.Target4.target, flipH, flipV),
-            stopAndShoot(2.seconds),
+            stopAndShoot(5.seconds),
             Commands.race(
                 Intake.intakeSequence(),
                 Commands.sequence(
@@ -126,6 +136,7 @@ object CenterStartDepotLeftShoot : Auto {
 
     enum class Targets(val target: APTargetWithTolerance) {
         Target1(APTargetWithTolerance(Pose2d(3.655.meters, 4.035.meters, Rotation2d(0.000.radians)))),
+        FirstShoot(APTargetWithTolerance(Pose2d(2.meters, 4.7.meters, Rotation2d(-0.24.radians)))),
         Target2(APTargetWithTolerance(Pose2d(0.676.meters, 4.989.meters, Rotation2d(-1.300.radians)))),
         Target3(APTargetWithTolerance(Pose2d(0.590.meters, 6.898.meters, Rotation2d(-1.776.radians)))),
         Target4(APTargetWithTolerance(Pose2d(2.070.meters, 7.069.meters, Rotation2d(-0.736.radians)))),
@@ -137,6 +148,48 @@ object CenterStartDepotLeftShoot : Auto {
         Target10(APTargetWithTolerance(Pose2d(3.345.meters, 7.478.meters, Rotation2d(3.142.radians))))
     }
 }
+
+object HPStationRightStart : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command =
+    Commands.sequence(
+        resetOdom(Targets.Start.target, flipH = flipH, flipV = flipV),
+        Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+        stopAndShoot(3.seconds),
+        Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+        Commands.waitTime(5.seconds),
+        Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+        stopAndShoot(10.seconds),
+    )
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Start(APTargetWithTolerance(Pose2d(3.640.meters, 4.026.meters, Rotation2d(0.000.radians)))),
+        Target2(APTargetWithTolerance(Pose2d(2.300.meters, 2.100.meters, Rotation2d(0.693.radians)))),
+        Target3(APTargetWithTolerance(Pose2d(0.349.meters, 0.717.meters, Rotation2d(0.000.radians))))
+    }
+}
+
+
+object HPStationCenterStart : Auto {
+    override fun getPath(flipH: Boolean, flipV: Boolean): Command =
+        Commands.sequence(
+            resetOdom(Targets.Start.target, flipH = flipH, flipV = flipV),
+            Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+            stopAndShoot(3.seconds),
+            Drivetrain.alignAndFlip(Targets.Target3.target, flipH, flipV),
+            Commands.waitTime(5.seconds),
+            Drivetrain.alignAndFlip(Targets.Target2.target, flipH, flipV),
+            stopAndShoot(10.seconds),
+        )
+
+    enum class Targets(val target: APTargetWithTolerance) {
+        Start(APTargetWithTolerance(Pose2d(3.640.meters, 4.026.meters, Rotation2d(0.000.radians)))),
+        Target2(APTargetWithTolerance(Pose2d(2.300.meters, 2.100.meters, Rotation2d(0.693.radians)))),
+        Target3(APTargetWithTolerance(Pose2d(0.349.meters, 0.717.meters, Rotation2d(0.000.radians))))
+    }
+}
+
+
+
 
 
 object Climb : Auto {
@@ -168,7 +221,7 @@ object Climb : Auto {
 
 fun resetOdom(pose: APTargetWithTolerance,flipH: Boolean,flipV: Boolean): Command = runOnce({
     Drivetrain.poseEstimator.resetPose(
-        flipTarget(pose,flipV,flipH).reference
+        flipTarget(pose,flipH = flipH,flipV = flipV).reference
     )
 })
 

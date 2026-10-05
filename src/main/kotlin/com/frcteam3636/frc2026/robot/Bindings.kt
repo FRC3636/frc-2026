@@ -36,14 +36,6 @@ fun configureBindings() {
         Intake.intakeSequence()
     )
 
-//    joystickLeft.button(2).whileTrue(
-//        Intake.manipulateSequence()
-//    )
-
-//    joystickLeft.button(3).onTrue(
-//        Intake.setPivotVoltage(0.volts)
-//    )
-
     joystickLeft.button(3).whileTrue(
         Commands.parallel(
             Feeder.outtake(),
@@ -51,7 +43,6 @@ fun configureBindings() {
             Intake.outtake()
         )
     )
-
 
 
     joystickRight.button(1).whileTrue(

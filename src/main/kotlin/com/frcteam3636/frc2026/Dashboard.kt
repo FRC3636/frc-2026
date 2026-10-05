@@ -23,7 +23,10 @@ object Dashboard {
 
 enum class AutoModes(val autoName: String, val developerAuto: Boolean = false) {
     None("None"),
+    HPStationRightStart("HPStationRightStart"),
+    HPStationCenterStart("HPStationCenterStart"),
+    Sad("Sad"),
     CenterStartDepotLeftShoot("CenterStartDepotLeftShoot"),
-    Lebron("Lebron"),
+    LebronRight("LebronRight"),
     LebronLeft("LebronLeft"),
 }
